@@ -4,6 +4,8 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
+import 'dotenv/config'; // Load env vars
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +20,38 @@ app.use(bodyParser.json({ limit: '50mb' }));
 // Serve Static Frontend (Production)
 app.use(express.static(path.join(__dirname, 'dist')));
 
+// MongoDB Schemas
+const ErrorSchema = new mongoose.Schema({
+    id: Number,
+    title: String,
+    code: String,
+    category: String,
+    summary: String,
+    solution: String,
+    date: String,
+    viewCount: { type: Number, default: 0 },
+    imageUrl: String
+});
+
+const CategorySchema = new mongoose.Schema({
+    id: String,
+    name: String,
+    color: String
+});
+
+const ErrorModel = mongoose.model('Error', ErrorSchema);
+const CategoryModel = mongoose.model('Category', CategorySchema);
+
+// MongoDB Connection
+let isMongoConnected = false;
+if (process.env.MONGODB_URI) {
+    mongoose.connect(process.env.MONGODB_URI)
+        .then(() => {
+            console.log('Connected to MongoDB');
+            isMongoConnected = true;
+        })
+        .catch(err => console.error('MongoDB connection error:', err));
+}
 
 // Default Data (from mockData.js)
 const DEFAULT_DATA = {
@@ -163,7 +197,7 @@ const DEFAULT_DATA = {
     ]
 };
 
-// Helper to read DB
+// Helper to read DB (File Mode)
 const readDb = () => {
     if (!fs.existsSync(DB_FILE)) {
         fs.writeFileSync(DB_FILE, JSON.stringify(DEFAULT_DATA, null, 2));
@@ -172,91 +206,180 @@ const readDb = () => {
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
 };
 
-// Helper to write DB
+// Helper to write DB (File Mode)
 const writeDb = (data) => {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 };
 
-// Initialize DB if needed
+// Initialize DB if needed (Local)
 readDb();
 
 // Routes
+
 // GET All Errors
-app.get('/api/errors', (req, res) => {
-    const data = readDb();
-    res.json(data.errors);
+app.get('/api/errors', async (req, res) => {
+    if (isMongoConnected) {
+        try {
+            const errors = await ErrorModel.find().sort({ date: -1 });
+            res.json(errors);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        const data = readDb();
+        res.json(data.errors);
+    }
 });
 
 // GET All Categories
-app.get('/api/categories', (req, res) => {
-    const data = readDb();
-    res.json(data.categories);
+app.get('/api/categories', async (req, res) => {
+    if (isMongoConnected) {
+        try {
+            // Check if categories exist, if not insert defaults
+            let categories = await CategoryModel.find();
+            if (categories.length === 0) {
+                await CategoryModel.insertMany(DEFAULT_DATA.categories);
+                categories = await CategoryModel.find();
+            }
+            res.json(categories);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        const data = readDb();
+        res.json(data.categories);
+    }
 });
 
 // POST New Error
-app.post('/api/errors', (req, res) => {
-    const data = readDb();
-    const newError = {
-        ...req.body,
-        id: data.errors.length > 0 ? Math.max(...data.errors.map(e => e.id)) + 1 : 1,
-        viewCount: 0,
-        date: new Date().toISOString().split('T')[0]
-    };
-    data.errors.unshift(newError);
-    writeDb(data);
-    res.status(201).json(newError);
+app.post('/api/errors', async (req, res) => {
+    if (isMongoConnected) {
+        try {
+            // Find max ID
+            const lastError = await ErrorModel.findOne().sort({ id: -1 });
+            const newId = lastError ? lastError.id + 1 : 1;
+
+            const newError = new ErrorModel({
+                ...req.body,
+                id: newId,
+                date: new Date().toISOString().split('T')[0],
+                viewCount: 0
+            });
+            await newError.save();
+            res.status(201).json(newError);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        const data = readDb();
+        const newError = {
+            ...req.body,
+            id: data.errors.length > 0 ? Math.max(...data.errors.map(e => e.id)) + 1 : 1,
+            viewCount: 0,
+            date: new Date().toISOString().split('T')[0]
+        };
+        data.errors.unshift(newError);
+        writeDb(data);
+        res.status(201).json(newError);
+    }
 });
 
 // PUT Update Error
-app.put('/api/errors/:id', (req, res) => {
-    const data = readDb();
+app.put('/api/errors/:id', async (req, res) => {
     const id = parseInt(req.params.id);
-    const index = data.errors.findIndex(e => e.id === id);
 
-    if (index !== -1) {
-        data.errors[index] = { ...data.errors[index], ...req.body };
-        writeDb(data);
-        res.json(data.errors[index]);
+    if (isMongoConnected) {
+        try {
+            const updatedError = await ErrorModel.findOneAndUpdate({ id: id }, req.body, { new: true });
+            if (updatedError) {
+                res.json(updatedError);
+            } else {
+                res.status(404).json({ error: 'Error not found' });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     } else {
-        res.status(404).json({ error: 'Error not found' });
+        const data = readDb();
+        const index = data.errors.findIndex(e => e.id === id);
+
+        if (index !== -1) {
+            data.errors[index] = { ...data.errors[index], ...req.body };
+            writeDb(data);
+            res.json(data.errors[index]);
+        } else {
+            res.status(404).json({ error: 'Error not found' });
+        }
     }
 });
 
 // DELETE Error
-app.delete('/api/errors/:id', (req, res) => {
-    const data = readDb();
+app.delete('/api/errors/:id', async (req, res) => {
     const id = parseInt(req.params.id);
-    const filteredErrors = data.errors.filter(e => e.id !== id);
 
-    if (data.errors.length !== filteredErrors.length) {
-        data.errors = filteredErrors;
-        writeDb(data);
-        res.json({ success: true });
+    if (isMongoConnected) {
+        try {
+            const deleted = await ErrorModel.findOneAndDelete({ id: id });
+            if (deleted) {
+                res.json({ success: true });
+            } else {
+                res.status(404).json({ error: 'Error not found' });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     } else {
-        res.status(404).json({ error: 'Error not found' });
+        const data = readDb();
+        const filteredErrors = data.errors.filter(e => e.id !== id);
+
+        if (data.errors.length !== filteredErrors.length) {
+            data.errors = filteredErrors;
+            writeDb(data);
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Error not found' });
+        }
     }
 });
 
-// Incremenet View Count (Special Endpoint)
-app.post('/api/errors/:id/view', (req, res) => {
-    const data = readDb();
+// Incremenet View Count
+app.post('/api/errors/:id/view', async (req, res) => {
     const id = parseInt(req.params.id);
-    const index = data.errors.findIndex(e => e.id === id);
 
-    if (index !== -1) {
-        data.errors[index].viewCount = (data.errors[index].viewCount || 0) + 1;
-        writeDb(data);
-        res.json(data.errors[index]);
+    if (isMongoConnected) {
+        try {
+            const updatedError = await ErrorModel.findOneAndUpdate({ id: id }, { $inc: { viewCount: 1 } }, { new: true });
+            if (updatedError) {
+                res.json(updatedError);
+            } else {
+                res.status(404).json({ error: 'Error not found' });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     } else {
-        res.status(404).json({ error: 'Error not found' });
+        const data = readDb();
+        const index = data.errors.findIndex(e => e.id === id);
+
+        if (index !== -1) {
+            data.errors[index].viewCount = (data.errors[index].viewCount || 0) + 1;
+            writeDb(data);
+            res.json(data.errors[index]);
+        } else {
+            res.status(404).json({ error: 'Error not found' });
+        }
     }
 });
 
 // Serve index.html for any other requests (SPA support)
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-});
+if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running on http://0.0.0.0:${PORT}`);
+    });
+}
+
+export default app;
