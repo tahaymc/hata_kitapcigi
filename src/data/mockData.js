@@ -6,7 +6,7 @@ export const CATEGORIES = [
     { id: 'diger', name: 'Diğer', color: 'slate' },
 ];
 
-let ERRORS = [
+const DEFAULT_ERRORS = [
     {
         id: 1,
         title: 'Fiş Yazıcı Bağlantı Hatası',
@@ -19,6 +19,7 @@ let ERRORS = [
 4. Yazıcıyı kapatıp 10 saniye bekledikten sonra tekrar açın.
 5. Sorun devam ederse IT departmanına [Ticket Açın].`,
         date: '2023-10-25',
+        viewCount: 124,
         imageUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -44,7 +45,8 @@ let ERRORS = [
 2. Işık yanıp sönmeye başlayınca bırakın.
 3. Yazıcı birkaç boş etiket verip duracaktır.
 4. Tekrar deneme baskısı alın.`,
-        date: '2023-10-27'
+        date: '2023-10-27',
+        imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 4,
@@ -56,7 +58,8 @@ let ERRORS = [
 2. Başka bir USB portuna takarak deneyin.
 3. Kabloda kırık veya ezilme var mı kontrol edin.
 4. Sorun devam ederse yedek okuyucu ile değiştirin.`,
-        date: '2023-10-28'
+        date: '2023-10-28',
+        imageUrl: 'https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 5,
@@ -67,7 +70,8 @@ let ERRORS = [
         solution: `1. Şarj kızağının fişini kontrol edin.
 2. Terminalin ve kızağın metal temas noktalarını kuru bir bezle temizleyin.
 3. Bataryanın tam oturduğundan emin olun.`,
-        date: '2023-10-28'
+        date: '2023-10-28',
+        imageUrl: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 6,
@@ -79,7 +83,8 @@ let ERRORS = [
 2. Switch dolabındaki sigortaları kontrol edin.
 3. Kablolarda yerinden çıkan var mı bakın.
 4. Bilgi işlem departmanına acil durum bildirin.`,
-        date: '2023-10-29'
+        date: '2023-10-29',
+        imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 7,
@@ -88,9 +93,10 @@ let ERRORS = [
         category: 'reyon',
         summary: 'El terminalinden gönderilen etiketler yazıcıdan çıkmıyor.',
         solution: `1. Yazıcının "Ready" konumunda olduğundan emin olun.
-2. El terminalinin Wi-Fi bağlantısını kontrol edin.
+2. El terminalinde Wi-Fi bağlantısını kontrol edin.
 3. Yazıcı kuyruğunda bekleyen işleri temizleyin.`,
-        date: '2023-10-29'
+        date: '2023-10-29',
+        imageUrl: 'https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 8,
@@ -102,7 +108,8 @@ let ERRORS = [
 2. Sigorta panelinden klima şalterini kontrol edin.
 3. Dış ünitenin önünde engel var mı bakın.
 4. Teknik servis kaydı oluşturun.`,
-        date: '2023-10-30'
+        date: '2023-10-30',
+        imageUrl: 'https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 9,
@@ -113,7 +120,8 @@ let ERRORS = [
         solution: `1. Çekmecenin anahtarla kilitli olup olmadığını kontrol edin.
 2. Yazıcı ile çekmece arasındaki kabloyu kontrol edin (genelde yazıcı tetikler).
 3. Çekmecenin altında bir nesne sıkışmış olabilir.`,
-        date: '2023-10-30'
+        date: '2023-10-30',
+        imageUrl: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 10,
@@ -124,7 +132,8 @@ let ERRORS = [
         solution: `1. Caps Lock tuşunun açık olup olmadığını kontrol edin.
 2. Şifrenizin süresi dolmuş olabilir, portal üzerinden sıfırlayın.
 3. VPN bağlantısı gerekiyorsa bağlı olduğunuzdan emin olun.`,
-        date: '2023-10-31'
+        date: '2023-10-31',
+        imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 11,
@@ -135,7 +144,8 @@ let ERRORS = [
         solution: `1. El terminalinde bekleyen aktarım dosyası var mı kontrol edin.
 2. Sayım yapılan lokasyon kodunun doğruluğunu teyit edin.
 3. Wi-Fi çekim gücünün düşük olduğu "kör nokta"ları kontrol edin.`,
-        date: '2023-11-01'
+        date: '2023-11-01',
+        imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 12,
@@ -146,7 +156,8 @@ let ERRORS = [
         solution: `1. Terazinin ayaklarının yere tam bastığını ve dengede olduğunu (su terazisi ile) kontrol edin.
 2. Terazi kefesinin altına bir şey sıkışıp sıkışmadığını kontrol edin.
 3. Cihazı kapatıp açın, açılırken kefe üzerinde yük olmamalıdır.`,
-        date: '2023-11-01'
+        date: '2023-11-01',
+        imageUrl: 'https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60'
     },
     {
         id: 13,
@@ -157,56 +168,112 @@ let ERRORS = [
         solution: `1. Gün içinde bekleyen (askıda) fiş olup olmadığını kontrol edin.
 2. Mali hafıza doluluk oranını kontrol edin.
 3. Kasa ile ödeme kaydedici cihaz arasındaki bağlantıyı kontrol edin.`,
-        date: '2023-11-02'
+        date: '2023-11-02',
+        imageUrl: 'https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60'
     }
 ];
 
-// Helper functions (Simulating async API)
+const API_URL = '/api'; // Using proxy in development, or set absolute URL for LAN usage
+
+
+
+// Read Function
 export const getCategories = async () => {
-    return Promise.resolve(CATEGORIES);
+    // For now we keep categories static or fetch from API if we implemented categories endpoint
+    // Let's stick to static for now as per previous mockData content unless required
+    // Actually the server has /api/categories which returns the same list, let's use it or fallback
+    try {
+        const response = await fetch(`${API_URL}/categories`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    } catch (e) {
+        console.warn('API connection failed, using offline categories', e);
+        return CATEGORIES;
+    }
 };
 
 export const getAllErrors = async () => {
-    return Promise.resolve([...ERRORS]);
+    try {
+        const response = await fetch(`${API_URL}/errors`);
+        if (!response.ok) throw new Error('Failed to fetch errors');
+        return await response.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return [];
+    }
+};
+
+export const searchErrors = async (query, categoryId, date) => {
+    try {
+        // Fetch all and filter client side for simplicity, 
+        // OR implement search in API. To save time, we fetch all and filter client side.
+        const allErrors = await getAllErrors();
+        let filtered = allErrors;
+
+        if (categoryId) {
+            filtered = filtered.filter(e => e.category === categoryId);
+        }
+
+        if (date) {
+            filtered = filtered.filter(e => e.date === date);
+        }
+
+        if (query) {
+            const q = query.toLowerCase();
+            filtered = filtered.filter(e =>
+                e.title.toLowerCase().includes(q) ||
+                e.summary.toLowerCase().includes(q)
+            );
+        }
+
+        return filtered;
+    } catch (e) {
+        console.error("Search failed:", e);
+        return [];
+    }
 };
 
 export const getErrorById = async (id) => {
-    const error = ERRORS.find(e => e.id == id);
-    return Promise.resolve(error);
+    const errors = await getAllErrors();
+    return errors.find(e => e.id == id);
 };
 
-export const searchErrors = async (query, categoryId) => {
-    let filtered = ERRORS;
-
-    if (categoryId) {
-        filtered = filtered.filter(e => e.category === categoryId);
-    }
-
-    if (query) {
-        const q = query.toLowerCase();
-        filtered = filtered.filter(e =>
-            e.title.toLowerCase().includes(q) ||
-            e.summary.toLowerCase().includes(q)
-        );
-    }
-
-    return Promise.resolve(filtered);
-};
-
-// Admin Functions
+// Write Functions
 export const addError = async (newError) => {
-    const id = ERRORS.length > 0 ? Math.max(...ERRORS.map(e => e.id)) + 1 : 1;
-    const error = { ...newError, id, date: new Date().toISOString().split('T')[0] };
-    ERRORS = [error, ...ERRORS];
-    return Promise.resolve(error);
+    const response = await fetch(`${API_URL}/errors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newError)
+    });
+    return await response.json();
 };
 
 export const updateError = async (id, updatedData) => {
-    ERRORS = ERRORS.map(e => (e.id === id ? { ...e, ...updatedData } : e));
-    return Promise.resolve(true);
+    const response = await fetch(`${API_URL}/errors/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+    });
+    return response.ok;
 };
 
 export const deleteError = async (id) => {
-    ERRORS = ERRORS.filter(e => e.id !== id);
-    return Promise.resolve(true);
+    const response = await fetch(`${API_URL}/errors/${id}`, {
+        method: 'DELETE'
+    });
+    return response.ok;
+};
+
+export const incrementViewCount = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/errors/${id}/view`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (e) {
+        console.error("Failed to increment view count", e);
+    }
+    return null;
 };
