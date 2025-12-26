@@ -28,9 +28,15 @@ const ErrorSchema = new mongoose.Schema({
     category: String,
     summary: String,
     solution: String,
+    solutionType: { type: String, default: 'text' }, // 'text' or 'steps'
+    solutionSteps: [{
+        text: String,
+        imageUrl: String
+    }],
     date: String,
     viewCount: { type: Number, default: 0 },
-    imageUrl: String
+    imageUrl: String,
+    imageUrls: [String] // Yeni alan: Çoklu resimler için
 });
 
 const CategorySchema = new mongoose.Schema({
@@ -65,7 +71,8 @@ const DEFAULT_DATA = {
             solution: "1. Yazıcının güç kablosunu kontrol edin.\n2. USB bağlantısının tam oturduğundan emin olun.\n3. Kağıt rulosunun doğru takıldığını kontrol edin.\n4. Yazıcıyı kapatıp 10 saniye bekledikten sonra tekrar açın.\n5. Sorun devam ederse IT departmanına [Ticket Açın].",
             date: '2023-10-25',
             viewCount: 124,
-            imageUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 2,
@@ -75,7 +82,8 @@ const DEFAULT_DATA = {
             summary: 'Satış ekranı dondu, işlem yapılamıyor.',
             solution: "1. CTRL+ALT+DEL tuşlarına basın.\n2. Görev Yöneticisi'ni açın.\n3. Kasa uygulamasını seçip \"Görevi Sonlandır\" deyin.\n4. Uygulamayı masaüstünden tekrar başlatın.",
             date: '2023-10-26',
-            imageUrl: 'https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 3,
@@ -85,7 +93,8 @@ const DEFAULT_DATA = {
             summary: 'Etiketler kaymış basılıyor, hizalama sorunu var.',
             solution: "1. Yazıcının üzerindeki 'Feed' tuşuna basılı tutun.\n2. Işık yanıp sönmeye başlayınca bırakın.\n3. Yazıcı birkaç boş etiket verip duracaktır.\n4. Tekrar deneme baskısı alın.",
             date: '2023-10-27',
-            imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 4,
@@ -95,7 +104,8 @@ const DEFAULT_DATA = {
             summary: 'Lazer ışığı yanıyor ancak barkodu sisteme aktarmıyor.',
             solution: "1. Okuyucunun kablosunu çıkarıp takın.\n2. Başka bir USB portuna takarak deneyin.\n3. Kabloda kırık veya ezilme var mı kontrol edin.\n4. Sorun devam ederse yedek okuyucu ile değiştirin.",
             date: '2023-10-28',
-            imageUrl: 'https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 5,
@@ -105,7 +115,8 @@ const DEFAULT_DATA = {
             summary: 'Terminali kızağa koyunca şarj ışığı yanmıyor.',
             solution: "1. Şarj kızağının fişini kontrol edin.\n2. Terminalin ve kızağın metal temas noktalarını kuru bir bezle temizleyin.\n3. Bataryanın tam oturduğundan emin olun.",
             date: '2023-10-28',
-            imageUrl: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 6,
@@ -115,7 +126,8 @@ const DEFAULT_DATA = {
             summary: 'Tüm bilgisayarlarda ağ bağlantısı koptu.',
             solution: "1. Modemin ışıklarını kontrol edin (DSL/PON ışığı yanıyor mu?).\n2. Switch dolabındaki sigortaları kontrol edin.\n3. Kablolarda yerinden çıkan var mı bakın.\n4. Bilgi işlem departmanına acil durum bildirin.",
             date: '2023-10-29',
-            imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 7,
@@ -125,7 +137,8 @@ const DEFAULT_DATA = {
             summary: 'El terminalinden gönderilen etiketler yazıcıdan çıkmıyor.',
             solution: "1. Yazıcının \"Ready\" konumunda olduğundan emin olun.\n2. El terminalinde Wi-Fi bağlantısını kontrol edin.\n3. Yazıcı kuyruğunda bekleyen işleri temizleyin.",
             date: '2023-10-29',
-            imageUrl: 'https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 8,
@@ -135,7 +148,8 @@ const DEFAULT_DATA = {
             summary: 'Mağaza içi klima sistemi soğutmuyor/ısıtmıyor.',
             solution: "1. Termostat ayarlarını kontrol edin.\n2. Sigorta panelinden klima şalterini kontrol edin.\n3. Dış ünitenin önünde engel var mı bakın.\n4. Teknik servis kaydı oluşturun.",
             date: '2023-10-30',
-            imageUrl: 'https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 9,
@@ -145,7 +159,8 @@ const DEFAULT_DATA = {
             summary: 'Satış sonrası veya manuel tetiklemeyle çekmece açılmıyor.',
             solution: "1. Çekmecenin anahtarla kilitli olup olmadığını kontrol edin.\n2. Yazıcı ile çekmece arasındaki kabloyu kontrol edin (genelde yazıcı tetikler).\n3. Çekmecenin altında bir nesne sıkışmış olabilir.",
             date: '2023-10-30',
-            imageUrl: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 10,
@@ -155,7 +170,8 @@ const DEFAULT_DATA = {
             summary: '"Kullanıcı adı veya şifre hatalı" veya sunucuya erişilemiyor.',
             solution: "1. Caps Lock tuşunun açık olup olmadığını kontrol edin.\n2. Şifrenizin süresi dolmuş olabilir, portal üzerinden sıfırlayın.\n3. VPN bağlantısı gerekiyorsa bağlı olduğunuzdan emin olun.",
             date: '2023-10-31',
-            imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 11,
@@ -165,7 +181,8 @@ const DEFAULT_DATA = {
             summary: 'Sayılan ürünler sisteme eksik aktarılıyor.',
             solution: "1. El terminalinde bekleyen aktarım dosyası var mı kontrol edin.\n2. Sayım yapılan lokasyon kodunun doğruluğunu teyit edin.\n3. Wi-Fi çekim gücünün düşük olduğu \"kör nokta\"ları kontrol edin.",
             date: '2023-11-01',
-            imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 12,
@@ -175,7 +192,8 @@ const DEFAULT_DATA = {
             summary: 'Terazi tartım sonuçları hatalı çıkıyor.',
             solution: "1. Terazinin ayaklarının yere tam bastığını ve dengede olduğunu (su terazisi ile) kontrol edin.\n2. Terazi kefesinin altına bir şey sıkışıp sıkışmadığını kontrol edin.\n3. Cihazı kapatıp açın, açılırken kefe üzerinde yük olmamalıdır.",
             date: '2023-11-01',
-            imageUrl: 'https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60']
         },
         {
             id: 13,
@@ -185,7 +203,8 @@ const DEFAULT_DATA = {
             summary: 'Gün sonu işlemi hata veriyor, rapor çıkmıyor.',
             solution: "1. Gün içinde bekleyen (askıda) fiş olup olmadığını kontrol edin.\n2. Mali hafıza doluluk oranını kontrol edin.\n3. Kasa ile ödeme kaydedici cihaz arasındaki bağlantıyı kontrol edin.",
             date: '2023-11-02',
-            imageUrl: 'https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60'
+            imageUrl: 'https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60',
+            imageUrls: ['https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60']
         }
     ],
     categories: [
@@ -253,6 +272,23 @@ app.get('/api/categories', async (req, res) => {
 
 // POST New Error
 app.post('/api/errors', async (req, res) => {
+    // Process images
+    let finalImageUrls = req.body.imageUrls || [];
+    let finalImageUrl = req.body.imageUrl;
+
+    if (!finalImageUrl && finalImageUrls.length > 0) {
+        finalImageUrl = finalImageUrls[0];
+    }
+    if (finalImageUrl && (!finalImageUrls || finalImageUrls.length === 0)) {
+        finalImageUrls = [finalImageUrl];
+    }
+
+    const payload = {
+        ...req.body,
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls
+    };
+
     if (isMongoConnected) {
         try {
             // Find max ID
@@ -260,7 +296,7 @@ app.post('/api/errors', async (req, res) => {
             const newId = lastError ? lastError.id + 1 : 1;
 
             const newError = new ErrorModel({
-                ...req.body,
+                ...payload,
                 id: newId,
                 date: new Date().toISOString().split('T')[0],
                 viewCount: 0
@@ -273,7 +309,7 @@ app.post('/api/errors', async (req, res) => {
     } else {
         const data = readDb();
         const newError = {
-            ...req.body,
+            ...payload,
             id: data.errors.length > 0 ? Math.max(...data.errors.map(e => e.id)) + 1 : 1,
             viewCount: 0,
             date: new Date().toISOString().split('T')[0]
@@ -288,9 +324,26 @@ app.post('/api/errors', async (req, res) => {
 app.put('/api/errors/:id', async (req, res) => {
     const id = parseInt(req.params.id);
 
+    // Process images
+    let finalImageUrls = req.body.imageUrls || [];
+    let finalImageUrl = req.body.imageUrl;
+
+    if (!finalImageUrl && finalImageUrls.length > 0) {
+        finalImageUrl = finalImageUrls[0];
+    }
+    if (finalImageUrl && (!finalImageUrls || finalImageUrls.length === 0)) {
+        finalImageUrls = [finalImageUrl];
+    }
+
+    const payload = {
+        ...req.body,
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls
+    };
+
     if (isMongoConnected) {
         try {
-            const updatedError = await ErrorModel.findOneAndUpdate({ id: id }, req.body, { new: true });
+            const updatedError = await ErrorModel.findOneAndUpdate({ id: id }, payload, { new: true });
             if (updatedError) {
                 res.json(updatedError);
             } else {
@@ -304,7 +357,7 @@ app.put('/api/errors/:id', async (req, res) => {
         const index = data.errors.findIndex(e => e.id === id);
 
         if (index !== -1) {
-            data.errors[index] = { ...data.errors[index], ...req.body };
+            data.errors[index] = { ...data.errors[index], ...payload };
             writeDb(data);
             res.json(data.errors[index]);
         } else {

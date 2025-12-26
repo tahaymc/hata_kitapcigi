@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn } from 'lucide-react';
+import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CATEGORIES } from '../data/mockData';
 
 const getCategoryIcon = (categoryId) => {
@@ -22,6 +22,7 @@ const COLOR_STYLES = {
 
 const ErrorDetailModal = ({ error, onClose }) => {
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
+    const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
 
     // Prevent body scroll when modal is open
     React.useEffect(() => {
@@ -35,6 +36,10 @@ const ErrorDetailModal = ({ error, onClose }) => {
 
     const category = CATEGORIES.find(c => c.id === error.category);
     const colorStyle = COLOR_STYLES[category?.color || 'slate'];
+
+    const displayImages = error.imageUrls && error.imageUrls.length > 0
+        ? error.imageUrls
+        : (error.imageUrl ? [error.imageUrl] : []);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -70,11 +75,11 @@ const ErrorDetailModal = ({ error, onClose }) => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Content */}
                         <div className="lg:col-span-2 space-y-8">
-                            <div>
-                                <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 leading-tight">
+                            <div className="bg-slate-50 dark:bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-500/30 transition-colors">
+                                <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3 leading-tight break-words">
                                     {error.title}
                                 </h2>
-                                <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium">
                                     {error.summary}
                                 </p>
                             </div>
@@ -86,15 +91,53 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">Çözüm Adımları</h3>
                                 </div>
                                 <div className="p-6">
-                                    <ul className="space-y-4">
-                                        {error.solution.split('\n').map((step, index) => (
-                                            <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
-                                                <span className={`flex-shrink-0 w-7 h-7 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-xs ring-1 ${colorStyle.ring}/30`}>
-                                                    {index + 1}
-                                                </span>
-                                                <span className="mt-0.5 leading-relaxed text-sm md:text-base">{step.replace(/^\d+\.\s*/, '')}</span>
-                                            </li>
-                                        ))}
+                                    <ul className="space-y-6">
+                                        {error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0 ? (
+                                            error.solutionSteps.map((step, index) => (
+                                                <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
+                                                    <span className={`flex-shrink-0 w-8 h-8 rounded-lg ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-sm border border-${colorStyle.border}/20`}>
+                                                        {index + 1}
+                                                    </span>
+                                                    <div className="flex-grow space-y-3 min-w-0">
+                                                        <div className="mt-1 leading-relaxed text-sm md:text-base font-medium break-words whitespace-pre-wrap">
+                                                            {step.text}
+                                                        </div>
+                                                        {step.imageUrl && (
+                                                            <div className="relative group/step-img w-full max-w-sm rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                                <img
+                                                                    src={step.imageUrl}
+                                                                    alt={`Adım ${index + 1}`}
+                                                                    className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                                                                    onClick={() => {
+                                                                        // Reuse the main gallery state for simplicity, or add new state.
+                                                                        // Since we might disturb the main gallery state, let's just make a temporary fake gallery entry 
+                                                                        // But wait, the main gallery state only controls the RIGHT side panel. 
+                                                                        // The fullscreen overlay uses 'isImageEnlarged' and 'selectedImageIndex' of 'displayImages'.
+                                                                        // We can't easily hijack that without adding step images to 'displayImages'.
+                                                                        const win = window.open();
+                                                                        if (win) {
+                                                                            win.document.write(`<img src="${step.imageUrl}" style="max-width:100%;height:auto;">`);
+                                                                        }
+                                                                        // For now, simple open in new tab is safest without big refactor. 
+                                                                        // OR, allow a simplified zoom here? 
+                                                                        // Let's rely on simple browser zoom or new tab for step images for now to not overcomplicate the modal state.
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))
+                                        ) : (
+                                            error.solution.split('\n').filter(s => s.trim() !== '').map((step, index) => (
+                                                <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
+                                                    <span className={`flex-shrink-0 w-7 h-7 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-xs ring-1 ${colorStyle.ring}/30`}>
+                                                        {index + 1}
+                                                    </span>
+                                                    <div className="mt-0.5 leading-relaxed text-sm md:text-base break-words whitespace-pre-wrap min-w-0 flex-1">{step.replace(/^\d+\.\s*/, '')}</div>
+                                                </li>
+                                            ))
+                                        )}
                                     </ul>
                                 </div>
                             </div>
@@ -129,13 +172,13 @@ const ErrorDetailModal = ({ error, onClose }) => {
                             <div className="sticky top-0 space-y-4">
                                 <div
                                     className="bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden shadow-xl group cursor-pointer"
-                                    onClick={() => error.imageUrl && setIsImageEnlarged(true)}
+                                    onClick={() => displayImages.length > 0 && setIsImageEnlarged(true)}
                                 >
                                     <div className="aspect-[3/4] w-full bg-slate-200 dark:bg-[#0f172a] relative overflow-hidden">
-                                        {error.imageUrl ? (
+                                        {displayImages.length > 0 ? (
                                             <>
                                                 <img
-                                                    src={error.imageUrl}
+                                                    src={displayImages[selectedImageIndex]}
                                                     alt={error.title}
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                 />
@@ -155,15 +198,46 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                         <div className="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-60 pointer-events-none"></div>
                                     </div>
                                     <div className="p-4 bg-slate-50 dark:bg-[#1e293b]">
-                                        <div className="flex items-center gap-2 mb-2 text-amber-500 dark:text-amber-400">
-                                            <AlertTriangle className="w-4 h-4" />
-                                            <span className="font-bold text-xs uppercase tracking-wide">Hata Görseli</span>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2 text-amber-500 dark:text-amber-400">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                <span className="font-bold text-xs uppercase tracking-wide">Hata Görseli</span>
+                                            </div>
+                                            {displayImages.length > 1 && (
+                                                <span className="text-xs text-slate-400">
+                                                    {selectedImageIndex + 1} / {displayImages.length}
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
                                             Hatanın sistemdeki veya ekrandaki temsili görüntüsüdür.
                                         </p>
                                     </div>
                                 </div>
+
+                                {/* Thumbnails */}
+                                {displayImages.length > 1 && (
+                                    <div className="space-y-3 mt-6">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                                            <ImageIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Hata Görselleri</h4>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-2 animate-in slide-in-from-bottom-2 fade-in">
+                                            {displayImages.map((img, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setSelectedImageIndex(idx)}
+                                                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                                >
+                                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                                    <div className="absolute top-1 right-1 w-5 h-5 bg-black/60 backdrop-blur-[2px] rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-white/20">
+                                                        {idx + 1}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -177,17 +251,49 @@ const ErrorDetailModal = ({ error, onClose }) => {
                     onClick={() => setIsImageEnlarged(false)}
                 >
                     <button
-                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
                         onClick={() => setIsImageEnlarged(false)}
                     >
                         <X className="w-8 h-8" />
                     </button>
+
+                    {/* Navigation Arrows */}
+                    {displayImages.length > 1 && (
+                        <>
+                            <button
+                                className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : displayImages.length - 1));
+                                }}
+                            >
+                                <ChevronLeft className="w-8 h-8" />
+                            </button>
+                            <button
+                                className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedImageIndex(prev => (prev < displayImages.length - 1 ? prev + 1 : 0));
+                                }}
+                            >
+                                <ChevronRight className="w-8 h-8" />
+                            </button>
+                        </>
+                    )}
+
                     <img
-                        src={error.imageUrl}
+                        src={displayImages[selectedImageIndex]}
                         alt={error.title}
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
                         onClick={(e) => e.stopPropagation()}
                     />
+
+                    {/* Counter Bubble */}
+                    {displayImages.length > 1 && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white font-medium text-sm border border-white/10">
+                            {selectedImageIndex + 1} / {displayImages.length}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
