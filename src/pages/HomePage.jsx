@@ -1,10 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getCategories, searchErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 
-const getCategoryIcon = (categoryId, className = "w-6 h-6") => {
+const ICON_OPTIONS = {
+    shoppingCart: ShoppingCart,
+    archive: Archive,
+    monitor: Monitor,
+    settings: Settings,
+    tag: Tag,
+    truck: Truck,
+    wifi: Wifi,
+    printer: Printer,
+    creditCard: CreditCard,
+    smartphone: Smartphone,
+    package: Package,
+    alertTriangle: AlertTriangle,
+    helpCircle: HelpCircle,
+    database: Database,
+    zap: Zap,
+    thermometer: Thermometer,
+    bookOpen: BookOpen,
+    shield: Shield
+};
+
+const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = null) => {
+    // If iconName is provided (from category object), use it
+    if (iconName && ICON_OPTIONS[iconName]) {
+        const IconComponent = ICON_OPTIONS[iconName];
+        return <IconComponent className={className} />;
+    }
+
+    // Fallback for legacy hardcoded categories
     switch (categoryId) {
         case 'kasa': return <ShoppingCart className={className} />;
         case 'reyon': return <Archive className={className} />;
@@ -19,6 +47,7 @@ const getCategoryColor = (categoryId) => {
     return cat ? cat.color : 'slate';
 };
 
+// Explicit mapping for Tailwind to detect classes
 // Explicit mapping for Tailwind to detect classes
 const COLOR_STYLES = {
     blue: {
@@ -85,25 +114,334 @@ const COLOR_STYLES = {
         buttonSelected: 'bg-slate-600 text-white shadow-lg shadow-slate-500/30 border-slate-500',
         buttonUnselectedHover: 'hover:bg-slate-500/10 hover:text-slate-400 hover:border-slate-500/50',
         bar: 'bg-slate-500 w-1'
+    },
+    red: {
+        gradient: 'from-red-500 to-red-400',
+        text: 'text-red-400',
+        bgLight: 'bg-red-500/10',
+        borderLight: 'border-red-500/20',
+        groupHoverText: 'group-hover:text-red-400',
+        groupHoverBg: 'group-hover:bg-red-500/10',
+        hoverBorder: 'hover:border-red-500/50',
+        hoverShadow: 'hover:shadow-red-500/10',
+        buttonSelected: 'bg-red-600 text-white shadow-lg shadow-red-500/30 border-red-500',
+        buttonUnselectedHover: 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/50',
+        bar: 'bg-red-500 w-1'
+    },
+    amber: {
+        gradient: 'from-amber-500 to-amber-400',
+        text: 'text-amber-400',
+        bgLight: 'bg-amber-500/10',
+        borderLight: 'border-amber-500/20',
+        groupHoverText: 'group-hover:text-amber-400',
+        groupHoverBg: 'group-hover:bg-amber-500/10',
+        hoverBorder: 'hover:border-amber-500/50',
+        hoverShadow: 'hover:shadow-amber-500/10',
+        buttonSelected: 'bg-amber-600 text-white shadow-lg shadow-amber-500/30 border-amber-500',
+        buttonUnselectedHover: 'hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/50',
+        bar: 'bg-amber-500 w-1'
+    },
+    yellow: {
+        gradient: 'from-yellow-500 to-yellow-400',
+        text: 'text-yellow-400',
+        bgLight: 'bg-yellow-500/10',
+        borderLight: 'border-yellow-500/20',
+        groupHoverText: 'group-hover:text-yellow-400',
+        groupHoverBg: 'group-hover:bg-yellow-500/10',
+        hoverBorder: 'hover:border-yellow-500/50',
+        hoverShadow: 'hover:shadow-yellow-500/10',
+        buttonSelected: 'bg-yellow-600 text-white shadow-lg shadow-yellow-500/30 border-yellow-500',
+        buttonUnselectedHover: 'hover:bg-yellow-500/10 hover:text-yellow-400 hover:border-yellow-500/50',
+        bar: 'bg-yellow-500 w-1'
+    },
+    lime: {
+        gradient: 'from-lime-500 to-lime-400',
+        text: 'text-lime-400',
+        bgLight: 'bg-lime-500/10',
+        borderLight: 'border-lime-500/20',
+        groupHoverText: 'group-hover:text-lime-400',
+        groupHoverBg: 'group-hover:bg-lime-500/10',
+        hoverBorder: 'hover:border-lime-500/50',
+        hoverShadow: 'hover:shadow-lime-500/10',
+        buttonSelected: 'bg-lime-600 text-white shadow-lg shadow-lime-500/30 border-lime-500',
+        buttonUnselectedHover: 'hover:bg-lime-500/10 hover:text-lime-400 hover:border-lime-500/50',
+        bar: 'bg-lime-500 w-1'
+    },
+    green: {
+        gradient: 'from-green-500 to-green-400',
+        text: 'text-green-400',
+        bgLight: 'bg-green-500/10',
+        borderLight: 'border-green-500/20',
+        groupHoverText: 'group-hover:text-green-400',
+        groupHoverBg: 'group-hover:bg-green-500/10',
+        hoverBorder: 'hover:border-green-500/50',
+        hoverShadow: 'hover:shadow-green-500/10',
+        buttonSelected: 'bg-green-600 text-white shadow-lg shadow-green-500/30 border-green-500',
+        buttonUnselectedHover: 'hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/50',
+        bar: 'bg-green-500 w-1'
+    },
+    teal: {
+        gradient: 'from-teal-500 to-teal-400',
+        text: 'text-teal-400',
+        bgLight: 'bg-teal-500/10',
+        borderLight: 'border-teal-500/20',
+        groupHoverText: 'group-hover:text-teal-400',
+        groupHoverBg: 'group-hover:bg-teal-500/10',
+        hoverBorder: 'hover:border-teal-500/50',
+        hoverShadow: 'hover:shadow-teal-500/10',
+        buttonSelected: 'bg-teal-600 text-white shadow-lg shadow-teal-500/30 border-teal-500',
+        buttonUnselectedHover: 'hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/50',
+        bar: 'bg-teal-500 w-1'
+    },
+    cyan: {
+        gradient: 'from-cyan-500 to-cyan-400',
+        text: 'text-cyan-400',
+        bgLight: 'bg-cyan-500/10',
+        borderLight: 'border-cyan-500/20',
+        groupHoverText: 'group-hover:text-cyan-400',
+        groupHoverBg: 'group-hover:bg-cyan-500/10',
+        hoverBorder: 'hover:border-cyan-500/50',
+        hoverShadow: 'hover:shadow-cyan-500/10',
+        buttonSelected: 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 border-cyan-500',
+        buttonUnselectedHover: 'hover:bg-cyan-500/10 hover:text-cyan-400 hover:border-cyan-500/50',
+        bar: 'bg-cyan-500 w-1'
+    },
+    sky: {
+        gradient: 'from-sky-500 to-sky-400',
+        text: 'text-sky-400',
+        bgLight: 'bg-sky-500/10',
+        borderLight: 'border-sky-500/20',
+        groupHoverText: 'group-hover:text-sky-400',
+        groupHoverBg: 'group-hover:bg-sky-500/10',
+        hoverBorder: 'hover:border-sky-500/50',
+        hoverShadow: 'hover:shadow-sky-500/10',
+        buttonSelected: 'bg-sky-600 text-white shadow-lg shadow-sky-500/30 border-sky-500',
+        buttonUnselectedHover: 'hover:bg-sky-500/10 hover:text-sky-400 hover:border-sky-500/50',
+        bar: 'bg-sky-500 w-1'
+    },
+    indigo: {
+        gradient: 'from-indigo-500 to-indigo-400',
+        text: 'text-indigo-400',
+        bgLight: 'bg-indigo-500/10',
+        borderLight: 'border-indigo-500/20',
+        groupHoverText: 'group-hover:text-indigo-400',
+        groupHoverBg: 'group-hover:bg-indigo-500/10',
+        hoverBorder: 'hover:border-indigo-500/50',
+        hoverShadow: 'hover:shadow-indigo-500/10',
+        buttonSelected: 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 border-indigo-500',
+        buttonUnselectedHover: 'hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/50',
+        bar: 'bg-indigo-500 w-1'
+    },
+    violet: {
+        gradient: 'from-violet-500 to-violet-400',
+        text: 'text-violet-400',
+        bgLight: 'bg-violet-500/10',
+        borderLight: 'border-violet-500/20',
+        groupHoverText: 'group-hover:text-violet-400',
+        groupHoverBg: 'group-hover:bg-violet-500/10',
+        hoverBorder: 'hover:border-violet-500/50',
+        hoverShadow: 'hover:shadow-violet-500/10',
+        buttonSelected: 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-500',
+        buttonUnselectedHover: 'hover:bg-violet-500/10 hover:text-violet-400 hover:border-violet-500/50',
+        bar: 'bg-violet-500 w-1'
+    },
+    fuchsia: {
+        gradient: 'from-fuchsia-500 to-fuchsia-400',
+        text: 'text-fuchsia-400',
+        bgLight: 'bg-fuchsia-500/10',
+        borderLight: 'border-fuchsia-500/20',
+        groupHoverText: 'group-hover:text-fuchsia-400',
+        groupHoverBg: 'group-hover:bg-fuchsia-500/10',
+        hoverBorder: 'hover:border-fuchsia-500/50',
+        hoverShadow: 'hover:shadow-fuchsia-500/10',
+        buttonSelected: 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/30 border-fuchsia-500',
+        buttonUnselectedHover: 'hover:bg-fuchsia-500/10 hover:text-fuchsia-400 hover:border-fuchsia-500/50',
+        bar: 'bg-fuchsia-500 w-1'
+    },
+    pink: {
+        gradient: 'from-pink-500 to-pink-400',
+        text: 'text-pink-400',
+        bgLight: 'bg-pink-500/10',
+        borderLight: 'border-pink-500/20',
+        groupHoverText: 'group-hover:text-pink-400',
+        groupHoverBg: 'group-hover:bg-pink-500/10',
+        hoverBorder: 'hover:border-pink-500/50',
+        hoverShadow: 'hover:shadow-pink-500/10',
+        buttonSelected: 'bg-pink-600 text-white shadow-lg shadow-pink-500/30 border-pink-500',
+        buttonUnselectedHover: 'hover:bg-pink-500/10 hover:text-pink-400 hover:border-pink-500/50',
+        bar: 'bg-pink-500 w-1'
+    },
+    rose: {
+        gradient: 'from-rose-500 to-rose-400',
+        text: 'text-rose-400',
+        bgLight: 'bg-rose-500/10',
+        borderLight: 'border-rose-500/20',
+        groupHoverText: 'group-hover:text-rose-400',
+        groupHoverBg: 'group-hover:bg-rose-500/10',
+        hoverBorder: 'hover:border-rose-500/50',
+        hoverShadow: 'hover:shadow-rose-500/10',
+        buttonSelected: 'bg-rose-600 text-white shadow-lg shadow-rose-500/30 border-rose-500',
+        buttonUnselectedHover: 'hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/50',
+        bar: 'bg-rose-500 w-1'
     }
 };
 
-const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori Seçin" }) => {
+const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori Seçin", onAddCategory, onUpdateCategory, onDeleteCategory }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
+    const [editingCatId, setEditingCatId] = useState(null);
+
+    // Shared form state for both Add and Edit
+    const [formName, setFormName] = useState("");
+    const [formColor, setFormColor] = useState("slate");
+    const [formIcon, setFormIcon] = useState("settings");
+
     const dropdownRef = React.useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setIsAdding(false);
+                setEditingCatId(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const startAdd = () => {
+        setIsAdding(true);
+        setEditingCatId(null);
+        setFormName("");
+        setFormColor("slate");
+        setFormIcon("settings");
+    };
+
+    const startEdit = (e, c) => {
+        e.stopPropagation(); // Don't select the category
+        setEditingCatId(c.id);
+        setIsAdding(false);
+        setFormName(c.name);
+        setFormColor(c.color);
+        setFormIcon(c.icon || "settings");
+    };
+
+    const handleSaveAdd = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!formName.trim() || !onAddCategory) return;
+
+        const success = await onAddCategory(formName, formColor, formIcon);
+        if (success) {
+            setIsAdding(false);
+            setFormName("");
+            setFormColor("slate");
+            setFormIcon("settings");
+            // Optionally close dropdown or stay open
+        }
+    };
+
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!formName.trim() || !onUpdateCategory) return;
+
+        const success = await onUpdateCategory(editingCatId, formName, formColor, formIcon);
+        if (success) {
+            setEditingCatId(null);
+            setFormName("");
+            setFormColor("slate");
+            setFormIcon("settings");
+        }
+    };
+
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) return;
+        if (onDeleteCategory) {
+            await onDeleteCategory(id);
+            if (value === id) onChange(null); // Clear selection if deleted
+        }
+    };
+
+    const cancelForm = (e) => {
+        e.stopPropagation();
+        setIsAdding(false);
+        setEditingCatId(null);
+        setFormName("");
+        setFormColor("slate");
+    };
+
     const selectedCat = categories.find(c => c.id === value);
     const selectedColor = selectedCat ? (COLOR_STYLES[selectedCat.color] || COLOR_STYLES.slate) : COLOR_STYLES.slate;
+
+    // Helper to render the form (used for both Add and Edit)
+    const renderForm = (isEdit = false) => (
+        <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                    {isEdit ? "Kategoriyi Düzenle" : "Yeni Kategori Adı"}
+                </label>
+                <input
+                    type="text"
+                    autoFocus
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Örn: Muhasebe"
+                    value={formName}
+                    onChange={e => setFormName(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Simge Seçin</label>
+                <div className="grid grid-cols-6 gap-2">
+                    {Object.entries(ICON_OPTIONS).map(([key, Icon]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFormIcon(key); }}
+                            className={`p-1.5 rounded-lg flex items-center justify-center transition-all ${formIcon === key ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                            title={key}
+                        >
+                            <Icon className="w-4 h-4" />
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Renk Seçin</label>
+                <div className="grid grid-cols-6 gap-2">
+                    {Object.keys(COLOR_STYLES).map(colorKey => (
+                        <button
+                            key={colorKey}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFormColor(colorKey); }}
+                            className={`w-6 h-6 rounded-full ${COLOR_STYLES[colorKey].bar.replace('w-1', '')} ${formColor === colorKey ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-110'} transition-all`}
+                            title={colorKey}
+                        />
+                    ))}
+                </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+                <button
+                    type="button"
+                    onClick={cancelForm}
+                    className="flex-1 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                    İptal
+                </button>
+                <button
+                    type="button"
+                    onClick={isEdit ? handleSaveEdit : handleSaveAdd}
+                    disabled={!formName.trim()}
+                    className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                    {isEdit ? "Güncelle" : "Ekle"}
+                </button>
+            </div>
+        </div>
+    );
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -115,7 +453,7 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
                 {selectedCat ? (
                     <div className="flex items-center gap-3">
                         <span className={`${selectedColor.text} p-1 ${selectedColor.bgLight} rounded-lg`}>
-                            {getCategoryIcon(selectedCat.id, "w-4 h-4")}
+                            {getCategoryIcon(selectedCat.id, "w-4 h-4", selectedCat.icon)}
                         </span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">{selectedCat.name}</span>
                     </div>
@@ -126,29 +464,73 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl shadow-xl max-h-64 overflow-auto animate-in fade-in zoom-in-95 duration-100">
-                    <div className="p-1.5 space-y-0.5">
-                        {categories.map(c => {
-                            const cStyle = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
-                            const isSelected = c.id === value;
-                            return (
+                <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl shadow-xl max-h-96 overflow-auto animate-in fade-in zoom-in-95 duration-100 p-1.5 flex flex-col gap-1">
+
+                    {/* List Categories */}
+                    {categories.map(c => {
+                        const isEditing = editingCatId === c.id;
+                        if (isEditing) {
+                            return <div key={c.id}>{renderForm(true)}</div>;
+                        }
+
+                        const cStyle = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
+                        const isSelected = c.id === value;
+                        return (
+                            <div key={c.id} className="group relative flex items-center">
                                 <button
-                                    key={c.id}
                                     type="button"
                                     onClick={() => { onChange(c.id); setIsOpen(false); }}
-                                    className={`w-full px-3 py-2.5 flex items-center gap-3 rounded-lg transition-colors text-sm group ${isSelected ? 'bg-slate-100 dark:bg-slate-700/50' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}
+                                    className={`w-full px-3 py-2.5 flex items-center gap-3 rounded-lg transition-colors text-sm ${isSelected ? 'bg-slate-100 dark:bg-slate-700/50' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}
                                 >
                                     <span className={`${cStyle.text} p-1.5 rounded-md ${cStyle.bgLight} group-hover:scale-110 transition-transform`}>
-                                        {getCategoryIcon(c.id, "w-4 h-4")}
+                                        {getCategoryIcon(c.id, "w-4 h-4", c.icon)}
                                     </span>
                                     <span className={`font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                         {c.name}
                                     </span>
                                     {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
                                 </button>
-                            );
-                        })}
-                    </div>
+
+                                {/* Edit/Delete Actions (Visible on Hover) */}
+                                <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 shadow-sm rounded-md border border-slate-100 dark:border-slate-700 p-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => startEdit(e, c)}
+                                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                        title="Düzenle"
+                                    >
+                                        <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleDelete(e, c.id)}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                        title="Sil"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Add New Section */}
+                    {isAdding ? (
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            {renderForm(false)}
+                        </div>
+                    ) : (
+                        <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); startAdd(); }}
+                                className="w-full px-3 py-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Yeni Kategori Ekle
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -244,6 +626,58 @@ const HomePage = () => {
     useEffect(() => {
         searchErrors(searchTerm, selectedCategory, selectedDate).then(setErrors);
     }, [searchTerm, selectedCategory, selectedDate]);
+
+    const handleAddCategory = async (name, color, icon) => {
+        try {
+            // Using absolute URL isn't necessary if proxy is set up or relative path works, but sticking to relative '/api'
+            const response = await fetch('/api/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, color, icon })
+            });
+            if (response.ok) {
+                const newCat = await response.json();
+                setCategories([...categories, newCat]);
+                return newCat.id;
+            }
+        } catch (e) {
+            console.error('Failed to add category', e);
+        }
+        return null;
+    };
+
+    const handleUpdateCategory = async (id, name, color, icon) => {
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, color, icon })
+            });
+            if (response.ok) {
+                const updatedCat = await response.json();
+                setCategories(categories.map(c => c.id === id ? updatedCat : c));
+                return true;
+            }
+        } catch (e) {
+            console.error('Failed to update category', e);
+        }
+        return false;
+    };
+
+    const handleDeleteCategory = async (id) => {
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                setCategories(categories.filter(c => c.id !== id));
+                return true;
+            }
+        } catch (e) {
+            console.error('Failed to delete category', e);
+        }
+        return false;
+    };
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -379,16 +813,16 @@ const HomePage = () => {
     };
 
     const handleCardClick = async (error) => {
-        // Optimistic UI update or wait for response?
-        // Let's rely on the response to be sure
+        // Attempt to increment view count
         const updatedError = await incrementViewCount(error.id);
 
         if (updatedError) {
-            // Update local list state
+            // Update local list state if successful
             setErrors(prev => prev.map(e => e.id === error.id ? updatedError : e));
-
-            // Open modal with updated error
             setSelectedError(updatedError);
+        } else {
+            // Fallback: If API fails (e.g. Vercel static deployment), still open the modal with existing data
+            setSelectedError(error);
         }
     };
 
@@ -1023,6 +1457,9 @@ const HomePage = () => {
                                             value={newErrorData.category}
                                             onChange={(val) => setNewErrorData({ ...newErrorData, category: val })}
                                             categories={categories}
+                                            onAddCategory={handleAddCategory}
+                                            onUpdateCategory={handleUpdateCategory}
+                                            onDeleteCategory={handleDeleteCategory}
                                         />
                                     </div>
                                 </div>
@@ -1248,6 +1685,9 @@ const HomePage = () => {
                                                 value={editingError.category}
                                                 onChange={(val) => setEditingError({ ...editingError, category: val })}
                                                 categories={categories}
+                                                onAddCategory={handleAddCategory}
+                                                onUpdateCategory={handleUpdateCategory}
+                                                onDeleteCategory={handleDeleteCategory}
                                             />
                                         </div>
                                     </div>

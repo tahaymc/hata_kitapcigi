@@ -50,6 +50,8 @@ const CategoryModel = mongoose.model('Category', CategorySchema);
 
 // MongoDB Connection
 let isMongoConnected = false;
+/* 
+// Disabled temporarily to prevent crash on bad auth
 if (process.env.MONGODB_URI) {
     mongoose.connect(process.env.MONGODB_URI)
         .then(() => {
@@ -58,6 +60,7 @@ if (process.env.MONGODB_URI) {
         })
         .catch(err => console.error('MongoDB connection error:', err));
 }
+*/
 
 // Default Data (from mockData.js)
 const DEFAULT_DATA = {
@@ -218,11 +221,17 @@ const DEFAULT_DATA = {
 
 // Helper to read DB (File Mode)
 const readDb = () => {
-    if (!fs.existsSync(DB_FILE)) {
-        fs.writeFileSync(DB_FILE, JSON.stringify(DEFAULT_DATA, null, 2));
-        return DEFAULT_DATA;
+    try {
+        if (!fs.existsSync(DB_FILE)) {
+            fs.writeFileSync(DB_FILE, JSON.stringify(DEFAULT_DATA, null, 2));
+            return DEFAULT_DATA;
+        }
+        const fileContent = fs.readFileSync(DB_FILE, 'utf8');
+        return JSON.parse(fileContent);
+    } catch (error) {
+        console.error('Error reading DB:', error);
+        return DEFAULT_DATA; // Fallback to default data on error
     }
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
 };
 
 // Helper to write DB (File Mode)
@@ -234,19 +243,23 @@ const writeDb = (data) => {
 readDb();
 
 // Routes
-
-// GET All Errors
 app.get('/api/errors', async (req, res) => {
     if (isMongoConnected) {
         try {
             const errors = await ErrorModel.find().sort({ date: -1 });
             res.json(errors);
         } catch (e) {
+            console.error('Mongo Error:', e);
             res.status(500).json({ error: e.message });
         }
     } else {
-        const data = readDb();
-        res.json(data.errors);
+        try {
+            const data = readDb();
+            res.json(data.errors || []);
+        } catch (e) {
+            console.error('File Error:', e);
+            res.status(500).json({ error: 'Failed to read data' });
+        }
     }
 });
 
@@ -267,6 +280,92 @@ app.get('/api/categories', async (req, res) => {
     } else {
         const data = readDb();
         res.json(data.categories);
+    }
+});
+
+// POST New Category
+app.post('/api/categories', async (req, res) => {
+    const { name, color, icon } = req.body;
+    const id = req.body.id || name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const newCategory = { id, name, color, icon: icon || 'settings' }; // Default to settings if no icon
+
+    if (isMongoConnected) {
+        try {
+            const category = new CategoryModel(newCategory);
+            await category.save();
+            res.status(201).json(category);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        const data = readDb();
+        // Check if exists
+        if (data.categories.some(c => c.id === id)) {
+            return res.status(400).json({ error: 'Category already exists' });
+        }
+        data.categories.push(newCategory);
+        writeDb(data);
+        res.status(201).json(newCategory);
+    }
+});
+
+// PUT Update Category
+app.put('/api/categories/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, color, icon } = req.body;
+
+    if (isMongoConnected) {
+        try {
+            const updatedCategory = await CategoryModel.findOneAndUpdate({ id }, { name, color, icon }, { new: true });
+            if (updatedCategory) {
+                res.json(updatedCategory);
+            } else {
+                res.status(404).json({ error: 'Category not found' });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        const data = readDb();
+        const index = data.categories.findIndex(c => c.id === id);
+        if (index !== -1) {
+            data.categories[index] = { ...data.categories[index], name, color, icon };
+            writeDb(data);
+            res.json(data.categories[index]);
+        } else {
+            res.status(404).json({ error: 'Category not found' });
+        }
+    }
+});
+
+// DELETE Category
+app.delete('/api/categories/:id', async (req, res) => {
+    const { id } = req.params;
+
+    if (isMongoConnected) {
+        try {
+            const deleted = await CategoryModel.findOneAndDelete({ id });
+            if (deleted) {
+                res.json({ success: true });
+            } else {
+                res.status(404).json({ error: 'Category not found' });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        const data = readDb();
+        const initialLength = data.categories.length;
+        const filteredCategories = data.categories.filter(c => c.id !== id);
+
+        if (filteredCategories.length !== initialLength) {
+            data.categories = filteredCategories;
+            writeDb(data);
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Category not found' });
+        }
     }
 });
 
