@@ -50,8 +50,7 @@ const CategoryModel = mongoose.model('Category', CategorySchema);
 
 // MongoDB Connection
 let isMongoConnected = false;
-/* 
-// Disabled temporarily to prevent crash on bad auth
+
 if (process.env.MONGODB_URI) {
     mongoose.connect(process.env.MONGODB_URI)
         .then(() => {
@@ -60,7 +59,8 @@ if (process.env.MONGODB_URI) {
         })
         .catch(err => console.error('MongoDB connection error:', err));
 }
-*/
+
+
 
 // Default Data (from mockData.js)
 const DEFAULT_DATA = {
@@ -236,7 +236,11 @@ const readDb = () => {
 
 // Helper to write DB (File Mode)
 const writeDb = (data) => {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    } catch (e) {
+        console.warn('Write failed (likely read-only fs):', e.message);
+    }
 };
 
 // Initialize DB if needed (Local)
