@@ -187,7 +187,7 @@ app.post('/api/errors', async (req, res) => {
         ...req.body,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         viewCount: 0
     };
 

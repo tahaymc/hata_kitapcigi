@@ -18,7 +18,7 @@ const DEFAULT_ERRORS = [
 3. Kağıt rulosunun doğru takıldığını kontrol edin.
 4. Yazıcıyı kapatıp 10 saniye bekledikten sonra tekrar açın.
 5. Sorun devam ederse IT departmanına [Ticket Açın].`,
-        date: '2023-10-25',
+        date: '25.10.2023',
         viewCount: 124,
         imageUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60'
     },
@@ -32,7 +32,7 @@ const DEFAULT_ERRORS = [
 2. Görev Yöneticisi'ni açın.
 3. Kasa uygulamasını seçip "Görevi Sonlandır" deyin.
 4. Uygulamayı masaüstünden tekrar başlatın.`,
-        date: '2023-10-26',
+        date: '26.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -45,7 +45,7 @@ const DEFAULT_ERRORS = [
 2. Işık yanıp sönmeye başlayınca bırakın.
 3. Yazıcı birkaç boş etiket verip duracaktır.
 4. Tekrar deneme baskısı alın.`,
-        date: '2023-10-27',
+        date: '27.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -58,7 +58,7 @@ const DEFAULT_ERRORS = [
 2. Başka bir USB portuna takarak deneyin.
 3. Kabloda kırık veya ezilme var mı kontrol edin.
 4. Sorun devam ederse yedek okuyucu ile değiştirin.`,
-        date: '2023-10-28',
+        date: '28.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -70,7 +70,7 @@ const DEFAULT_ERRORS = [
         solution: `1. Şarj kızağının fişini kontrol edin.
 2. Terminalin ve kızağın metal temas noktalarını kuru bir bezle temizleyin.
 3. Bataryanın tam oturduğundan emin olun.`,
-        date: '2023-10-28',
+        date: '28.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -83,7 +83,7 @@ const DEFAULT_ERRORS = [
 2. Switch dolabındaki sigortaları kontrol edin.
 3. Kablolarda yerinden çıkan var mı bakın.
 4. Bilgi işlem departmanına acil durum bildirin.`,
-        date: '2023-10-29',
+        date: '29.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -95,7 +95,7 @@ const DEFAULT_ERRORS = [
         solution: `1. Yazıcının "Ready" konumunda olduğundan emin olun.
 2. El terminalinde Wi-Fi bağlantısını kontrol edin.
 3. Yazıcı kuyruğunda bekleyen işleri temizleyin.`,
-        date: '2023-10-29',
+        date: '29.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -108,7 +108,7 @@ const DEFAULT_ERRORS = [
 2. Sigorta panelinden klima şalterini kontrol edin.
 3. Dış ünitenin önünde engel var mı bakın.
 4. Teknik servis kaydı oluşturun.`,
-        date: '2023-10-30',
+        date: '30.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -120,7 +120,7 @@ const DEFAULT_ERRORS = [
         solution: `1. Çekmecenin anahtarla kilitli olup olmadığını kontrol edin.
 2. Yazıcı ile çekmece arasındaki kabloyu kontrol edin (genelde yazıcı tetikler).
 3. Çekmecenin altında bir nesne sıkışmış olabilir.`,
-        date: '2023-10-30',
+        date: '30.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -132,7 +132,7 @@ const DEFAULT_ERRORS = [
         solution: `1. Caps Lock tuşunun açık olup olmadığını kontrol edin.
 2. Şifrenizin süresi dolmuş olabilir, portal üzerinden sıfırlayın.
 3. VPN bağlantısı gerekiyorsa bağlı olduğunuzdan emin olun.`,
-        date: '2023-10-31',
+        date: '31.10.2023',
         imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -144,7 +144,7 @@ const DEFAULT_ERRORS = [
         solution: `1. El terminalinde bekleyen aktarım dosyası var mı kontrol edin.
 2. Sayım yapılan lokasyon kodunun doğruluğunu teyit edin.
 3. Wi-Fi çekim gücünün düşük olduğu "kör nokta"ları kontrol edin.`,
-        date: '2023-11-01',
+        date: '01.11.2023',
         imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -156,7 +156,7 @@ const DEFAULT_ERRORS = [
         solution: `1. Terazinin ayaklarının yere tam bastığını ve dengede olduğunu (su terazisi ile) kontrol edin.
 2. Terazi kefesinin altına bir şey sıkışıp sıkışmadığını kontrol edin.
 3. Cihazı kapatıp açın, açılırken kefe üzerinde yük olmamalıdır.`,
-        date: '2023-11-01',
+        date: '01.11.2023',
         imageUrl: 'https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60'
     },
     {
@@ -168,7 +168,7 @@ const DEFAULT_ERRORS = [
         solution: `1. Gün içinde bekleyen (askıda) fiş olup olmadığını kontrol edin.
 2. Mali hafıza doluluk oranını kontrol edin.
 3. Kasa ile ödeme kaydedici cihaz arasındaki bağlantıyı kontrol edin.`,
-        date: '2023-11-02',
+        date: '02.11.2023',
         imageUrl: 'https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60'
     }
 ];

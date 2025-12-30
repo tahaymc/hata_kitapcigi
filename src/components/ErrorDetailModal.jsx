@@ -20,6 +20,16 @@ const COLOR_STYLES = {
     slate: { text: 'text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' }
 };
 
+const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('.') && dateStr.split('.').length === 3) return dateStr;
+    if (dateStr.includes('-')) {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}.${month}.${year}`;
+    }
+    return dateStr;
+};
+
 const ErrorDetailModal = ({ error, onClose }) => {
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
@@ -50,17 +60,20 @@ const ErrorDetailModal = ({ error, onClose }) => {
             ></div>
 
             {/* Modal Container */}
-            <div className="relative w-full max-w-5xl max-h-[90vh] bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="relative w-full max-w-7xl max-h-[95vh] bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-slate-700/50 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-8 py-5 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
-                    <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-md ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider`}>
+                <div className="flex items-center justify-between px-8 py-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
+                    <div className="flex items-center gap-4">
+                        <span className={`px-4 py-1.5 rounded-xl ${colorStyle.bgLight} border-2 border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-extrabold text-lg tracking-wider shadow-sm`}>
                             {error.code || 'SYS-000'}
                         </span>
-                        <span className="text-slate-400 text-sm font-medium uppercase tracking-wide">
-                            {category?.name || 'Genel'}
-                        </span>
+                        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-200 text-sm shadow-sm`}>
+                            <div className={`${colorStyle.text}`}>
+                                {getCategoryIcon(error.category)}
+                            </div>
+                            <span className="uppercase tracking-wide">{category?.name || 'Genel'}</span>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
@@ -71,7 +84,7 @@ const ErrorDetailModal = ({ error, onClose }) => {
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="overflow-y-auto p-8 custom-scrollbar">
+                <div className="overflow-y-auto p-10 custom-scrollbar">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Content */}
                         <div className="lg:col-span-2 space-y-8">
@@ -150,7 +163,7 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Tarih</p>
-                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{error.date}</p>
+                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{formatDisplayDate(error.date)}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 flex-1">
