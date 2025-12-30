@@ -10,13 +10,29 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 
 // Supabase Connection
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-    console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are required in .env file.');
-    throw new Error('Missing Supabase credentials');
+// Supabase Connection
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+let supabase;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are missing in environment.');
+    // We do NOT throw here anymore to prevent "FUNCTION_INVOCATION_FAILED"
+    // Instead we let endpoints fail if they try to use it.
+} else {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase client initialized');
 }
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-console.log('Supabase client initialized');
+// Endpoint to debug environment variables (Safe: shows only presence)
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        hasUrl: !!process.env.SUPABASE_URL,
+        hasKey: !!process.env.SUPABASE_KEY,
+        nodeEnv: process.env.NODE_ENV
+    });
+});
 
 // --- ROUTES ---
 
