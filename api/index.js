@@ -45,8 +45,21 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// Helper to check DB connection
+const checkDb = (res) => {
+    if (!supabase) {
+        res.status(500).json({
+            error: 'Database connection failed',
+            details: 'Supabase credentials missing in environment variables.'
+        });
+        return false;
+    }
+    return true;
+};
+
 // GET All Errors
 app.get('/api/errors', async (req, res) => {
+    if (!checkDb(res)) return;
     try {
         const { data, error } = await supabase
             .from('errors')
@@ -63,6 +76,7 @@ app.get('/api/errors', async (req, res) => {
 
 // GET All Categories
 app.get('/api/categories', async (req, res) => {
+    if (!checkDb(res)) return;
     try {
         const { data, error } = await supabase
             .from('categories')
@@ -78,6 +92,7 @@ app.get('/api/categories', async (req, res) => {
 
 // POST New Category
 app.post('/api/categories', async (req, res) => {
+    if (!checkDb(res)) return;
     const { name, color, icon } = req.body;
     const id = req.body.id || name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -100,6 +115,7 @@ app.post('/api/categories', async (req, res) => {
 
 // PUT Update Category
 app.put('/api/categories/:id', async (req, res) => {
+    if (!checkDb(res)) return;
     const { id } = req.params;
     const { name, color, icon } = req.body;
 
@@ -125,6 +141,7 @@ app.put('/api/categories/:id', async (req, res) => {
 
 // DELETE Category
 app.delete('/api/categories/:id', async (req, res) => {
+    if (!checkDb(res)) return;
     const { id } = req.params;
 
     try {
@@ -143,6 +160,7 @@ app.delete('/api/categories/:id', async (req, res) => {
 
 // POST New Error
 app.post('/api/errors', async (req, res) => {
+    if (!checkDb(res)) return;
     // Process images
     let finalImageUrls = req.body.imageUrls || [];
     let finalImageUrl = req.body.imageUrl;
@@ -181,6 +199,7 @@ app.post('/api/errors', async (req, res) => {
 
 // PUT Update Error
 app.put('/api/errors/:id', async (req, res) => {
+    if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
     let finalImageUrls = req.body.imageUrls || [];
@@ -221,6 +240,7 @@ app.put('/api/errors/:id', async (req, res) => {
 
 // DELETE Error
 app.delete('/api/errors/:id', async (req, res) => {
+    if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
     try {
@@ -239,6 +259,7 @@ app.delete('/api/errors/:id', async (req, res) => {
 
 // Increment View Count
 app.post('/api/errors/:id/view', async (req, res) => {
+    if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
     try {
