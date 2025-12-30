@@ -186,7 +186,7 @@ app.post('/api/errors', async (req, res) => {
         ...req.body,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls,
-        date: new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format for PostgreSQL
         viewCount: 0
     };
 
