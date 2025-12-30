@@ -19,10 +19,11 @@ Sunucuda çalışacak uygulama için aşağıdaki dosya ve klasörleri sunucudak
 
 *   📂 `dist` (Az önce oluşturduğunuz klasör)
 *   📄 `server.js` (Arka uç sunucu dosyamız)
+*   📄 `defaultData.js` (Eğer veritabanı boşsa kullanılacak varsayılan veriler)
 *   📄 `package.json` (Bağımlılık listesi)
-*   📄 `db.json` (Veritabanı dosyası - *Eğer içinde veri varsa bunu da atın, yoksa sunucu kendisi oluşturur*)
+*   📄 `.env` (Supabase bağlantı bilgileri - **Sunucuda bu dosyayı oluşturup içine bilgileri yapıştırmalısınız!**)
 
-> **⚠️ Önemli:** `src`, `public`, `node_modules` gibi diğer klasörleri atmanıza gerek YOKTUR. Sadece yukarıdakiler yeterli.
+> **⚠️ Önemli:** `.env` dosyasını sunucuya kopyalayın veya sunucuda oluşturun. İçinde `SUPABASE_URL` ve `SUPABASE_KEY` olmalıdır.
 
 ## 3. Sunucuda Kurulum
 Sunucuda dosyaları attığınız klasöre girin (Terminal veya CMD ile) ve gerekli kütüphaneleri indirin:

@@ -41,7 +41,7 @@ The content is organized as follows:
 
 <directory_structure>
 .gitignore
-db.json
+api/index.js
 DEPLOYMENT_GUIDE.md
 eslint.config.js
 index.html
@@ -49,7 +49,7 @@ package.json
 postcss.config.js
 public/vite.svg
 README.md
-server.js
+seed.js
 src/App.jsx
 src/assets/react.svg
 src/components/ErrorDetailModal.jsx
@@ -59,168 +59,371 @@ src/main.jsx
 src/pages/ErrorDetailPage.jsx
 src/pages/HomePage.jsx
 tailwind.config.js
+vercel.json
 vite.config.js
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
 
-<file path="db.json">
-{
-  "errors": [
-    {
-      "id": 2,
-      "title": "Kasa Programı Kilitlendi",
-      "code": "KAS-204",
-      "category": "kasa",
-      "summary": "Satış ekranı dondu, işlem yapılamıyor.",
-      "solution": "1. CTRL+ALT+DEL tuşlarına basın.\n2. Görev Yöneticisi'ni açın.\n3. Kasa uygulamasını seçip \"Görevi Sonlandır\" deyin.\n4. Uygulamayı masaüstünden tekrar başlatın.",
-      "date": "2023-10-26",
-      "imageUrl": "https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&auto=format&fit=crop&q=60",
-      "viewCount": 2
-    },
-    {
-      "id": 3,
-      "title": "Etiket Yazıcı Kalibrasyonuuuuu",
-      "code": "REY-305",
-      "category": "sistem",
-      "summary": "Etiketler kaymış basılıyor, hizalama sorunu var.",
-      "solution": "1. Yazıcının üzerindeki 'Feed' tuşuna basılı tutun.\n2. Işık yanıp sönmeye başlayınca bırakın.\n3. Yazıcı birkaç boş etiket verip duracaktır.\n4. Tekrar deneme baskısı alın.",
-      "date": "2023-10-27",
-      "imageUrl": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60",
-      "viewCount": 2
-    },
-    {
-      "id": 4,
-      "title": "Barkod Okuyucu Okumuyor",
-      "code": "KAS-205",
-      "category": "kasa",
-      "summary": "Lazer ışığı yanıyor ancak barkodu sisteme aktarmıyor.",
-      "solution": "1. Okuyucunun kablosunu çıkarıp takın.\n2. Başka bir USB portuna takarak deneyin.\n3. Kabloda kırık veya ezilme var mı kontrol edin.\n4. Sorun devam ederse yedek okuyucu ile değiştirin.",
-      "date": "2023-10-28",
-      "imageUrl": "https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60",
-      "viewCount": 2
-    },
-    {
-      "id": 5,
-      "title": "El Terminali Şarj Almıyor",
-      "code": "DEP-301",
-      "category": "depo",
-      "summary": "Terminali kızağa koyunca şarj ışığı yanmıyor.",
-      "solution": "1. Şarj kızağının fişini kontrol edin.\n2. Terminalin ve kızağın metal temas noktalarını kuru bir bezle temizleyin.\n3. Bataryanın tam oturduğundan emin olun.",
-      "date": "2023-10-28",
-      "imageUrl": "https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 6,
-      "title": "İnternet Bağlantısı Yok",
-      "code": "SYS-102",
-      "category": "sistem",
-      "summary": "Tüm bilgisayarlarda ağ bağlantısı koptu.",
-      "solution": "1. Modemin ışıklarını kontrol edin (DSL/PON ışığı yanıyor mu?).\n2. Switch dolabındaki sigortaları kontrol edin.\n3. Kablolarda yerinden çıkan var mı bakın.\n4. Bilgi işlem departmanına acil durum bildirin.",
-      "date": "2023-10-29",
-      "imageUrl": "https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 7,
-      "title": "Raf Etiketi Basılmıyor",
-      "code": "REY-306",
-      "category": "reyon",
-      "summary": "El terminalinden gönderilen etiketler yazıcıdan çıkmıyor.",
-      "solution": "1. Yazıcının \"Ready\" konumunda olduğundan emin olun.\n2. El terminalinde Wi-Fi bağlantısını kontrol edin.\n3. Yazıcı kuyruğunda bekleyen işleri temizleyin.",
-      "date": "2023-10-29",
-      "imageUrl": "https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60",
-      "viewCount": 1
-    },
-    {
-      "id": 8,
-      "title": "Klima Arızası",
-      "code": "GEN-001",
-      "category": "diger",
-      "summary": "Mağaza içi klima sistemi soğutmuyor/ısıtmıyor.",
-      "solution": "1. Termostat ayarlarını kontrol edin.\n2. Sigorta panelinden klima şalterini kontrol edin.\n3. Dış ünitenin önünde engel var mı bakın.\n4. Teknik servis kaydı oluşturun.",
-      "date": "2023-10-30",
-      "imageUrl": "https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 9,
-      "title": "Yazar Kasa Çekmecesi Açılmıyor",
-      "code": "KAS-206",
-      "category": "kasa",
-      "summary": "Satış sonrası veya manuel tetiklemeyle çekmece açılmıyor.",
-      "solution": "1. Çekmecenin anahtarla kilitli olup olmadığını kontrol edin.\n2. Yazıcı ile çekmece arasındaki kabloyu kontrol edin (genelde yazıcı tetikler).\n3. Çekmecenin altında bir nesne sıkışmış olabilir.",
-      "date": "2023-10-30",
-      "imageUrl": "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 10,
-      "title": "ERP Giriş Hatası",
-      "code": "SYS-103",
-      "category": "sistem",
-      "summary": "\"Kullanıcı adı veya şifre hatalı\" veya sunucuya erişilemiyor.",
-      "solution": "1. Caps Lock tuşunun açık olup olmadığını kontrol edin.\n2. Şifrenizin süresi dolmuş olabilir, portal üzerinden sıfırlayın.\n3. VPN bağlantısı gerekiyorsa bağlı olduğunuzdan emin olun.",
-      "date": "2023-10-31",
-      "imageUrl": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 11,
-      "title": "Stok Sayım Hatası",
-      "code": "DEP-302",
-      "category": "depo",
-      "summary": "Sayılan ürünler sisteme eksik aktarılıyor.",
-      "solution": "1. El terminalinde bekleyen aktarım dosyası var mı kontrol edin.\n2. Sayım yapılan lokasyon kodunun doğruluğunu teyit edin.\n3. Wi-Fi çekim gücünün düşük olduğu \"kör nokta\"ları kontrol edin.",
-      "date": "2023-11-01",
-      "imageUrl": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 12,
-      "title": "Terazi Kalibrasyonu",
-      "code": "REY-307",
-      "category": "reyon",
-      "summary": "Terazi tartım sonuçları hatalı çıkıyor.",
-      "solution": "1. Terazinin ayaklarının yere tam bastığını ve dengede olduğunu (su terazisi ile) kontrol edin.\n2. Terazi kefesinin altına bir şey sıkışıp sıkışmadığını kontrol edin.\n3. Cihazı kapatıp açın, açılırken kefe üzerinde yük olmamalıdır.",
-      "date": "2023-11-01",
-      "imageUrl": "https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60"
-    },
-    {
-      "id": 13,
-      "title": "Z Raporu Alınamıyor",
-      "code": "KAS-207",
-      "category": "kasa",
-      "summary": "Gün sonu işlemi hata veriyor, rapor çıkmıyor.",
-      "solution": "1. Gün içinde bekleyen (askıda) fiş olup olmadığını kontrol edin.\n2. Mali hafıza doluluk oranını kontrol edin.\n3. Kasa ile ödeme kaydedici cihaz arasındaki bağlantıyı kontrol edin.",
-      "date": "2023-11-02",
-      "imageUrl": "https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60"
-    }
-  ],
-  "categories": [
-    {
-      "id": "kasa",
-      "name": "Kasa",
-      "color": "blue"
-    },
-    {
-      "id": "reyon",
-      "name": "Reyon",
-      "color": "emerald"
-    },
-    {
-      "id": "depo",
-      "name": "Depo",
-      "color": "orange"
-    },
-    {
-      "id": "sistem",
-      "name": "Sistem",
-      "color": "purple"
-    },
-    {
-      "id": "diger",
-      "name": "Diğer",
-      "color": "slate"
-    }
-  ]
+<file path="api/index.js">
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
+
+const app = express();
+
+app.use(cors());
+app.use(bodyParser.json({ limit: '50mb' }));
+
+// Supabase Connection
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+    console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are required in .env file.');
+    throw new Error('Missing Supabase credentials');
 }
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+console.log('Supabase client initialized');
+
+// --- ROUTES ---
+
+// Status Endpoint
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'Supabase-Only Backend (Serverless)',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// GET All Errors
+app.get('/api/errors', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('errors')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (GET /errors):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// GET All Categories
+app.get('/api/categories', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('categories')
+            .select('*');
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (GET /categories):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST New Category
+app.post('/api/categories', async (req, res) => {
+    const { name, color, icon } = req.body;
+    const id = req.body.id || name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const newCategory = { id, name, color, icon: icon || 'settings' };
+
+    try {
+        const { data, error } = await supabase
+            .from('categories')
+            .insert([newCategory])
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST /categories):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// PUT Update Category
+app.put('/api/categories/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, color, icon } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('categories')
+            .update({ name, color, icon })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        if (data) {
+            res.json(data);
+        } else {
+            res.status(404).json({ error: 'Category not found' });
+        }
+    } catch (e) {
+        console.error('Supabase Error (PUT /categories):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE Category
+app.delete('/api/categories/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { error } = await supabase
+            .from('categories')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /categories):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST New Error
+app.post('/api/errors', async (req, res) => {
+    // Process images
+    let finalImageUrls = req.body.imageUrls || [];
+    let finalImageUrl = req.body.imageUrl;
+
+    if (!finalImageUrl && finalImageUrls.length > 0) {
+        finalImageUrl = finalImageUrls[0];
+    }
+    if (finalImageUrl && (!finalImageUrls || finalImageUrls.length === 0)) {
+        finalImageUrls = [finalImageUrl];
+    }
+
+    const payload = {
+        ...req.body,
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls,
+        date: new Date().toISOString().split('T')[0],
+        viewCount: 0
+    };
+
+    delete payload.id;
+
+    try {
+        const { data, error } = await supabase
+            .from('errors')
+            .insert([payload])
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST /errors):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// PUT Update Error
+app.put('/api/errors/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+
+    let finalImageUrls = req.body.imageUrls || [];
+    let finalImageUrl = req.body.imageUrl;
+
+    if (!finalImageUrl && finalImageUrls.length > 0) {
+        finalImageUrl = finalImageUrls[0];
+    }
+    if (finalImageUrl && (!finalImageUrls || finalImageUrls.length === 0)) {
+        finalImageUrls = [finalImageUrl];
+    }
+
+    const payload = {
+        ...req.body,
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls
+    };
+
+    try {
+        const { data, error } = await supabase
+            .from('errors')
+            .update(payload)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        if (data) {
+            res.json(data);
+        } else {
+            res.status(404).json({ error: 'Error not found' });
+        }
+    } catch (e) {
+        console.error('Supabase Error (PUT /errors):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE Error
+app.delete('/api/errors/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+
+    try {
+        const { error } = await supabase
+            .from('errors')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /errors):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Increment View Count
+app.post('/api/errors/:id/view', async (req, res) => {
+    const id = parseInt(req.params.id);
+
+    try {
+        const { data: current, error: fetchError } = await supabase
+            .from('errors')
+            .select('viewCount')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newCount = (current.viewCount || 0) + 1;
+
+        const { data, error } = await supabase
+            .from('errors')
+            .update({ viewCount: newCount })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST view):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+const PORT = 3001;
+
+// Conditional Listen for Local Development
+if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running on http://0.0.0.0:${PORT}`);
+    });
+}
+
+// Export app for Vercel Serverless
+export default app;
+</file>
+
+<file path="seed.js">
+import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
+import { DEFAULT_DATA } from './defaultData.js';
+
+const seed = async () => {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('❌ HATA: .env dosyasında SUPABASE_URL veya SUPABASE_KEY eksik.');
+        return;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('🔌 Supabase bağlantısı kuruldu...');
+
+    // 1. Kategorileri Ekle
+    console.log('📦 Kategoriler kontrol ediliyor...');
+    const { count: catCount, error: catErr } = await supabase.from('categories').select('*', { count: 'exact', head: true });
+
+    if (catErr) {
+        console.error('❌ Kategori okuma hatası (Muhtemelen RLS izinleri kapalı):', catErr.message);
+    } else if (catCount === 0) {
+        console.log('📥 Kategoriler ekleniyor...');
+        const { error: insertErr } = await supabase.from('categories').insert(DEFAULT_DATA.categories);
+        if (insertErr) {
+            console.error('❌ Kategori ekleme hatası:', insertErr.message);
+        } else {
+            console.log('✅ Kategoriler başarıyla eklendi.');
+        }
+    } else {
+        console.log(`ℹ️ Zaten ${catCount} adet kategori var. Ekleme yapılmadı.`);
+    }
+
+    // 2. Hataları Ekle
+    console.log('📦 Hatalar kontrol ediliyor...');
+    const { count: errCount, error: errErr } = await supabase.from('errors').select('*', { count: 'exact', head: true });
+
+    if (errErr) {
+        console.error('❌ Hata okuma hatası:', errErr.message);
+    } else if (errCount === 0) {
+        console.log('📥 Hatalar ekleniyor...');
+
+        // ID'leri kaldırarak eklemeyi dene (Otomatik ID için)
+        // const errors = DEFAULT_DATA.errors.map(({ id, ...rest }) => rest);
+
+        // Sistemdeki ID'leri korumak için direkt ekliyoruz:
+        const { error: insertErr } = await supabase.from('errors').insert(DEFAULT_DATA.errors);
+
+        if (insertErr) {
+            console.error('❌ Hata ekleme hatası:', insertErr.message);
+            console.log('💡 İPUCU: Supabase panelinde tablonuzda "Enable Row Level Security (RLS)" açık olabilir. Veri eklemek için Policy eklemeli veya RLS yi kapatmalısınız.');
+        } else {
+            console.log('✅ Hatalar başarıyla eklendi.');
+        }
+    } else {
+        console.log(`ℹ️ Zaten ${errCount} adet kayıtlı hata var. Ekleme yapılmadı.`);
+    }
+};
+
+seed();
+</file>
+
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.vercel
 </file>
 
 <file path="DEPLOYMENT_GUIDE.md">
@@ -245,10 +448,11 @@ Sunucuda çalışacak uygulama için aşağıdaki dosya ve klasörleri sunucudak
 
 *   📂 `dist` (Az önce oluşturduğunuz klasör)
 *   📄 `server.js` (Arka uç sunucu dosyamız)
+*   📄 `defaultData.js` (Eğer veritabanı boşsa kullanılacak varsayılan veriler)
 *   📄 `package.json` (Bağımlılık listesi)
-*   📄 `db.json` (Veritabanı dosyası - *Eğer içinde veri varsa bunu da atın, yoksa sunucu kendisi oluşturur*)
+*   📄 `.env` (Supabase bağlantı bilgileri - **Sunucuda bu dosyayı oluşturup içine bilgileri yapıştırmalısınız!**)
 
-> **⚠️ Önemli:** `src`, `public`, `node_modules` gibi diğer klasörleri atmanıza gerek YOKTUR. Sadece yukarıdakiler yeterli.
+> **⚠️ Önemli:** `.env` dosyasını sunucuya kopyalayın veya sunucuda oluşturun. İçinde `SUPABASE_URL` ve `SUPABASE_KEY` olmalıdır.
 
 ## 3. Sunucuda Kurulum
 Sunucuda dosyaları attığınız klasöre girin (Terminal veya CMD ile) ve gerekli kütüphaneleri indirin:
@@ -280,298 +484,6 @@ pm2 save
 pm2 startup
 ```
 Böylece sunucu yeniden başlasa bile uygulama otomatik çalışır.
-</file>
-
-<file path="server.js">
-import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-const PORT = 3001;
-const DB_FILE = path.join(__dirname, 'db.json');
-
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-
-// Serve Static Frontend (Production)
-app.use(express.static(path.join(__dirname, 'dist')));
-
-
-// Default Data (from mockData.js)
-const DEFAULT_DATA = {
-    errors: [
-        {
-            id: 1,
-            title: 'Fiş Yazıcı Bağlantı Hatası',
-            code: 'SYS-101',
-            category: 'sistem',
-            summary: 'Yazıcıdan çıktı alınamıyor, kırmızı ışık yanıp sönüyor.',
-            solution: "1. Yazıcının güç kablosunu kontrol edin.\n2. USB bağlantısının tam oturduğundan emin olun.\n3. Kağıt rulosunun doğru takıldığını kontrol edin.\n4. Yazıcıyı kapatıp 10 saniye bekledikten sonra tekrar açın.\n5. Sorun devam ederse IT departmanına [Ticket Açın].",
-            date: '2023-10-25',
-            viewCount: 124,
-            imageUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 2,
-            title: 'Kasa Programı Kilitlendi',
-            code: 'KAS-204',
-            category: 'kasa',
-            summary: 'Satış ekranı dondu, işlem yapılamıyor.',
-            solution: "1. CTRL+ALT+DEL tuşlarına basın.\n2. Görev Yöneticisi'ni açın.\n3. Kasa uygulamasını seçip \"Görevi Sonlandır\" deyin.\n4. Uygulamayı masaüstünden tekrar başlatın.",
-            date: '2023-10-26',
-            imageUrl: 'https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 3,
-            title: 'Etiket Yazıcı Kalibrasyonu',
-            code: 'REY-305',
-            category: 'reyon',
-            summary: 'Etiketler kaymış basılıyor, hizalama sorunu var.',
-            solution: "1. Yazıcının üzerindeki 'Feed' tuşuna basılı tutun.\n2. Işık yanıp sönmeye başlayınca bırakın.\n3. Yazıcı birkaç boş etiket verip duracaktır.\n4. Tekrar deneme baskısı alın.",
-            date: '2023-10-27',
-            imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 4,
-            title: 'Barkod Okuyucu Okumuyor',
-            code: 'KAS-205',
-            category: 'kasa',
-            summary: 'Lazer ışığı yanıyor ancak barkodu sisteme aktarmıyor.',
-            solution: "1. Okuyucunun kablosunu çıkarıp takın.\n2. Başka bir USB portuna takarak deneyin.\n3. Kabloda kırık veya ezilme var mı kontrol edin.\n4. Sorun devam ederse yedek okuyucu ile değiştirin.",
-            date: '2023-10-28',
-            imageUrl: 'https://images.unsplash.com/photo-1591485112902-5b328ac585ee?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 5,
-            title: 'El Terminali Şarj Almıyor',
-            code: 'DEP-301',
-            category: 'depo',
-            summary: 'Terminali kızağa koyunca şarj ışığı yanmıyor.',
-            solution: "1. Şarj kızağının fişini kontrol edin.\n2. Terminalin ve kızağın metal temas noktalarını kuru bir bezle temizleyin.\n3. Bataryanın tam oturduğundan emin olun.",
-            date: '2023-10-28',
-            imageUrl: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 6,
-            title: 'İnternet Bağlantısı Yok',
-            code: 'SYS-102',
-            category: 'sistem',
-            summary: 'Tüm bilgisayarlarda ağ bağlantısı koptu.',
-            solution: "1. Modemin ışıklarını kontrol edin (DSL/PON ışığı yanıyor mu?).\n2. Switch dolabındaki sigortaları kontrol edin.\n3. Kablolarda yerinden çıkan var mı bakın.\n4. Bilgi işlem departmanına acil durum bildirin.",
-            date: '2023-10-29',
-            imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bbcbf?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 7,
-            title: 'Raf Etiketi Basılmıyor',
-            code: 'REY-306',
-            category: 'reyon',
-            summary: 'El terminalinden gönderilen etiketler yazıcıdan çıkmıyor.',
-            solution: "1. Yazıcının \"Ready\" konumunda olduğundan emin olun.\n2. El terminalinde Wi-Fi bağlantısını kontrol edin.\n3. Yazıcı kuyruğunda bekleyen işleri temizleyin.",
-            date: '2023-10-29',
-            imageUrl: 'https://images.unsplash.com/photo-1588611910609-847253d71973?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 8,
-            title: 'Klima Arızası',
-            code: 'GEN-001',
-            category: 'diger',
-            summary: 'Mağaza içi klima sistemi soğutmuyor/ısıtmıyor.',
-            solution: "1. Termostat ayarlarını kontrol edin.\n2. Sigorta panelinden klima şalterini kontrol edin.\n3. Dış ünitenin önünde engel var mı bakın.\n4. Teknik servis kaydı oluşturun.",
-            date: '2023-10-30',
-            imageUrl: 'https://images.unsplash.com/photo-1574966739987-65e38db0f7ce?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 9,
-            title: 'Yazar Kasa Çekmecesi Açılmıyor',
-            code: 'KAS-206',
-            category: 'kasa',
-            summary: 'Satış sonrası veya manuel tetiklemeyle çekmece açılmıyor.',
-            solution: "1. Çekmecenin anahtarla kilitli olup olmadığını kontrol edin.\n2. Yazıcı ile çekmece arasındaki kabloyu kontrol edin (genelde yazıcı tetikler).\n3. Çekmecenin altında bir nesne sıkışmış olabilir.",
-            date: '2023-10-30',
-            imageUrl: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 10,
-            title: 'ERP Giriş Hatası',
-            code: 'SYS-103',
-            category: 'sistem',
-            summary: '"Kullanıcı adı veya şifre hatalı" veya sunucuya erişilemiyor.',
-            solution: "1. Caps Lock tuşunun açık olup olmadığını kontrol edin.\n2. Şifrenizin süresi dolmuş olabilir, portal üzerinden sıfırlayın.\n3. VPN bağlantısı gerekiyorsa bağlı olduğunuzdan emin olun.",
-            date: '2023-10-31',
-            imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 11,
-            title: 'Stok Sayım Hatası',
-            code: 'DEP-302',
-            category: 'depo',
-            summary: 'Sayılan ürünler sisteme eksik aktarılıyor.',
-            solution: "1. El terminalinde bekleyen aktarım dosyası var mı kontrol edin.\n2. Sayım yapılan lokasyon kodunun doğruluğunu teyit edin.\n3. Wi-Fi çekim gücünün düşük olduğu \"kör nokta\"ları kontrol edin.",
-            date: '2023-11-01',
-            imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 12,
-            title: 'Terazi Kalibrasyonu',
-            code: 'REY-307',
-            category: 'reyon',
-            summary: 'Terazi tartım sonuçları hatalı çıkıyor.',
-            solution: "1. Terazinin ayaklarının yere tam bastığını ve dengede olduğunu (su terazisi ile) kontrol edin.\n2. Terazi kefesinin altına bir şey sıkışıp sıkışmadığını kontrol edin.\n3. Cihazı kapatıp açın, açılırken kefe üzerinde yük olmamalıdır.",
-            date: '2023-11-01',
-            imageUrl: 'https://images.unsplash.com/photo-1579705295015-688849b380db?w=800&auto=format&fit=crop&q=60'
-        },
-        {
-            id: 13,
-            title: 'Z Raporu Alınamıyor',
-            code: 'KAS-207',
-            category: 'kasa',
-            summary: 'Gün sonu işlemi hata veriyor, rapor çıkmıyor.',
-            solution: "1. Gün içinde bekleyen (askıda) fiş olup olmadığını kontrol edin.\n2. Mali hafıza doluluk oranını kontrol edin.\n3. Kasa ile ödeme kaydedici cihaz arasındaki bağlantıyı kontrol edin.",
-            date: '2023-11-02',
-            imageUrl: 'https://plus.unsplash.com/premium_photo-1661331911417-3475ca332c69?w=800&auto=format&fit=crop&q=60'
-        }
-    ],
-    categories: [
-        { id: 'kasa', name: 'Kasa', color: 'blue' },
-        { id: 'reyon', name: 'Reyon', color: 'emerald' },
-        { id: 'depo', name: 'Depo', color: 'orange' },
-        { id: 'sistem', name: 'Sistem', color: 'purple' },
-        { id: 'diger', name: 'Diğer', color: 'slate' },
-    ]
-};
-
-// Helper to read DB
-const readDb = () => {
-    if (!fs.existsSync(DB_FILE)) {
-        fs.writeFileSync(DB_FILE, JSON.stringify(DEFAULT_DATA, null, 2));
-        return DEFAULT_DATA;
-    }
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-};
-
-// Helper to write DB
-const writeDb = (data) => {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-};
-
-// Initialize DB if needed
-readDb();
-
-// Routes
-// GET All Errors
-app.get('/api/errors', (req, res) => {
-    const data = readDb();
-    res.json(data.errors);
-});
-
-// GET All Categories
-app.get('/api/categories', (req, res) => {
-    const data = readDb();
-    res.json(data.categories);
-});
-
-// POST New Error
-app.post('/api/errors', (req, res) => {
-    const data = readDb();
-    const newError = {
-        ...req.body,
-        id: data.errors.length > 0 ? Math.max(...data.errors.map(e => e.id)) + 1 : 1,
-        viewCount: 0,
-        date: new Date().toISOString().split('T')[0]
-    };
-    data.errors.unshift(newError);
-    writeDb(data);
-    res.status(201).json(newError);
-});
-
-// PUT Update Error
-app.put('/api/errors/:id', (req, res) => {
-    const data = readDb();
-    const id = parseInt(req.params.id);
-    const index = data.errors.findIndex(e => e.id === id);
-
-    if (index !== -1) {
-        data.errors[index] = { ...data.errors[index], ...req.body };
-        writeDb(data);
-        res.json(data.errors[index]);
-    } else {
-        res.status(404).json({ error: 'Error not found' });
-    }
-});
-
-// DELETE Error
-app.delete('/api/errors/:id', (req, res) => {
-    const data = readDb();
-    const id = parseInt(req.params.id);
-    const filteredErrors = data.errors.filter(e => e.id !== id);
-
-    if (data.errors.length !== filteredErrors.length) {
-        data.errors = filteredErrors;
-        writeDb(data);
-        res.json({ success: true });
-    } else {
-        res.status(404).json({ error: 'Error not found' });
-    }
-});
-
-// Incremenet View Count (Special Endpoint)
-app.post('/api/errors/:id/view', (req, res) => {
-    const data = readDb();
-    const id = parseInt(req.params.id);
-    const index = data.errors.findIndex(e => e.id === id);
-
-    if (index !== -1) {
-        data.errors[index].viewCount = (data.errors[index].viewCount || 0) + 1;
-        writeDb(data);
-        res.json(data.errors[index]);
-    } else {
-        res.status(404).json({ error: 'Error not found' });
-    }
-});
-
-// Serve index.html for any other requests (SPA support)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-});
-</file>
-
-<file path=".gitignore">
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 </file>
 
 <file path="eslint.config.js">
@@ -622,47 +534,6 @@ export default defineConfig([
 </html>
 </file>
 
-<file path="package.json">
-{
-  "name": "hata_kitapcigi",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "start": "node server.js",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "body-parser": "^2.2.1",
-    "clsx": "^2.1.0",
-    "cors": "^2.8.5",
-    "express": "^5.2.1",
-    "framer-motion": "^11.0.8",
-    "lucide-react": "^0.344.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.3",
-    "tailwind-merge": "^2.2.1"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.64",
-    "@types/react-dom": "^18.2.21",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.18",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
-    "vite": "^5.1.6"
-  }
-}
-</file>
-
 <file path="postcss.config.js">
 export default {
     plugins: {
@@ -695,32 +566,28 @@ The React Compiler is not enabled on this template because of its impact on dev 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 </file>
 
-<file path="src/App.jsx">
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-      </Routes>
-    </Router>
-  );
-}
-
-export default App;
-</file>
-
 <file path="src/assets/react.svg">
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
 </file>
 
-<file path="src/components/ErrorDetailModal.jsx">
-import React from 'react';
-import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn } from 'lucide-react';
-import { CATEGORIES } from '../data/mockData';
+<file path="src/main.jsx">
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+</file>
+
+<file path="src/pages/ErrorDetailPage.jsx">
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Calendar, Monitor, ShoppingCart, Archive, Settings, AlertTriangle, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { getErrorById, CATEGORIES } from '../data/mockData';
 
 const getCategoryIcon = (categoryId) => {
     switch (categoryId) {
@@ -733,188 +600,170 @@ const getCategoryIcon = (categoryId) => {
 };
 
 const COLOR_STYLES = {
-    blue: { text: 'text-blue-400', bgLight: 'bg-blue-500/10', border: 'border-blue-500', ring: 'ring-blue-500' },
-    emerald: { text: 'text-emerald-400', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500', ring: 'ring-emerald-500' },
-    orange: { text: 'text-orange-400', bgLight: 'bg-orange-500/10', border: 'border-orange-500', ring: 'ring-orange-500' },
-    purple: { text: 'text-purple-400', bgLight: 'bg-purple-500/10', border: 'border-purple-500', ring: 'ring-purple-500' },
-    slate: { text: 'text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' }
+    blue: { text: 'text-blue-400', bg: 'bg-blue-500', bgLight: 'bg-blue-500/10', border: 'border-blue-500' },
+    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500' },
+    orange: { text: 'text-orange-400', bg: 'bg-orange-500', bgLight: 'bg-orange-500/10', border: 'border-orange-500' },
+    purple: { text: 'text-purple-400', bg: 'bg-purple-500', bgLight: 'bg-purple-500/10', border: 'border-purple-500' },
+    slate: { text: 'text-slate-400', bg: 'bg-slate-500', bgLight: 'bg-slate-500/10', border: 'border-slate-500' }
 };
 
-const ErrorDetailModal = ({ error, onClose }) => {
-    const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
+const ErrorDetailPage = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Prevent body scroll when modal is open
-    React.useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, []);
+    useEffect(() => {
+        getErrorById(id).then(data => {
+            setError(data);
+            setLoading(false);
+        });
+    }, [id]);
 
-    if (!error) return null;
+    if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Yükleniyor...</div>;
+    if (!error) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Hata bulunamadı.</div>;
 
     const category = CATEGORIES.find(c => c.id === error.category);
     const colorStyle = COLOR_STYLES[category?.color || 'slate'];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-                onClick={onClose}
-            ></div>
-
-            {/* Modal Container */}
-            <div className="relative w-full max-w-5xl max-h-[90vh] bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-8 py-5 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
-                    <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-md ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider`}>
-                            {error.code || 'SYS-000'}
-                        </span>
-                        <span className="text-slate-400 text-sm font-medium uppercase tracking-wide">
-                            {category?.name || 'Genel'}
-                        </span>
-                    </div>
+        <div className="min-h-screen bg-[#0f172a] font-sans text-slate-100 flex flex-col">
+            {/* Header */}
+            <header className="bg-[#1e293b] border-b border-slate-700/50 sticky top-0 z-10">
+                <div className="max-w-[1200px] mx-auto px-6 py-4 flex items-center gap-4">
                     <button
-                        onClick={onClose}
-                        className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        onClick={() => navigate('/')}
+                        className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
                     >
-                        <X className="w-6 h-6" />
+                        <ArrowLeft className="w-6 h-6" />
                     </button>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                            <span className={`px-3 py-1 rounded-md ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider`}>
+                                {error.code || 'SYS-000'}
+                            </span>
+                            <span className="text-slate-400 text-sm font-medium uppercase tracking-wide">
+                                {category?.name || 'Genel'}
+                            </span>
+                        </div>
+                    </div>
                 </div>
+            </header>
 
-                {/* Scrollable Content */}
-                <div className="overflow-y-auto p-8 custom-scrollbar">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Left Content */}
-                        <div className="lg:col-span-2 space-y-8">
-                            <div>
-                                <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 leading-tight">
-                                    {error.title}
-                                </h2>
-                                <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-                                    {error.summary}
-                                </p>
+            <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    {/* Left Content: Details */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div>
+                            <h1 className="text-4xl font-extrabold text-white mb-4 leading-tight">
+                                {error.title}
+                            </h1>
+                            <p className="text-lg text-slate-400 leading-relaxed">
+                                {error.summary}
+                            </p>
+                        </div>
+
+                        {/* Solution Steps */}
+                        <div className="bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-xl">
+                            <div className="px-8 py-6 border-b border-slate-700/50 bg-[#253248] flex items-center gap-3">
+                                <CheckCircle className={`w-6 h-6 ${colorStyle.text}`} />
+                                <h2 className="text-xl font-bold text-white">Çözüm Adımları</h2>
                             </div>
-
-                            {/* Solution Steps */}
-                            <div className="bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden shadow-lg">
-                                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 bg-slate-100 dark:bg-[#253248] flex items-center gap-3">
-                                    <CheckCircle className={`w-5 h-5 ${colorStyle.text}`} />
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Çözüm Adımları</h3>
-                                </div>
-                                <div className="p-6">
+                            <div className="p-8">
+                                <div className="prose prose-invert max-w-none">
                                     <ul className="space-y-4">
                                         {error.solution.split('\n').map((step, index) => (
-                                            <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
-                                                <span className={`flex-shrink-0 w-7 h-7 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-xs ring-1 ${colorStyle.ring}/30`}>
+                                            <li key={index} className="flex gap-4 items-start text-slate-300">
+                                                <span className={`flex-shrink-0 w-8 h-8 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-sm`}>
                                                     {index + 1}
                                                 </span>
-                                                <span className="mt-0.5 leading-relaxed text-sm md:text-base">{step.replace(/^\d+\.\s*/, '')}</span>
+                                                <span className="mt-1 leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Info Card */}
-                            <div className="flex flex-col sm:flex-row gap-4 p-5 bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50">
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className="w-10 h-10 bg-white dark:bg-[#0f172a] rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 dark:border-none shadow-sm dark:shadow-none">
-                                        <Calendar className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Tarih</p>
-                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{error.date}</p>
-                                    </div>
+                        {/* Info Card */}
+                        <div className="flex items-center justify-between p-6 bg-[#1e293b] rounded-2xl border border-slate-700/50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center text-slate-400">
+                                    <Calendar className="w-6 h-6" />
                                 </div>
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className="w-10 h-10 bg-white dark:bg-[#0f172a] rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 dark:border-none shadow-sm dark:shadow-none">
-                                        {getCategoryIcon(error.category)}
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Kategori</p>
-                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{category?.name}</p>
-                                    </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Son Güncelleme</p>
+                                    <p className="text-white font-medium">{error.date}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center text-slate-400">
+                                    {getCategoryIcon(error.category)}
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Kategori</p>
+                                    <p className="text-white font-medium">{category?.name}</p>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-
-
-                        {/* Right Content: Image */}
-                        <div className="lg:col-span-1">
-                            <div className="sticky top-0 space-y-4">
-                                <div
-                                    className="bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden shadow-xl group cursor-pointer"
-                                    onClick={() => error.imageUrl && setIsImageEnlarged(true)}
-                                >
-                                    <div className="aspect-[3/4] w-full bg-slate-200 dark:bg-[#0f172a] relative overflow-hidden">
-                                        {error.imageUrl ? (
-                                            <>
-                                                <img
-                                                    src={error.imageUrl}
-                                                    alt={error.title}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                                />
-                                                {/* Hover Overlay with Magnifying Glass */}
-                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20 group-hover:bg-black/40 backdrop-blur-[0px] group-hover:backdrop-blur-[2px]">
-                                                    <div className="bg-white/10 p-4 rounded-full backdrop-blur-md border border-white/20 text-white shadow-xl transform scale-50 opacity-0 translate-y-4 group-hover:scale-100 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 delay-75">
-                                                        <ZoomIn className="w-8 h-8" />
-                                                    </div>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
-                                                <ImageIcon className="w-12 h-12 mb-3 opacity-50" />
-                                                <span className="text-xs font-medium">Görsel Yok</span>
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-60 pointer-events-none"></div>
-                                    </div>
-                                    <div className="p-4 bg-slate-50 dark:bg-[#1e293b]">
-                                        <div className="flex items-center gap-2 mb-2 text-amber-500 dark:text-amber-400">
-                                            <AlertTriangle className="w-4 h-4" />
-                                            <span className="font-bold text-xs uppercase tracking-wide">Hata Görseli</span>
+                    {/* Right Content: Image */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-32 space-y-6">
+                            <div className="bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-2xl group">
+                                <div className="aspect-[4/5] w-full bg-[#0f172a] relative overflow-hidden">
+                                    {error.imageUrl ? (
+                                        <img
+                                            src={error.imageUrl}
+                                            alt={error.title}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
+                                            <ImageIcon className="w-16 h-16 mb-4 opacity-50" />
+                                            <span className="text-sm font-medium">Görsel Mevcut Değil</span>
                                         </div>
-                                        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
-                                            Hatanın sistemdeki veya ekrandaki temsili görüntüsüdür.
-                                        </p>
+                                    )}
+
+                                    {/* Overlay Gradient */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-60"></div>
+                                </div>
+                                <div className="p-6">
+                                    <div className="flex items-center gap-3 mb-4 text-amber-400">
+                                        <AlertTriangle className="w-5 h-5" />
+                                        <span className="font-bold text-sm uppercase tracking-wide">Hata Görseli</span>
                                     </div>
+                                    <p className="text-slate-400 text-sm leading-relaxed">
+                                        Bu görsel, hatanın ekranda veya cihazda nasıl göründüğünü temsil eder. Karşılaştığınız durum ile eşleşip eşleşmediğini kontrol edin.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Full Screen Image Overlay */}
-            {isImageEnlarged && (
-                <div
-                    className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
-                    onClick={() => setIsImageEnlarged(false)}
-                >
-                    <button
-                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-                        onClick={() => setIsImageEnlarged(false)}
-                    >
-                        <X className="w-8 h-8" />
-                    </button>
-                    <img
-                        src={error.imageUrl}
-                        alt={error.title}
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
+            </main>
         </div>
     );
 };
 
-export default ErrorDetailModal;
+export default ErrorDetailPage;
+</file>
+
+<file path="vercel.json">
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index.js"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
 </file>
 
 <file path="src/data/mockData.js">
@@ -1211,24 +1060,116 @@ export const incrementViewCount = async (id) => {
 }
 </file>
 
-<file path="src/main.jsx">
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+        }
+      }
+    },
+  },
+  plugins: [],
+}
 </file>
 
-<file path="src/pages/ErrorDetailPage.jsx">
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Monitor, ShoppingCart, Archive, Settings, AlertTriangle, CheckCircle, Image as ImageIcon } from 'lucide-react';
-import { getErrorById, CATEGORIES } from '../data/mockData';
+<file path="vite.config.js">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true, // Listen on all addresses
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+})
+</file>
+
+<file path="package.json">
+{
+  "name": "hata_kitapcigi",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "node api/index.js",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "body-parser": "^2.2.1",
+    "clsx": "^2.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "framer-motion": "^11.0.8",
+    "lucide-react": "^0.344.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.6"
+  }
+}
+</file>
+
+<file path="src/App.jsx">
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+
+function App() {
+  return (
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+</file>
+
+<file path="src/components/ErrorDetailModal.jsx">
+import React from 'react';
+import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CATEGORIES } from '../data/mockData';
 
 const getCategoryIcon = (categoryId) => {
     switch (categoryId) {
@@ -1241,170 +1182,338 @@ const getCategoryIcon = (categoryId) => {
 };
 
 const COLOR_STYLES = {
-    blue: { text: 'text-blue-400', bg: 'bg-blue-500', bgLight: 'bg-blue-500/10', border: 'border-blue-500' },
-    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500' },
-    orange: { text: 'text-orange-400', bg: 'bg-orange-500', bgLight: 'bg-orange-500/10', border: 'border-orange-500' },
-    purple: { text: 'text-purple-400', bg: 'bg-purple-500', bgLight: 'bg-purple-500/10', border: 'border-purple-500' },
-    slate: { text: 'text-slate-400', bg: 'bg-slate-500', bgLight: 'bg-slate-500/10', border: 'border-slate-500' }
+    blue: { text: 'text-blue-400', bgLight: 'bg-blue-500/10', border: 'border-blue-500', ring: 'ring-blue-500' },
+    emerald: { text: 'text-emerald-400', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500', ring: 'ring-emerald-500' },
+    orange: { text: 'text-orange-400', bgLight: 'bg-orange-500/10', border: 'border-orange-500', ring: 'ring-orange-500' },
+    purple: { text: 'text-purple-400', bgLight: 'bg-purple-500/10', border: 'border-purple-500', ring: 'ring-purple-500' },
+    slate: { text: 'text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' }
 };
 
-const ErrorDetailPage = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(true);
+const ErrorDetailModal = ({ error, onClose }) => {
+    const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
+    const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
 
-    useEffect(() => {
-        getErrorById(id).then(data => {
-            setError(data);
-            setLoading(false);
-        });
-    }, [id]);
+    // Prevent body scroll when modal is open
+    React.useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
 
-    if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Yükleniyor...</div>;
-    if (!error) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Hata bulunamadı.</div>;
+    if (!error) return null;
 
     const category = CATEGORIES.find(c => c.id === error.category);
     const colorStyle = COLOR_STYLES[category?.color || 'slate'];
 
+    const displayImages = error.imageUrls && error.imageUrls.length > 0
+        ? error.imageUrls
+        : (error.imageUrl ? [error.imageUrl] : []);
+
     return (
-        <div className="min-h-screen bg-[#0f172a] font-sans text-slate-100 flex flex-col">
-            {/* Header */}
-            <header className="bg-[#1e293b] border-b border-slate-700/50 sticky top-0 z-10">
-                <div className="max-w-[1200px] mx-auto px-6 py-4 flex items-center gap-4">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-                    >
-                        <ArrowLeft className="w-6 h-6" />
-                    </button>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1 rounded-md ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider`}>
-                                {error.code || 'SYS-000'}
-                            </span>
-                            <span className="text-slate-400 text-sm font-medium uppercase tracking-wide">
-                                {category?.name || 'Genel'}
-                            </span>
-                        </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+                onClick={onClose}
+            ></div>
+
+            {/* Modal Container */}
+            <div className="relative w-full max-w-5xl max-h-[90vh] bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-700/50 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-8 py-5 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
+                    <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-md ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider`}>
+                            {error.code || 'SYS-000'}
+                        </span>
+                        <span className="text-slate-400 text-sm font-medium uppercase tracking-wide">
+                            {category?.name || 'Genel'}
+                        </span>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
-            </header>
 
-            <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-10">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    {/* Left Content: Details */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div>
-                            <h1 className="text-4xl font-extrabold text-white mb-4 leading-tight">
-                                {error.title}
-                            </h1>
-                            <p className="text-lg text-slate-400 leading-relaxed">
-                                {error.summary}
-                            </p>
-                        </div>
-
-                        {/* Solution Steps */}
-                        <div className="bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-xl">
-                            <div className="px-8 py-6 border-b border-slate-700/50 bg-[#253248] flex items-center gap-3">
-                                <CheckCircle className={`w-6 h-6 ${colorStyle.text}`} />
-                                <h2 className="text-xl font-bold text-white">Çözüm Adımları</h2>
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto p-8 custom-scrollbar">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Content */}
+                        <div className="lg:col-span-2 space-y-8">
+                            <div className="bg-slate-50 dark:bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-500/30 transition-colors">
+                                <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3 leading-tight break-words">
+                                    {error.title}
+                                </h2>
+                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium">
+                                    {error.summary}
+                                </p>
                             </div>
-                            <div className="p-8">
-                                <div className="prose prose-invert max-w-none">
-                                    <ul className="space-y-4">
-                                        {error.solution.split('\n').map((step, index) => (
-                                            <li key={index} className="flex gap-4 items-start text-slate-300">
-                                                <span className={`flex-shrink-0 w-8 h-8 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-sm`}>
-                                                    {index + 1}
-                                                </span>
-                                                <span className="mt-1 leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</span>
-                                            </li>
-                                        ))}
+
+                            {/* Solution Steps */}
+                            <div className="bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden shadow-lg">
+                                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 bg-slate-100 dark:bg-[#253248] flex items-center gap-3">
+                                    <CheckCircle className={`w-5 h-5 ${colorStyle.text}`} />
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Çözüm Adımları</h3>
+                                </div>
+                                <div className="p-6">
+                                    <ul className="space-y-6">
+                                        {error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0 ? (
+                                            error.solutionSteps.map((step, index) => (
+                                                <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
+                                                    <span className={`flex-shrink-0 w-8 h-8 rounded-lg ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-sm border border-${colorStyle.border}/20`}>
+                                                        {index + 1}
+                                                    </span>
+                                                    <div className="flex-grow space-y-3 min-w-0">
+                                                        <div className="mt-1 leading-relaxed text-sm md:text-base font-medium break-words whitespace-pre-wrap">
+                                                            {step.text}
+                                                        </div>
+                                                        {step.imageUrl && (
+                                                            <div className="relative group/step-img w-full max-w-sm rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                                <img
+                                                                    src={step.imageUrl}
+                                                                    alt={`Adım ${index + 1}`}
+                                                                    className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                                                                    onClick={() => {
+                                                                        // Reuse the main gallery state for simplicity, or add new state.
+                                                                        // Since we might disturb the main gallery state, let's just make a temporary fake gallery entry 
+                                                                        // But wait, the main gallery state only controls the RIGHT side panel. 
+                                                                        // The fullscreen overlay uses 'isImageEnlarged' and 'selectedImageIndex' of 'displayImages'.
+                                                                        // We can't easily hijack that without adding step images to 'displayImages'.
+                                                                        const win = window.open();
+                                                                        if (win) {
+                                                                            win.document.write(`<img src="${step.imageUrl}" style="max-width:100%;height:auto;">`);
+                                                                        }
+                                                                        // For now, simple open in new tab is safest without big refactor. 
+                                                                        // OR, allow a simplified zoom here? 
+                                                                        // Let's rely on simple browser zoom or new tab for step images for now to not overcomplicate the modal state.
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))
+                                        ) : (
+                                            error.solution.split('\n').filter(s => s.trim() !== '').map((step, index) => (
+                                                <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
+                                                    <span className={`flex-shrink-0 w-7 h-7 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-xs ring-1 ${colorStyle.ring}/30`}>
+                                                        {index + 1}
+                                                    </span>
+                                                    <div className="mt-0.5 leading-relaxed text-sm md:text-base break-words whitespace-pre-wrap min-w-0 flex-1">{step.replace(/^\d+\.\s*/, '')}</div>
+                                                </li>
+                                            ))
+                                        )}
                                     </ul>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Info Card */}
-                        <div className="flex items-center justify-between p-6 bg-[#1e293b] rounded-2xl border border-slate-700/50">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center text-slate-400">
-                                    <Calendar className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Son Güncelleme</p>
-                                    <p className="text-white font-medium">{error.date}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center text-slate-400">
-                                    {getCategoryIcon(error.category)}
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Kategori</p>
-                                    <p className="text-white font-medium">{category?.name}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Content: Image */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-32 space-y-6">
-                            <div className="bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-2xl group">
-                                <div className="aspect-[4/5] w-full bg-[#0f172a] relative overflow-hidden">
-                                    {error.imageUrl ? (
-                                        <img
-                                            src={error.imageUrl}
-                                            alt={error.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
-                                            <ImageIcon className="w-16 h-16 mb-4 opacity-50" />
-                                            <span className="text-sm font-medium">Görsel Mevcut Değil</span>
-                                        </div>
-                                    )}
-
-                                    {/* Overlay Gradient */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-60"></div>
-                                </div>
-                                <div className="p-6">
-                                    <div className="flex items-center gap-3 mb-4 text-amber-400">
-                                        <AlertTriangle className="w-5 h-5" />
-                                        <span className="font-bold text-sm uppercase tracking-wide">Hata Görseli</span>
+                            {/* Info Card */}
+                            <div className="flex flex-col sm:flex-row gap-4 p-5 bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50">
+                                <div className="flex items-center gap-3 flex-1">
+                                    <div className="w-10 h-10 bg-white dark:bg-[#0f172a] rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 dark:border-none shadow-sm dark:shadow-none">
+                                        <Calendar className="w-5 h-5" />
                                     </div>
-                                    <p className="text-slate-400 text-sm leading-relaxed">
-                                        Bu görsel, hatanın ekranda veya cihazda nasıl göründüğünü temsil eder. Karşılaştığınız durum ile eşleşip eşleşmediğini kontrol edin.
-                                    </p>
+                                    <div>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Tarih</p>
+                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{error.date}</p>
+                                    </div>
                                 </div>
+                                <div className="flex items-center gap-3 flex-1">
+                                    <div className="w-10 h-10 bg-white dark:bg-[#0f172a] rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 dark:border-none shadow-sm dark:shadow-none">
+                                        {getCategoryIcon(error.category)}
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Kategori</p>
+                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{category?.name}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        {/* Right Content: Image */}
+                        <div className="lg:col-span-1">
+                            <div className="sticky top-0 space-y-4">
+                                <div
+                                    className="bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden shadow-xl group cursor-pointer"
+                                    onClick={() => displayImages.length > 0 && setIsImageEnlarged(true)}
+                                >
+                                    <div className="aspect-[3/4] w-full bg-slate-200 dark:bg-[#0f172a] relative overflow-hidden">
+                                        {displayImages.length > 0 ? (
+                                            <>
+                                                <img
+                                                    src={displayImages[selectedImageIndex]}
+                                                    alt={error.title}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                />
+                                                {/* Hover Overlay with Magnifying Glass */}
+                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20 group-hover:bg-black/40 backdrop-blur-[0px] group-hover:backdrop-blur-[2px]">
+                                                    <div className="bg-white/10 p-4 rounded-full backdrop-blur-md border border-white/20 text-white shadow-xl transform scale-50 opacity-0 translate-y-4 group-hover:scale-100 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 delay-75">
+                                                        <ZoomIn className="w-8 h-8" />
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
+                                                <ImageIcon className="w-12 h-12 mb-3 opacity-50" />
+                                                <span className="text-xs font-medium">Görsel Yok</span>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-60 pointer-events-none"></div>
+                                    </div>
+                                    <div className="p-4 bg-slate-50 dark:bg-[#1e293b]">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2 text-amber-500 dark:text-amber-400">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                <span className="font-bold text-xs uppercase tracking-wide">Hata Görseli</span>
+                                            </div>
+                                            {displayImages.length > 1 && (
+                                                <span className="text-xs text-slate-400">
+                                                    {selectedImageIndex + 1} / {displayImages.length}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+                                            Hatanın sistemdeki veya ekrandaki temsili görüntüsüdür.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Thumbnails */}
+                                {displayImages.length > 1 && (
+                                    <div className="space-y-3 mt-6">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                                            <ImageIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">Hata Görselleri</h4>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-2 animate-in slide-in-from-bottom-2 fade-in">
+                                            {displayImages.map((img, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setSelectedImageIndex(idx)}
+                                                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                                >
+                                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                                    <div className="absolute top-1 right-1 w-5 h-5 bg-black/60 backdrop-blur-[2px] rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-white/20">
+                                                        {idx + 1}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
+
+            {/* Full Screen Image Overlay */}
+            {isImageEnlarged && (
+                <div
+                    className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setIsImageEnlarged(false)}
+                >
+                    <button
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                        onClick={() => setIsImageEnlarged(false)}
+                    >
+                        <X className="w-8 h-8" />
+                    </button>
+
+                    {/* Navigation Arrows */}
+                    {displayImages.length > 1 && (
+                        <>
+                            <button
+                                className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : displayImages.length - 1));
+                                }}
+                            >
+                                <ChevronLeft className="w-8 h-8" />
+                            </button>
+                            <button
+                                className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedImageIndex(prev => (prev < displayImages.length - 1 ? prev + 1 : 0));
+                                }}
+                            >
+                                <ChevronRight className="w-8 h-8" />
+                            </button>
+                        </>
+                    )}
+
+                    <img
+                        src={displayImages[selectedImageIndex]}
+                        alt={error.title}
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+
+                    {/* Counter Bubble */}
+                    {displayImages.length > 1 && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white font-medium text-sm border border-white/10">
+                            {selectedImageIndex + 1} / {displayImages.length}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
 
-export default ErrorDetailPage;
+export default ErrorDetailModal;
 </file>
 
 <file path="src/pages/HomePage.jsx">
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2 } from 'lucide-react';
+import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getCategories, searchErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 
-const getCategoryIcon = (categoryId) => {
+const ICON_OPTIONS = {
+    shoppingCart: ShoppingCart,
+    archive: Archive,
+    monitor: Monitor,
+    settings: Settings,
+    tag: Tag,
+    truck: Truck,
+    wifi: Wifi,
+    printer: Printer,
+    creditCard: CreditCard,
+    smartphone: Smartphone,
+    package: Package,
+    alertTriangle: AlertTriangle,
+    helpCircle: HelpCircle,
+    database: Database,
+    zap: Zap,
+    thermometer: Thermometer,
+    bookOpen: BookOpen,
+    shield: Shield
+};
+
+const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = null) => {
+    // If iconName is provided (from category object), use it
+    if (iconName && ICON_OPTIONS[iconName]) {
+        const IconComponent = ICON_OPTIONS[iconName];
+        return <IconComponent className={className} />;
+    }
+
+    // Fallback for legacy hardcoded categories
     switch (categoryId) {
-        case 'kasa': return <ShoppingCart className="w-6 h-6" />;
-        case 'reyon': return <Archive className="w-6 h-6" />;
-        case 'depo': return <Archive className="w-6 h-6" />;
-        case 'sistem': return <Monitor className="w-6 h-6" />;
-        default: return <Settings className="w-6 h-6" />;
+        case 'kasa': return <ShoppingCart className={className} />;
+        case 'reyon': return <Archive className={className} />;
+        case 'depo': return <Archive className={className} />;
+        case 'sistem': return <Monitor className={className} />;
+        default: return <Settings className={className} />;
     }
 };
 
@@ -1413,6 +1522,7 @@ const getCategoryColor = (categoryId) => {
     return cat ? cat.color : 'slate';
 };
 
+// Explicit mapping for Tailwind to detect classes
 // Explicit mapping for Tailwind to detect classes
 const COLOR_STYLES = {
     blue: {
@@ -1479,7 +1589,427 @@ const COLOR_STYLES = {
         buttonSelected: 'bg-slate-600 text-white shadow-lg shadow-slate-500/30 border-slate-500',
         buttonUnselectedHover: 'hover:bg-slate-500/10 hover:text-slate-400 hover:border-slate-500/50',
         bar: 'bg-slate-500 w-1'
+    },
+    red: {
+        gradient: 'from-red-500 to-red-400',
+        text: 'text-red-400',
+        bgLight: 'bg-red-500/10',
+        borderLight: 'border-red-500/20',
+        groupHoverText: 'group-hover:text-red-400',
+        groupHoverBg: 'group-hover:bg-red-500/10',
+        hoverBorder: 'hover:border-red-500/50',
+        hoverShadow: 'hover:shadow-red-500/10',
+        buttonSelected: 'bg-red-600 text-white shadow-lg shadow-red-500/30 border-red-500',
+        buttonUnselectedHover: 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/50',
+        bar: 'bg-red-500 w-1'
+    },
+    amber: {
+        gradient: 'from-amber-500 to-amber-400',
+        text: 'text-amber-400',
+        bgLight: 'bg-amber-500/10',
+        borderLight: 'border-amber-500/20',
+        groupHoverText: 'group-hover:text-amber-400',
+        groupHoverBg: 'group-hover:bg-amber-500/10',
+        hoverBorder: 'hover:border-amber-500/50',
+        hoverShadow: 'hover:shadow-amber-500/10',
+        buttonSelected: 'bg-amber-600 text-white shadow-lg shadow-amber-500/30 border-amber-500',
+        buttonUnselectedHover: 'hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/50',
+        bar: 'bg-amber-500 w-1'
+    },
+    yellow: {
+        gradient: 'from-yellow-500 to-yellow-400',
+        text: 'text-yellow-400',
+        bgLight: 'bg-yellow-500/10',
+        borderLight: 'border-yellow-500/20',
+        groupHoverText: 'group-hover:text-yellow-400',
+        groupHoverBg: 'group-hover:bg-yellow-500/10',
+        hoverBorder: 'hover:border-yellow-500/50',
+        hoverShadow: 'hover:shadow-yellow-500/10',
+        buttonSelected: 'bg-yellow-600 text-white shadow-lg shadow-yellow-500/30 border-yellow-500',
+        buttonUnselectedHover: 'hover:bg-yellow-500/10 hover:text-yellow-400 hover:border-yellow-500/50',
+        bar: 'bg-yellow-500 w-1'
+    },
+    lime: {
+        gradient: 'from-lime-500 to-lime-400',
+        text: 'text-lime-400',
+        bgLight: 'bg-lime-500/10',
+        borderLight: 'border-lime-500/20',
+        groupHoverText: 'group-hover:text-lime-400',
+        groupHoverBg: 'group-hover:bg-lime-500/10',
+        hoverBorder: 'hover:border-lime-500/50',
+        hoverShadow: 'hover:shadow-lime-500/10',
+        buttonSelected: 'bg-lime-600 text-white shadow-lg shadow-lime-500/30 border-lime-500',
+        buttonUnselectedHover: 'hover:bg-lime-500/10 hover:text-lime-400 hover:border-lime-500/50',
+        bar: 'bg-lime-500 w-1'
+    },
+    green: {
+        gradient: 'from-green-500 to-green-400',
+        text: 'text-green-400',
+        bgLight: 'bg-green-500/10',
+        borderLight: 'border-green-500/20',
+        groupHoverText: 'group-hover:text-green-400',
+        groupHoverBg: 'group-hover:bg-green-500/10',
+        hoverBorder: 'hover:border-green-500/50',
+        hoverShadow: 'hover:shadow-green-500/10',
+        buttonSelected: 'bg-green-600 text-white shadow-lg shadow-green-500/30 border-green-500',
+        buttonUnselectedHover: 'hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/50',
+        bar: 'bg-green-500 w-1'
+    },
+    teal: {
+        gradient: 'from-teal-500 to-teal-400',
+        text: 'text-teal-400',
+        bgLight: 'bg-teal-500/10',
+        borderLight: 'border-teal-500/20',
+        groupHoverText: 'group-hover:text-teal-400',
+        groupHoverBg: 'group-hover:bg-teal-500/10',
+        hoverBorder: 'hover:border-teal-500/50',
+        hoverShadow: 'hover:shadow-teal-500/10',
+        buttonSelected: 'bg-teal-600 text-white shadow-lg shadow-teal-500/30 border-teal-500',
+        buttonUnselectedHover: 'hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/50',
+        bar: 'bg-teal-500 w-1'
+    },
+    cyan: {
+        gradient: 'from-cyan-500 to-cyan-400',
+        text: 'text-cyan-400',
+        bgLight: 'bg-cyan-500/10',
+        borderLight: 'border-cyan-500/20',
+        groupHoverText: 'group-hover:text-cyan-400',
+        groupHoverBg: 'group-hover:bg-cyan-500/10',
+        hoverBorder: 'hover:border-cyan-500/50',
+        hoverShadow: 'hover:shadow-cyan-500/10',
+        buttonSelected: 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 border-cyan-500',
+        buttonUnselectedHover: 'hover:bg-cyan-500/10 hover:text-cyan-400 hover:border-cyan-500/50',
+        bar: 'bg-cyan-500 w-1'
+    },
+    sky: {
+        gradient: 'from-sky-500 to-sky-400',
+        text: 'text-sky-400',
+        bgLight: 'bg-sky-500/10',
+        borderLight: 'border-sky-500/20',
+        groupHoverText: 'group-hover:text-sky-400',
+        groupHoverBg: 'group-hover:bg-sky-500/10',
+        hoverBorder: 'hover:border-sky-500/50',
+        hoverShadow: 'hover:shadow-sky-500/10',
+        buttonSelected: 'bg-sky-600 text-white shadow-lg shadow-sky-500/30 border-sky-500',
+        buttonUnselectedHover: 'hover:bg-sky-500/10 hover:text-sky-400 hover:border-sky-500/50',
+        bar: 'bg-sky-500 w-1'
+    },
+    indigo: {
+        gradient: 'from-indigo-500 to-indigo-400',
+        text: 'text-indigo-400',
+        bgLight: 'bg-indigo-500/10',
+        borderLight: 'border-indigo-500/20',
+        groupHoverText: 'group-hover:text-indigo-400',
+        groupHoverBg: 'group-hover:bg-indigo-500/10',
+        hoverBorder: 'hover:border-indigo-500/50',
+        hoverShadow: 'hover:shadow-indigo-500/10',
+        buttonSelected: 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 border-indigo-500',
+        buttonUnselectedHover: 'hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/50',
+        bar: 'bg-indigo-500 w-1'
+    },
+    violet: {
+        gradient: 'from-violet-500 to-violet-400',
+        text: 'text-violet-400',
+        bgLight: 'bg-violet-500/10',
+        borderLight: 'border-violet-500/20',
+        groupHoverText: 'group-hover:text-violet-400',
+        groupHoverBg: 'group-hover:bg-violet-500/10',
+        hoverBorder: 'hover:border-violet-500/50',
+        hoverShadow: 'hover:shadow-violet-500/10',
+        buttonSelected: 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-500',
+        buttonUnselectedHover: 'hover:bg-violet-500/10 hover:text-violet-400 hover:border-violet-500/50',
+        bar: 'bg-violet-500 w-1'
+    },
+    fuchsia: {
+        gradient: 'from-fuchsia-500 to-fuchsia-400',
+        text: 'text-fuchsia-400',
+        bgLight: 'bg-fuchsia-500/10',
+        borderLight: 'border-fuchsia-500/20',
+        groupHoverText: 'group-hover:text-fuchsia-400',
+        groupHoverBg: 'group-hover:bg-fuchsia-500/10',
+        hoverBorder: 'hover:border-fuchsia-500/50',
+        hoverShadow: 'hover:shadow-fuchsia-500/10',
+        buttonSelected: 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/30 border-fuchsia-500',
+        buttonUnselectedHover: 'hover:bg-fuchsia-500/10 hover:text-fuchsia-400 hover:border-fuchsia-500/50',
+        bar: 'bg-fuchsia-500 w-1'
+    },
+    pink: {
+        gradient: 'from-pink-500 to-pink-400',
+        text: 'text-pink-400',
+        bgLight: 'bg-pink-500/10',
+        borderLight: 'border-pink-500/20',
+        groupHoverText: 'group-hover:text-pink-400',
+        groupHoverBg: 'group-hover:bg-pink-500/10',
+        hoverBorder: 'hover:border-pink-500/50',
+        hoverShadow: 'hover:shadow-pink-500/10',
+        buttonSelected: 'bg-pink-600 text-white shadow-lg shadow-pink-500/30 border-pink-500',
+        buttonUnselectedHover: 'hover:bg-pink-500/10 hover:text-pink-400 hover:border-pink-500/50',
+        bar: 'bg-pink-500 w-1'
+    },
+    rose: {
+        gradient: 'from-rose-500 to-rose-400',
+        text: 'text-rose-400',
+        bgLight: 'bg-rose-500/10',
+        borderLight: 'border-rose-500/20',
+        groupHoverText: 'group-hover:text-rose-400',
+        groupHoverBg: 'group-hover:bg-rose-500/10',
+        hoverBorder: 'hover:border-rose-500/50',
+        hoverShadow: 'hover:shadow-rose-500/10',
+        buttonSelected: 'bg-rose-600 text-white shadow-lg shadow-rose-500/30 border-rose-500',
+        buttonUnselectedHover: 'hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/50',
+        bar: 'bg-rose-500 w-1'
     }
+};
+
+const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori Seçin", onAddCategory, onUpdateCategory, onDeleteCategory }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
+    const [editingCatId, setEditingCatId] = useState(null);
+
+    // Shared form state for both Add and Edit
+    const [formName, setFormName] = useState("");
+    const [formColor, setFormColor] = useState("slate");
+    const [formIcon, setFormIcon] = useState("settings");
+
+    const dropdownRef = React.useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+                setIsAdding(false);
+                setEditingCatId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const startAdd = () => {
+        setIsAdding(true);
+        setEditingCatId(null);
+        setFormName("");
+        setFormColor("slate");
+        setFormIcon("settings");
+    };
+
+    const startEdit = (e, c) => {
+        e.stopPropagation(); // Don't select the category
+        setEditingCatId(c.id);
+        setIsAdding(false);
+        setFormName(c.name);
+        setFormColor(c.color);
+        setFormIcon(c.icon || "settings");
+    };
+
+    const handleSaveAdd = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!formName.trim() || !onAddCategory) return;
+
+        const success = await onAddCategory(formName, formColor, formIcon);
+        if (success) {
+            setIsAdding(false);
+            setFormName("");
+            setFormColor("slate");
+            setFormIcon("settings");
+            // Optionally close dropdown or stay open
+        }
+    };
+
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!formName.trim() || !onUpdateCategory) return;
+
+        const success = await onUpdateCategory(editingCatId, formName, formColor, formIcon);
+        if (success) {
+            setEditingCatId(null);
+            setFormName("");
+            setFormColor("slate");
+            setFormIcon("settings");
+        }
+    };
+
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) return;
+        if (onDeleteCategory) {
+            await onDeleteCategory(id);
+            if (value === id) onChange(null); // Clear selection if deleted
+        }
+    };
+
+    const cancelForm = (e) => {
+        e.stopPropagation();
+        setIsAdding(false);
+        setEditingCatId(null);
+        setFormName("");
+        setFormColor("slate");
+    };
+
+    const selectedCat = categories.find(c => c.id === value);
+    const selectedColor = selectedCat ? (COLOR_STYLES[selectedCat.color] || COLOR_STYLES.slate) : COLOR_STYLES.slate;
+
+    // Helper to render the form (used for both Add and Edit)
+    const renderForm = (isEdit = false) => (
+        <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                    {isEdit ? "Kategoriyi Düzenle" : "Yeni Kategori Adı"}
+                </label>
+                <input
+                    type="text"
+                    autoFocus
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Örn: Muhasebe"
+                    value={formName}
+                    onChange={e => setFormName(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Simge Seçin</label>
+                <div className="grid grid-cols-6 gap-2">
+                    {Object.entries(ICON_OPTIONS).map(([key, Icon]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFormIcon(key); }}
+                            className={`p-1.5 rounded-lg flex items-center justify-center transition-all ${formIcon === key ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                            title={key}
+                        >
+                            <Icon className="w-4 h-4" />
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Renk Seçin</label>
+                <div className="grid grid-cols-6 gap-2">
+                    {Object.keys(COLOR_STYLES).map(colorKey => (
+                        <button
+                            key={colorKey}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFormColor(colorKey); }}
+                            className={`w-6 h-6 rounded-full ${COLOR_STYLES[colorKey].bar.replace('w-1', '')} ${formColor === colorKey ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-110'} transition-all`}
+                            title={colorKey}
+                        />
+                    ))}
+                </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+                <button
+                    type="button"
+                    onClick={cancelForm}
+                    className="flex-1 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                    İptal
+                </button>
+                <button
+                    type="button"
+                    onClick={isEdit ? handleSaveEdit : handleSaveAdd}
+                    disabled={!formName.trim()}
+                    className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                    {isEdit ? "Güncelle" : "Ekle"}
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border rounded-lg flex items-center justify-between outline-none transition-all ${isOpen ? 'ring-2 ring-blue-500 border-transparent' : 'border-slate-200 dark:border-slate-700 focus:border-blue-500'}`}
+            >
+                {selectedCat ? (
+                    <div className="flex items-center gap-3">
+                        <span className={`${selectedColor.text} p-1 ${selectedColor.bgLight} rounded-lg`}>
+                            {getCategoryIcon(selectedCat.id, "w-4 h-4", selectedCat.icon)}
+                        </span>
+                        <span className="text-slate-900 dark:text-slate-100 font-medium">{selectedCat.name}</span>
+                    </div>
+                ) : (
+                    <span className="text-slate-400">{placeholder}</span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl shadow-xl max-h-96 overflow-auto animate-in fade-in zoom-in-95 duration-100 p-1.5 flex flex-col gap-1">
+
+                    {/* List Categories */}
+                    {categories.map(c => {
+                        const isEditing = editingCatId === c.id;
+                        if (isEditing) {
+                            return <div key={c.id}>{renderForm(true)}</div>;
+                        }
+
+                        const cStyle = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
+                        const isSelected = c.id === value;
+                        return (
+                            <div key={c.id} className="group relative flex items-center">
+                                <button
+                                    type="button"
+                                    onClick={() => { onChange(c.id); setIsOpen(false); }}
+                                    className={`w-full px-3 py-2.5 flex items-center gap-3 rounded-lg transition-colors text-sm ${isSelected ? 'bg-slate-100 dark:bg-slate-700/50' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}
+                                >
+                                    <span className={`${cStyle.text} p-1.5 rounded-md ${cStyle.bgLight} group-hover:scale-110 transition-transform`}>
+                                        {getCategoryIcon(c.id, "w-4 h-4", c.icon)}
+                                    </span>
+                                    <span className={`font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                                        {c.name}
+                                    </span>
+                                    {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
+                                </button>
+
+                                {/* Edit/Delete Actions (Visible on Hover) */}
+                                <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 shadow-sm rounded-md border border-slate-100 dark:border-slate-700 p-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => startEdit(e, c)}
+                                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                        title="Düzenle"
+                                    >
+                                        <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleDelete(e, c.id)}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                        title="Sil"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Add New Section */}
+                    {isAdding ? (
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            {renderForm(false)}
+                        </div>
+                    ) : (
+                        <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); startAdd(); }}
+                                className="w-full px-3 py-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Yeni Kategori Ekle
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 };
 
 const HomePage = () => {
@@ -1491,7 +2021,41 @@ const HomePage = () => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [viewMode, setViewMode] = useState('grid');
     const [selectedError, setSelectedError] = useState(null); // For Modal
-    const [previewImage, setPreviewImage] = useState(null); // For Quick Image View
+    const [previewGallery, setPreviewGallery] = useState(null); // For Quick Image View { images: [], index: 0 }
+    const [hoverSlideshow, setHoverSlideshow] = useState({ id: null, index: 0 }); // For Card Hover Effect
+
+    // Hover Slideshow Effect
+    useEffect(() => {
+        let interval;
+        if (hoverSlideshow.id) {
+            interval = setInterval(() => {
+                setHoverSlideshow(prev => {
+                    if (prev.id !== hoverSlideshow.id) return prev;
+                    // Find the error to know how many images it has
+                    const error = errors.find(e => e.id === hoverSlideshow.id);
+                    if (!error) return prev;
+
+                    const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                    if (images.length <= 1) return prev;
+
+                    return { ...prev, index: (prev.index + 1) % images.length };
+                });
+            }, 1000); // Switch every 1 second
+        }
+        return () => clearInterval(interval);
+    }, [hoverSlideshow.id, errors]);
+
+    // Prevent body scroll when preview gallery is open
+    useEffect(() => {
+        if (previewGallery) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [previewGallery]);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false); // Custom Dropdown State
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // Login Modal State
 
@@ -1501,7 +2065,9 @@ const HomePage = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newErrorData, setNewErrorData] = useState({
-        title: '', code: '', category: 'kasa', summary: '', solution: '', imageUrl: null
+        title: '', code: '', category: 'kasa', summary: '', solution: '', imageUrl: null, imageUrls: [],
+        solutionType: 'steps', // Enforcing 'steps'
+        solutionSteps: [{ text: '', imageUrl: null }]
     });
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingError, setEditingError] = useState(null);
@@ -1536,6 +2102,58 @@ const HomePage = () => {
         searchErrors(searchTerm, selectedCategory, selectedDate).then(setErrors);
     }, [searchTerm, selectedCategory, selectedDate]);
 
+    const handleAddCategory = async (name, color, icon) => {
+        try {
+            // Using absolute URL isn't necessary if proxy is set up or relative path works, but sticking to relative '/api'
+            const response = await fetch('/api/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, color, icon })
+            });
+            if (response.ok) {
+                const newCat = await response.json();
+                setCategories([...categories, newCat]);
+                return newCat.id;
+            }
+        } catch (e) {
+            console.error('Failed to add category', e);
+        }
+        return null;
+    };
+
+    const handleUpdateCategory = async (id, name, color, icon) => {
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, color, icon })
+            });
+            if (response.ok) {
+                const updatedCat = await response.json();
+                setCategories(categories.map(c => c.id === id ? updatedCat : c));
+                return true;
+            }
+        } catch (e) {
+            console.error('Failed to update category', e);
+        }
+        return false;
+    };
+
+    const handleDeleteCategory = async (id) => {
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                setCategories(categories.filter(c => c.id !== id));
+                return true;
+            }
+        } catch (e) {
+            console.error('Failed to delete category', e);
+        }
+        return false;
+    };
+
     const handleLogin = (e) => {
         e.preventDefault();
         if (loginData.username === 'admin' && loginData.password === 'admin') {
@@ -1554,26 +2172,45 @@ const HomePage = () => {
     };
 
     const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files);
+
+        files.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setNewErrorData({ ...newErrorData, imageUrl: reader.result });
+                setNewErrorData(prev => ({
+                    ...prev,
+                    imageUrls: [...(prev.imageUrls || []), reader.result]
+                }));
             };
             reader.readAsDataURL(file);
-        }
+        });
     };
 
     const handleAddErrorSubmit = async (e) => {
         e.preventDefault();
+
+        // Format solution always as steps
+        const finalSolution = newErrorData.solutionSteps
+            .filter(step => step.text.trim() !== '')
+            .map((step, index) => `${index + 1}. ${step.text}`)
+            .join('\n');
+
         try {
-            await addError(newErrorData);
-            setIsAddModalOpen(false);
-            setNewErrorData({ title: '', code: '', category: 'kasa', summary: '', solution: '' });
-            // Refresh errors
-            const updatedErrors = await searchErrors(searchTerm, selectedCategory, selectedDate);
-            setErrors(updatedErrors);
-            alert('Hata başarıyla eklendi!');
+            const newError = await addError({
+                ...newErrorData,
+                solution: finalSolution, // For backward compatibility
+                solutionType: 'steps',
+                solutionSteps: newErrorData.solutionSteps,
+                imageUrl: newErrorData.imageUrls?.[0] || newErrorData.imageUrl
+            });
+
+            if (newError) {
+                setErrors([newError, ...errors]);
+                setIsAddModalOpen(false);
+                setIsAddModalOpen(false);
+                setNewErrorData({ title: '', code: '', category: 'kasa', summary: '', solution: '', imageUrl: null, imageUrls: [], solutionType: 'steps', solutionSteps: [{ text: '', imageUrl: null }] });
+                alert('Hata başarıyla eklendi!');
+            }
         } catch (error) {
             alert('Hata eklenirken bir sorun oluştu.');
         }
@@ -1590,35 +2227,77 @@ const HomePage = () => {
 
     const handleEditClick = (e, error) => {
         e.stopPropagation();
-        setEditingError(error);
+
+        let steps = [{ text: '', imageUrl: null }];
+
+        if (error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0) {
+            steps = error.solutionSteps;
+        } else {
+            // Fallback parsing for legacy data
+            const isSteps = /^\s*\d+\./.test(error.solution);
+            if (isSteps) {
+                const parsedSteps = error.solution.split('\n')
+                    .map(line => line.replace(/^\d+\.\s*/, ''))
+                    .filter(s => s.trim() !== '');
+
+                if (parsedSteps.length > 0) {
+                    steps = parsedSteps.map(text => ({ text, imageUrl: null }));
+                }
+            } else if (error.solution) {
+                // Determine if it looks like there are steps even without numbering (paragraphs)
+                // or just put everything in one step
+                steps = [{ text: error.solution, imageUrl: null }];
+            }
+        }
+
+        setEditingError({
+            ...error,
+            imageUrls: error.imageUrls || (error.imageUrl ? [error.imageUrl] : []),
+            solutionType: 'steps',
+            solutionSteps: steps
+        });
         setIsEditModalOpen(true);
     };
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
+
+        // Format solution always as steps
+        const finalSolution = editingError.solutionSteps
+            .filter(step => step.text.trim() !== '')
+            .map((step, index) => `${index + 1}. ${step.text}`)
+            .join('\n');
+
         try {
-            await updateError(editingError.id, editingError);
+            await updateError({
+                ...editingError,
+                solution: finalSolution,
+                solutionType: 'steps',
+                solutionSteps: editingError.solutionSteps,
+                imageUrls: editingError.imageUrls
+            });
             setIsEditModalOpen(false);
             setEditingError(null);
+            // Refresh errors
             const updatedErrors = await searchErrors(searchTerm, selectedCategory, selectedDate);
             setErrors(updatedErrors);
             alert('Kayıt güncellendi!');
         } catch (error) {
-            alert('Güncelleme hatası.');
+            alert('Hata güncellenirken bir sorun oluştu.');
         }
     };
 
     const handleCardClick = async (error) => {
-        // Optimistic UI update or wait for response?
-        // Let's rely on the response to be sure
+        // Attempt to increment view count
         const updatedError = await incrementViewCount(error.id);
 
         if (updatedError) {
-            // Update local list state
+            // Update local list state if successful
             setErrors(prev => prev.map(e => e.id === error.id ? updatedError : e));
-
-            // Open modal with updated error
             setSelectedError(updatedError);
+        } else {
+            // Fallback: If API fails (e.g. Vercel static deployment), still open the modal with existing data
+            setSelectedError(error);
         }
     };
 
@@ -1855,12 +2534,17 @@ const HomePage = () => {
                                                     {error.code || 'SYS-000'}
                                                 </div>
                                                 {/* Static Image Preview Button with Hover Pop */}
-                                                {error.imageUrl && (
-                                                    <div className="relative group/preview">
+                                                {(error.imageUrl || (error.imageUrls && error.imageUrls.length > 0)) && (
+                                                    <div
+                                                        className="relative group/preview"
+                                                        onMouseEnter={() => setHoverSlideshow({ id: error.id, index: 0 })}
+                                                        onMouseLeave={() => setHoverSlideshow({ id: null, index: 0 })}
+                                                    >
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                setPreviewImage(error.imageUrl);
+                                                                const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                                                setPreviewGallery({ images, index: 0 });
                                                             }}
                                                             className={`p-1.5 rounded-md ${style.bgLight} border ${style.borderLight} ${style.text} hover:bg-${colorKey}-500 hover:text-white transition-all`}
                                                             title="Büyütmek için tıkla"
@@ -1872,13 +2556,24 @@ const HomePage = () => {
                                                         <div className="absolute left-0 top-full mt-2 w-48 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl opacity-0 invisible group-hover/preview:opacity-100 group-hover/preview:visible transition-all duration-300 z-20 pointer-events-none">
                                                             <div className="aspect-[3/4] w-full bg-slate-100 dark:bg-[#0f172a] rounded-lg overflow-hidden relative">
                                                                 <img
-                                                                    src={error.imageUrl}
+                                                                    src={
+                                                                        hoverSlideshow.id === error.id
+                                                                            ? ((error.imageUrls && error.imageUrls.length > 0) ? error.imageUrls[hoverSlideshow.index] : error.imageUrl)
+                                                                            : (error.imageUrl || (error.imageUrls && error.imageUrls[0]))
+                                                                    }
                                                                     alt="Önizleme"
-                                                                    className="w-full h-full object-cover"
+                                                                    className="w-full h-full object-cover transition-opacity duration-300"
                                                                 />
                                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-end justify-center p-2">
                                                                     <span className="text-[10px] text-white font-medium">Tıkla ve Büyüt</span>
                                                                 </div>
+                                                                {(error.imageUrls && error.imageUrls.length > 1) && (
+                                                                    <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-[2px] rounded text-[10px] font-bold text-white flex items-center gap-1">
+                                                                        <span>{hoverSlideshow.id === error.id ? hoverSlideshow.index + 1 : 1}</span>
+                                                                        <span className="opacity-60">/</span>
+                                                                        <span>{error.imageUrls.length}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2004,12 +2699,17 @@ const HomePage = () => {
                                         </div>
 
                                         {/* Static Image Preview Button with Hover Pop */}
-                                        {error.imageUrl && (
-                                            <div className="relative group/preview">
+                                        {(error.imageUrl || (error.imageUrls && error.imageUrls.length > 0)) && (
+                                            <div
+                                                className="relative group/preview"
+                                                onMouseEnter={() => setHoverSlideshow({ id: error.id, index: 0 })}
+                                                onMouseLeave={() => setHoverSlideshow({ id: null, index: 0 })}
+                                            >
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setPreviewImage(error.imageUrl);
+                                                        const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                                        setPreviewGallery({ images, index: 0 });
                                                     }}
                                                     className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-600/50"
                                                     title="Büyütmek için tıkla"
@@ -2021,13 +2721,24 @@ const HomePage = () => {
                                                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 w-48 p-2 bg-slate-800 rounded-xl border border-slate-700 shadow-2xl opacity-0 invisible group-hover/preview:opacity-100 group-hover/preview:visible transition-all duration-300 z-20 pointer-events-none">
                                                     <div className="aspect-[3/4] w-full bg-[#0f172a] rounded-lg overflow-hidden relative">
                                                         <img
-                                                            src={error.imageUrl}
+                                                            src={
+                                                                hoverSlideshow.id === error.id
+                                                                    ? ((error.imageUrls && error.imageUrls.length > 0) ? error.imageUrls[hoverSlideshow.index] : error.imageUrl)
+                                                                    : (error.imageUrl || (error.imageUrls && error.imageUrls[0]))
+                                                            }
                                                             alt="Önizleme"
                                                             className="w-full h-full object-cover"
                                                         />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-end justify-center p-2">
                                                             <span className="text-[10px] text-white font-medium">Tıkla ve Büyüt</span>
                                                         </div>
+                                                        {(error.imageUrls && error.imageUrls.length > 1) && (
+                                                            <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-[2px] rounded text-[10px] font-bold text-white flex items-center gap-1">
+                                                                <span>{hoverSlideshow.id === error.id ? hoverSlideshow.index + 1 : 1}</span>
+                                                                <span className="opacity-60">/</span>
+                                                                <span>{error.imageUrls.length}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     {/* Arrow Pointer */}
                                                     <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-slate-800 border-t border-r border-slate-700 transform rotate-45"></div>
@@ -2139,24 +2850,56 @@ const HomePage = () => {
                     </div>
                 )}
 
-                {/* Quick Image Preview Modal */}
-                {previewImage && (
+                {/* Quick Image Preview Gallery Modal */}
+                {previewGallery && (
                     <div
-                        className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-                        onClick={() => setPreviewImage(null)}
+                        className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        onClick={() => setPreviewGallery(null)}
                     >
                         <button
-                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-                            onClick={() => setPreviewImage(null)}
+                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                            onClick={() => setPreviewGallery(null)}
                         >
                             <X className="w-8 h-8" />
                         </button>
+
+                        {/* Navigation Arrows */}
+                        {previewGallery.images.length > 1 && (
+                            <>
+                                <button
+                                    className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPreviewGallery(prev => ({ ...prev, index: prev.index > 0 ? prev.index - 1 : prev.images.length - 1 }));
+                                    }}
+                                >
+                                    <ChevronLeft className="w-8 h-8" />
+                                </button>
+                                <button
+                                    className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPreviewGallery(prev => ({ ...prev, index: prev.index < prev.images.length - 1 ? prev.index + 1 : 0 }));
+                                    }}
+                                >
+                                    <ChevronRight className="w-8 h-8" />
+                                </button>
+                            </>
+                        )}
+
                         <img
-                            src={previewImage}
-                            alt="Önizleme"
-                            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                            src={previewGallery.images[previewGallery.index]}
+                            alt="Preview"
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
                             onClick={(e) => e.stopPropagation()}
                         />
+
+                        {/* Counter Bubble */}
+                        {previewGallery.images.length > 1 && (
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white font-medium text-sm border border-white/10">
+                                {previewGallery.index + 1} / {previewGallery.images.length}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -2185,50 +2928,66 @@ const HomePage = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
-                                        <select
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100"
+                                        <CategorySelect
                                             value={newErrorData.category}
-                                            onChange={e => setNewErrorData({ ...newErrorData, category: e.target.value })}
-                                        >
-                                            {categories.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
-                                        </select>
+                                            onChange={(val) => setNewErrorData({ ...newErrorData, category: val })}
+                                            categories={categories}
+                                            onAddCategory={handleAddCategory}
+                                            onUpdateCategory={handleUpdateCategory}
+                                            onDeleteCategory={handleDeleteCategory}
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Image Upload Section */}
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Görseli</label>
-                                    <div className="flex items-center justify-center w-full">
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group">
-                                            {newErrorData.imageUrl ? (
-                                                <>
-                                                    <img src={newErrorData.imageUrl} alt="Preview" className="w-full h-full object-contain p-2" />
-                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <span className="text-white text-sm font-medium">Değiştir</span>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold">Görsel seçin</span> veya buraya sürükleyin</p>
-                                                    <p className="text-xs text-slate-400 dark:text-slate-500">PNG, JPG (Maks. 5MB)</p>
-                                                </div>
-                                            )}
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                                        </label>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Görselleri</label>
+                                        <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 5MB (Çoklu Seçim)</span>
                                     </div>
-                                    {newErrorData.imageUrl && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setNewErrorData({ ...newErrorData, imageUrl: null })}
-                                            className="text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1"
-                                        >
-                                            <X className="w-3 h-3" />
-                                            Görseli Kaldır
-                                        </button>
-                                    )}
+
+                                    <div className="flex flex-col gap-4">
+                                        {/* Upload Area */}
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group">
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                                                    <ImageIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                                                </div>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold text-blue-600 dark:text-blue-400">Görsel yüklemek için tıklayın</span> veya sürükleyin</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">PNG, JPG, GIF</p>
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
+                                        </label>
+
+                                        {/* Image Preview Grid */}
+                                        {(newErrorData.imageUrls && newErrorData.imageUrls.length > 0) && (
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 animate-in fade-in duration-300">
+                                                {newErrorData.imageUrls.map((url, index) => (
+                                                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                                                        <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newImages = newErrorData.imageUrls.filter((_, i) => i !== index);
+                                                                    setNewErrorData({ ...newErrorData, imageUrls: newImages, imageUrl: newImages[0] || null });
+                                                                }}
+                                                                className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors transform scale-90 hover:scale-100"
+                                                                title="Görseli Kaldır"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                        {index === 0 && (
+                                                            <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-blue-500/90 backdrop-blur-sm rounded text-[10px] font-bold text-white shadow-sm">
+                                                                Kapak
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div>
@@ -2257,15 +3016,99 @@ const HomePage = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Çözüm Adımları</label>
-                                    <textarea
-                                        required
-                                        rows="6"
-                                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                        placeholder="1. Adım..."
-                                        value={newErrorData.solution}
-                                        onChange={e => setNewErrorData({ ...newErrorData, solution: e.target.value })}
-                                    ></textarea>
+                                    <div className="space-y-4">
+                                        {newErrorData.solutionSteps.map((step, index) => (
+                                            <div key={index} className="flex gap-3 group items-start">
+                                                <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 font-mono text-sm mt-1">
+                                                    {index + 1}.
+                                                </span>
+                                                <div className="flex-grow space-y-2">
+                                                    <div className="relative">
+                                                        <textarea
+                                                            rows="2"
+                                                            className="w-full pl-4 pr-28 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 resize-y"
+                                                            placeholder={`${index + 1}. Adımı girin...`}
+                                                            value={step.text}
+                                                            onChange={(e) => {
+                                                                const newSteps = [...newErrorData.solutionSteps];
+                                                                newSteps[index] = { ...newSteps[index], text: e.target.value };
+                                                                setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                    e.preventDefault();
+                                                                    setNewErrorData({ ...newErrorData, solutionSteps: [...newErrorData.solutionSteps, { text: '', imageUrl: null }] });
+                                                                }
+                                                            }}
+                                                        ></textarea>
+                                                        <div className="absolute right-2 top-2 flex items-center gap-1">
+                                                            <label className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer select-none border border-slate-200 dark:border-slate-700">
+                                                                <ImageIcon className="w-3.5 h-3.5" />
+                                                                <span>Görsel</span>
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    accept="image/*"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files[0];
+                                                                        if (file) {
+                                                                            const reader = new FileReader();
+                                                                            reader.onloadend = () => {
+                                                                                const newSteps = [...newErrorData.solutionSteps];
+                                                                                newSteps[index] = { ...newSteps[index], imageUrl: reader.result };
+                                                                                setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
+                                                                            };
+                                                                            reader.readAsDataURL(file);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                            {newErrorData.solutionSteps.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newSteps = newErrorData.solutionSteps.filter((_, i) => i !== index);
+                                                                        setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
+                                                                    }}
+                                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                                                    title="Adımı Sil"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {step.imageUrl && (
+                                                        <div className="relative inline-block group/img">
+                                                            <img src={step.imageUrl} alt="" className="h-20 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newSteps = [...newErrorData.solutionSteps];
+                                                                    newSteps[index] = { ...newSteps[index], imageUrl: null };
+                                                                    setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
+                                                                }}
+                                                                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewErrorData({ ...newErrorData, solutionSteps: [...newErrorData.solutionSteps, { text: '', imageUrl: null }] })}
+                                            className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Yeni Adım Ekle
+                                        </button>
+                                    </div>
                                 </div>
+
+
 
                                 <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
                                     <button
@@ -2283,200 +3126,262 @@ const HomePage = () => {
                                         Kaydet
                                     </button>
                                 </div>
-                            </form>
-                        </div>
-                    </div>
+                            </form >
+                        </div >
+                    </div >
                 )}
 
                 {/* Edit Error Modal */}
-                {isEditModalOpen && editingError && (
-                    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsEditModalOpen(false)}>
-                        <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50">
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Kaydı Düzenle</h2>
-                                <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                                    <X className="w-6 h-6" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                            value={editingError.code}
-                                            onChange={e => setEditingError({ ...editingError, code: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
-                                        <select
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100"
-                                            value={editingError.category}
-                                            onChange={e => setEditingError({ ...editingError, category: e.target.value })}
-                                        >
-                                            {categories.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                {
+                    isEditModalOpen && editingError && (
+                        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsEditModalOpen(false)}>
+                            <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Kaydı Düzenle</h2>
+                                    <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                                        <X className="w-6 h-6" />
+                                    </button>
                                 </div>
 
-                                {/* Image Upload Section */}
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Görseli</label>
-                                    <div className="flex items-center justify-center w-full">
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group">
-                                            {editingError.imageUrl ? (
-                                                <>
-                                                    <img src={editingError.imageUrl} alt="Preview" className="w-full h-full object-contain p-2" />
-                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <span className="text-white text-sm font-medium">Değiştir</span>
-                                                    </div>
-                                                </>
-                                            ) : (
+                                <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                                value={editingError.code}
+                                                onChange={e => setEditingError({ ...editingError, code: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
+                                            <CategorySelect
+                                                value={editingError.category}
+                                                onChange={(val) => setEditingError({ ...editingError, category: val })}
+                                                categories={categories}
+                                                onAddCategory={handleAddCategory}
+                                                onUpdateCategory={handleUpdateCategory}
+                                                onDeleteCategory={handleDeleteCategory}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Image Upload Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Görselleri</label>
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 5MB (Çoklu Seçim)</span>
+                                        </div>
+
+                                        <div className="flex flex-col gap-4">
+                                            {/* Upload Area */}
+                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group">
                                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold">Görsel seçin</span> veya buraya sürükleyin</p>
-                                                    <p className="text-xs text-slate-400 dark:text-slate-500">PNG, JPG (Maks. 5MB)</p>
+                                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                                                        <ImageIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                                                    </div>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold text-blue-600 dark:text-blue-400">Görsel yüklemek için tıklayın</span> veya sürükleyin</p>
+                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">PNG, JPG, GIF</p>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                        const files = Array.from(e.target.files);
+                                                        files.forEach(file => {
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setEditingError(prev => ({
+                                                                    ...prev,
+                                                                    imageUrls: [...(prev.imageUrls || []), reader.result]
+                                                                }));
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        });
+                                                    }}
+                                                />
+                                            </label>
+
+                                            {/* Image Preview Grid */}
+                                            {(editingError.imageUrls && editingError.imageUrls.length > 0) && (
+                                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 animate-in fade-in duration-300">
+                                                    {editingError.imageUrls.map((url, index) => (
+                                                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                                                            <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newImages = editingError.imageUrls.filter((_, i) => i !== index);
+                                                                        setEditingError({ ...editingError, imageUrls: newImages, imageUrl: newImages[0] || null });
+                                                                    }}
+                                                                    className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors transform scale-90 hover:scale-100"
+                                                                    title="Görseli Kaldır"
+                                                                >
+                                                                    <X className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                            {index === 0 && (
+                                                                <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-blue-500/90 backdrop-blur-sm rounded text-[10px] font-bold text-white shadow-sm">
+                                                                    Kapak
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => {
-                                                            setEditingError({ ...editingError, imageUrl: reader.result });
-                                                        };
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }}
-                                            />
-                                        </label>
+                                        </div>
                                     </div>
-                                    {editingError.imageUrl && (
+
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Başlığı</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                            value={editingError.title}
+                                            onChange={e => setEditingError({ ...editingError, title: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Özet</label>
+                                        <textarea
+                                            required
+                                            rows="2"
+                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                            value={editingError.summary}
+                                            onChange={e => setEditingError({ ...editingError, summary: e.target.value })}
+                                        ></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Çözüm Adımları</label>
+                                        <div className="space-y-4">
+                                            {editingError.solutionSteps.map((step, index) => (
+                                                <div key={index} className="flex gap-3 group items-start">
+                                                    <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 font-mono text-sm mt-1">
+                                                        {index + 1}.
+                                                    </span>
+                                                    <div className="flex-grow space-y-2">
+                                                        <div className="relative">
+                                                            <textarea
+                                                                rows="2"
+                                                                className="w-full pl-4 pr-28 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 resize-y"
+                                                                placeholder={`${index + 1}. Adımı girin...`}
+                                                                value={step.text}
+                                                                onChange={(e) => {
+                                                                    const newSteps = [...editingError.solutionSteps];
+                                                                    newSteps[index] = { ...newSteps[index], text: e.target.value };
+                                                                    setEditingError({ ...editingError, solutionSteps: newSteps });
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                                        e.preventDefault();
+                                                                        setEditingError({ ...editingError, solutionSteps: [...editingError.solutionSteps, { text: '', imageUrl: null }] });
+                                                                    }
+                                                                }}
+                                                            ></textarea>
+                                                            <div className="absolute right-2 top-2 flex items-center gap-1">
+                                                                <label className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer select-none border border-slate-200 dark:border-slate-700">
+                                                                    <ImageIcon className="w-3.5 h-3.5" />
+                                                                    <span>Görsel</span>
+                                                                    <input
+                                                                        type="file"
+                                                                        className="hidden"
+                                                                        accept="image/*"
+                                                                        onChange={(e) => {
+                                                                            const file = e.target.files[0];
+                                                                            if (file) {
+                                                                                const reader = new FileReader();
+                                                                                reader.onloadend = () => {
+                                                                                    const newSteps = [...editingError.solutionSteps];
+                                                                                    newSteps[index] = { ...newSteps[index], imageUrl: reader.result };
+                                                                                    setEditingError({ ...editingError, solutionSteps: newSteps });
+                                                                                };
+                                                                                reader.readAsDataURL(file);
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </label>
+                                                                {editingError.solutionSteps.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newSteps = editingError.solutionSteps.filter((_, i) => i !== index);
+                                                                            setEditingError({ ...editingError, solutionSteps: newSteps });
+                                                                        }}
+                                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                                                        title="Adımı Sil"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        {step.imageUrl && (
+                                                            <div className="relative inline-block group/img">
+                                                                <img src={step.imageUrl} alt="" className="h-20 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newSteps = [...editingError.solutionSteps];
+                                                                        newSteps[index] = { ...newSteps[index], imageUrl: null };
+                                                                        setEditingError({ ...editingError, solutionSteps: newSteps });
+                                                                    }}
+                                                                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditingError({ ...editingError, solutionSteps: [...editingError.solutionSteps, { text: '', imageUrl: null }] })}
+                                                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                Yeni Adım Ekle
+                                            </button>
+                                        </div>
+                                    </div>
+
+
+
+                                    <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
                                         <button
                                             type="button"
-                                            onClick={() => setEditingError({ ...editingError, imageUrl: null })}
-                                            className="text-xs text-red-500 hover:text-red-600 font-medium flex items-center gap-1"
+                                            onClick={() => setIsEditModalOpen(false)}
+                                            className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                                         >
-                                            <X className="w-3 h-3" />
-                                            Görseli Kaldır
+                                            İptal
                                         </button>
-                                    )}
-                                </div>
-
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Başlığı</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                        value={editingError.title}
-                                        onChange={e => setEditingError({ ...editingError, title: e.target.value })}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Özet</label>
-                                    <textarea
-                                        required
-                                        rows="2"
-                                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                        value={editingError.summary}
-                                        onChange={e => setEditingError({ ...editingError, summary: e.target.value })}
-                                    ></textarea>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Çözüm Adımları</label>
-                                    <textarea
-                                        required
-                                        rows="6"
-                                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                        value={editingError.solution}
-                                        onChange={e => setEditingError({ ...editingError, solution: e.target.value })}
-                                    ></textarea>
-                                </div>
-
-                                <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsEditModalOpen(false)}
-                                        className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                                    >
-                                        İptal
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors flex items-center gap-2"
-                                    >
-                                        <Save className="w-4 h-4" />
-                                        Kaydet
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </main>
-        </div>
+                                        <button
+                                            type="submit"
+                                            className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors flex items-center gap-2"
+                                        >
+                                            <Save className="w-4 h-4" />
+                                            Kaydet
+                                        </button>
+                                    </div>
+                                </form >
+                            </div >
+                        </div >
+                    )
+                }
+            </main >
+        </div >
     );
 };
 
 export default HomePage;
-</file>
-
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-export default {
-  darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-        }
-      }
-    },
-  },
-  plugins: [],
-}
-</file>
-
-<file path="vite.config.js">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: true, // Listen on all addresses
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
-})
 </file>
 
 </files>
