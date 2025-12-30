@@ -58,7 +58,6 @@ const formatDisplayDate = (dateStr) => {
 };
 
 // Explicit mapping for Tailwind to detect classes
-// Explicit mapping for Tailwind to detect classes
 const COLOR_STYLES = {
     blue: {
         gradient: 'from-blue-500 to-blue-400',
@@ -1007,11 +1006,11 @@ const HomePage = () => {
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-xl font-black leading-none tracking-tight">
-                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 dark:from-blue-400 dark:via-sky-300 dark:to-blue-400 animate-gradient-x">ENPLUS Sistem</span>
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 dark:from-blue-500 dark:via-cyan-300 dark:to-blue-500 animate-gradient-x">ENPLUS Sistem</span>
                             </h1>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <span className="h-0.5 w-4 bg-blue-500 rounded-full animate-pulse"></span>
-                                <p className="text-[11px] font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 dark:from-blue-400 dark:via-sky-300 dark:to-blue-400 animate-gradient-x">Hata Kitapçığı</p>
+                                <p className="text-[11px] font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 dark:from-blue-500 dark:via-cyan-300 dark:to-blue-500 animate-gradient-x">Hata Kitapçığı</p>
                             </div>
                         </div>
                     </div>
@@ -1211,28 +1210,34 @@ const HomePage = () => {
                                         <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1.5 ${style.bar.split(' ')[0]} rounded-b-full shadow-sm`} />
 
                                         {/* Header: Title and Code */}
+                                        {/* Header: Title and Code/Icon */}
                                         <div className="relative flex items-center justify-center mb-3 mt-2 min-h-[1.75rem]">
-                                            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                                            {/* Left: Category Icon */}
+                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20">
                                                 <div
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setSelectedCategory(error.category);
                                                     }}
-                                                    className={`p-1.5 rounded-full border shadow-sm transition-transform group-hover:scale-110 cursor-pointer hover:opacity-80 z-20 relative ${style.bgLight} ${style.text} ${style.borderLight}`}
+                                                    className={`p-1.5 rounded-full border shadow-sm transition-transform group-hover:scale-110 cursor-pointer hover:opacity-80 relative ${style.bgLight} ${style.text} ${style.borderLight}`}
                                                     title={`Kategoriye git: ${categories.find(c => c.id === error.category)?.name}`}
                                                 >
-                                                    <div className="w-3.5 h-3.5 flex items-center justify-center">
-                                                        {getCategoryIcon(error.category)}
+                                                    <div className="flex items-center justify-center">
+                                                        {getCategoryIcon(error.category, "w-5 h-5")}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="px-2 py-0.5 max-w-[60%] text-center">
+
+                                            {/* Center: Title */}
+                                            <div className="w-full px-12 text-center">
                                                 <h3 className="font-extrabold text-base leading-snug line-clamp-2 text-slate-800 dark:text-slate-100">
                                                     {error.title}
                                                 </h3>
                                             </div>
-                                            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                                                <span className={`px-2 py-0.5 rounded-full border font-mono font-bold text-[10px] ${style.bgLight} ${style.text} ${style.borderLight}`}>
+
+                                            {/* Right: Code */}
+                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20">
+                                                <span className={`px-2.5 py-1 rounded-full border font-mono font-bold text-xs ${style.bgLight} ${style.text} ${style.borderLight}`}>
                                                     {error.code || 'SYS-000'}
                                                 </span>
                                             </div>
@@ -1254,7 +1259,7 @@ const HomePage = () => {
                                                     e.stopPropagation();
                                                     setSelectedCategory(error.category);
                                                 }}
-                                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold border truncate max-w-[30%] text-center cursor-pointer hover:opacity-80 transition-opacity z-20 relative ${style.bgLight} ${style.text} ${style.borderLight}`}
+                                                className={`px-3 py-1.5 rounded-full text-xs font-bold border truncate max-w-[30%] text-center cursor-pointer hover:opacity-80 transition-opacity z-20 relative ${style.bgLight} ${style.text} ${style.borderLight}`}
                                                 title={`Kategoriye git: ${categories.find(c => c.id === error.category)?.name}`}
                                             >
                                                 {categories.find(c => c.id === error.category)?.name}
@@ -1278,8 +1283,8 @@ const HomePage = () => {
 
                                             {/* View Count Pill (Right) */}
                                             <div className="flex items-center justify-end">
-                                                <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
-                                                    <Eye className="w-3 h-3" />
+                                                <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                                                    <Eye className="w-4 h-4" />
                                                     <span>{error.viewCount || 0}</span>
                                                 </div>
                                             </div>
@@ -1294,14 +1299,16 @@ const HomePage = () => {
                                                         alt={error.title}
                                                         className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover/image:scale-105"
                                                     />
-                                                    <div className="absolute inset-0 bg-black/0 transition-colors flex items-center justify-center opacity-0 group-hover/image:opacity-100">
+                                                    <div
+                                                        className="absolute inset-0 bg-black/0 transition-colors flex items-center justify-center opacity-0 group-hover/image:opacity-100 cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                                            setPreviewGallery({ images, index: 0 });
+                                                        }}
+                                                    >
                                                         <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
-                                                                setPreviewGallery({ images, index: 0 });
-                                                            }}
-                                                            className="transform scale-90 group-hover/image:scale-100 transition-all duration-300 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-900 dark:text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-lg flex items-center gap-2 border border-white/20"
+                                                            className="transform scale-90 group-hover/image:scale-100 transition-all duration-300 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-900 dark:text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-lg flex items-center gap-2 border border-white/20 pointer-events-none"
                                                         >
                                                             <ImageIcon className="w-3.5 h-3.5" />
                                                             <span>İncele</span>

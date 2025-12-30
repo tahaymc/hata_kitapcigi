@@ -26,10 +26,10 @@
     @apply bg-slate-400 dark:bg-slate-600;
   }
 
-  /* Çok daha yavaş ve yumuşak gradient animasyonu (15s) */
+  /* Daha hızlı ve belirgin gradient animasyonu (7s) */
   .animate-gradient-x {
     background-size: 200% auto;
-    animation: gradient-x 15s ease infinite;
+    animation: gradient-x 7s linear infinite;
   }
 
   @keyframes gradient-x {

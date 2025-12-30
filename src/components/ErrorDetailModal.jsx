@@ -33,6 +33,7 @@ const formatDisplayDate = (dateStr) => {
 const ErrorDetailModal = ({ error, onClose }) => {
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
+    const [zoomedStepImage, setZoomedStepImage] = React.useState(null);
 
     // Prevent body scroll when modal is open
     React.useEffect(() => {
@@ -52,7 +53,7 @@ const ErrorDetailModal = ({ error, onClose }) => {
         : (error.imageUrl ? [error.imageUrl] : []);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
@@ -63,24 +64,35 @@ const ErrorDetailModal = ({ error, onClose }) => {
             <div className="relative w-full max-w-7xl max-h-[95vh] bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-slate-700/50 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-8 py-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
-                    <div className="flex items-center gap-4">
-                        <span className={`px-4 py-1.5 rounded-xl ${colorStyle.bgLight} border-2 border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-extrabold text-lg tracking-wider shadow-sm`}>
-                            {error.code || 'SYS-000'}
-                        </span>
-                        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-200 text-sm shadow-sm`}>
+                <div className="relative flex items-center justify-center px-8 py-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
+                    {/* Left: Icon */}
+                    <div className="absolute left-8 top-1/2 -translate-y-1/2">
+                        <div className={`flex items-center justify-center w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm`}>
                             <div className={`${colorStyle.text}`}>
                                 {getCategoryIcon(error.category)}
                             </div>
-                            <span className="uppercase tracking-wide">{category?.name || 'Genel'}</span>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
+
+                    {/* Center: Title */}
+                    <div className="w-full px-20 text-center">
+                        <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                            {error.title}
+                        </h2>
+                    </div>
+
+                    {/* Right: Code & Close */}
+                    <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                        <span className={`px-4 py-1.5 rounded-xl ${colorStyle.bgLight} border-2 border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-extrabold text-lg tracking-wider shadow-sm hidden sm:block`}>
+                            {error.code || 'SYS-000'}
+                        </span>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Scrollable Content */}
@@ -89,9 +101,7 @@ const ErrorDetailModal = ({ error, onClose }) => {
                         {/* Left Content */}
                         <div className="lg:col-span-2 space-y-8">
                             <div className="bg-slate-50 dark:bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-500/30 transition-colors">
-                                <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3 leading-tight break-words">
-                                    {error.title}
-                                </h2>
+
                                 <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium">
                                     {error.summary}
                                 </p>
@@ -121,20 +131,7 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                                                     src={step.imageUrl}
                                                                     alt={`Adım ${index + 1}`}
                                                                     className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
-                                                                    onClick={() => {
-                                                                        // Reuse the main gallery state for simplicity, or add new state.
-                                                                        // Since we might disturb the main gallery state, let's just make a temporary fake gallery entry 
-                                                                        // But wait, the main gallery state only controls the RIGHT side panel. 
-                                                                        // The fullscreen overlay uses 'isImageEnlarged' and 'selectedImageIndex' of 'displayImages'.
-                                                                        // We can't easily hijack that without adding step images to 'displayImages'.
-                                                                        const win = window.open();
-                                                                        if (win) {
-                                                                            win.document.write(`<img src="${step.imageUrl}" style="max-width:100%;height:auto;">`);
-                                                                        }
-                                                                        // For now, simple open in new tab is safest without big refactor. 
-                                                                        // OR, allow a simplified zoom here? 
-                                                                        // Let's rely on simple browser zoom or new tab for step images for now to not overcomplicate the modal state.
-                                                                    }}
+                                                                    onClick={() => setZoomedStepImage(step.imageUrl)}
                                                                 />
                                                             </div>
                                                         )}
@@ -307,6 +304,27 @@ const ErrorDetailModal = ({ error, onClose }) => {
                             {selectedImageIndex + 1} / {displayImages.length}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Step Image Full Screen Overlay */}
+            {zoomedStepImage && (
+                <div
+                    className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setZoomedStepImage(null)}
+                >
+                    <button
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                        onClick={() => setZoomedStepImage(null)}
+                    >
+                        <X className="w-8 h-8" />
+                    </button>
+                    <img
+                        src={zoomedStepImage}
+                        alt="Adım Görseli"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    />
                 </div>
             )}
         </div>

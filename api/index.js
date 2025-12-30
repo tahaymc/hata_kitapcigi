@@ -10,7 +10,6 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 
 // Supabase Connection
-// Supabase Connection
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
@@ -356,7 +355,6 @@ app.get('/api/diagnose-db', async (req, res) => {
         });
     }
 });
-
 const PORT = 3001;
 
 // Conditional Listen for Local Development
