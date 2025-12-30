@@ -261,7 +261,13 @@ export const updateError = async (id, updatedData) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
     });
-    return response.ok;
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Güncelleme yapılırken sunucu hatası oluştu');
+    }
+
+    return await response.json();
 };
 
 export const deleteError = async (id) => {

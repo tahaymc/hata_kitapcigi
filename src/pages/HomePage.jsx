@@ -826,7 +826,7 @@ const HomePage = () => {
             .join('\n');
 
         try {
-            await updateError({
+            await updateError(editingError.id, {
                 ...editingError,
                 solution: finalSolution,
                 solutionType: 'steps',
@@ -840,7 +840,8 @@ const HomePage = () => {
             setErrors(updatedErrors);
             alert('Kayıt güncellendi!');
         } catch (error) {
-            alert('Hata güncellenirken bir sorun oluştu.');
+            console.error('Error updating record:', error);
+            alert(`Hata güncellenirken bir sorun oluştu:\n${error.message}`);
         }
     };
 
