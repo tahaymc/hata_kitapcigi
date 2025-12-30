@@ -1311,12 +1311,12 @@ const HomePage = () => {
                                                     setSelectedDate(selectedDate === error.date ? null : error.date);
                                                 }}
                                                 className={`absolute left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full text-[10px] font-bold border flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all hover:scale-105 active:scale-95 z-20 ${selectedDate === error.date
-                                                    ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20'
-                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+                                                    ? style.buttonSelected
+                                                    : `bg-white dark:bg-slate-900 ${style.text} ${style.borderLight} hover:${style.bgLight}`
                                                     }`}
                                                 title={`Tarihe göre filtrele: ${formatDisplayDate(error.date)}`}
                                             >
-                                                <Calendar className={`w-3 h-3 ${selectedDate === error.date ? 'text-white' : 'text-slate-400'}`} />
+                                                <Calendar className={`w-3 h-3 ${selectedDate === error.date ? 'text-white' : 'currentColor'}`} />
                                                 <span>{formatDisplayDate(error.date)}</span>
                                             </div>
 
@@ -1432,11 +1432,11 @@ const HomePage = () => {
                                                     setSelectedDate(selectedDate === error.date ? null : error.date);
                                                 }}
                                                 className={`flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full border shadow-sm cursor-pointer transition-colors ${selectedDate === error.date
-                                                    ? 'bg-blue-600 text-white border-blue-500 shadow-blue-500/20'
-                                                    : 'bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 hover:text-slate-800 dark:hover:text-white'
+                                                    ? style.buttonSelected
+                                                    : `bg-white dark:bg-slate-900 ${style.text} ${style.borderLight} hover:${style.bgLight}`
                                                     }`}
                                             >
-                                                <Calendar className={`w-3 h-3 ${selectedDate === error.date ? 'text-white' : 'text-slate-400'}`} />
+                                                <Calendar className={`w-3 h-3 ${selectedDate === error.date ? 'text-white' : 'currentColor'}`} />
                                                 <span>{formatDisplayDate(error.date)}</span>
                                             </div>
 
