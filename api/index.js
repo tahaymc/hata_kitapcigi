@@ -15,16 +15,19 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 let supabase;
+let initError = null;
 
 try {
     if (!supabaseUrl || !supabaseKey) {
         console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are missing in environment.');
+        initError = 'Missing environment variables';
     } else {
         supabase = createClient(supabaseUrl, supabaseKey);
         console.log('Supabase client initialized');
     }
 } catch (e) {
     console.error('Supabase Initialization Failed:', e.message);
+    initError = e.message;
     supabase = null;
 }
 
@@ -33,7 +36,11 @@ app.get('/api/debug-env', (req, res) => {
     res.json({
         hasUrl: !!process.env.SUPABASE_URL,
         hasKey: !!process.env.SUPABASE_KEY,
-        nodeEnv: process.env.NODE_ENV
+        nodeEnv: process.env.NODE_ENV,
+        initError: initError,
+        urlPreview: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 10) + '...' : 'N/A',
+        keyPreview: process.env.SUPABASE_KEY ? process.env.SUPABASE_KEY.substring(0, 5) + '...' : 'N/A',
+        urlLength: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.length : 0
     });
 });
 
