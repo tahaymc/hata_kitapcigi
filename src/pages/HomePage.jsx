@@ -1522,14 +1522,13 @@ const HomePage = () => {
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleLogin} className="space-y-4">
+                                <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">Kullanıcı Adı</label>
                                         <input
                                             type="text"
                                             required
                                             className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                                            placeholder="örn: admin"
                                             value={loginData.username}
                                             onChange={e => setLoginData({ ...loginData, username: e.target.value })}
                                         />
@@ -1540,7 +1539,6 @@ const HomePage = () => {
                                             type="password"
                                             required
                                             className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                                            placeholder="••••••"
                                             value={loginData.password}
                                             onChange={e => setLoginData({ ...loginData, password: e.target.value })}
                                         />
