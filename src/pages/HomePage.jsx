@@ -3,6 +3,7 @@ import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid,
 import { useNavigate } from 'react-router-dom';
 import { getCategories, searchErrors, getAllErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
+import ErrorCodeInput from '../components/ErrorCodeInput';
 
 const ICON_OPTIONS = {
     shoppingCart: ShoppingCart,
@@ -1677,7 +1678,6 @@ const HomePage = () => {
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
                                             <ErrorCodeInput
                                                 value={newErrorData.code}
                                                 onChange={(val) => setNewErrorData({ ...newErrorData, code: val })}
@@ -1901,7 +1901,6 @@ const HomePage = () => {
                                 <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
                                             <ErrorCodeInput
                                                 value={editingError.code}

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const ErrorCodeInput = ({ value, onChange }) => {
+const ErrorCodeInput = ({ value = '', onChange }) => {
     // Parse initial value (e.g. "ABC-123" -> prefix="ABC", suffix="123")
     const [prefix, setPrefix] = useState('');
     const [suffix, setSuffix] = useState('');
