@@ -696,19 +696,50 @@ const HomePage = () => {
         setIsAdmin(false);
     };
 
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-
-        files.forEach(file => {
+    const compressImage = (file) => {
+        return new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setNewErrorData(prev => ({
-                    ...prev,
-                    imageUrls: [...(prev.imageUrls || []), reader.result]
-                }));
-            };
             reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+            };
         });
+    };
+
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        const compressedImages = await Promise.all(files.map(file => compressImage(file)));
+
+        setNewErrorData(prev => ({
+            ...prev,
+            imageUrls: [...(prev.imageUrls || []), ...compressedImages]
+        }));
     };
 
     const handleAddErrorSubmit = async (e) => {
@@ -1574,16 +1605,13 @@ const HomePage = () => {
                                                                     type="file"
                                                                     className="hidden"
                                                                     accept="image/*"
-                                                                    onChange={(e) => {
+                                                                    onChange={async (e) => {
                                                                         const file = e.target.files[0];
                                                                         if (file) {
-                                                                            const reader = new FileReader();
-                                                                            reader.onloadend = () => {
-                                                                                const newSteps = [...newErrorData.solutionSteps];
-                                                                                newSteps[index] = { ...newSteps[index], imageUrl: reader.result };
-                                                                                setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
-                                                                            };
-                                                                            reader.readAsDataURL(file);
+                                                                            const compressed = await compressImage(file);
+                                                                            const newSteps = [...newErrorData.solutionSteps];
+                                                                            newSteps[index] = { ...newSteps[index], imageUrl: compressed };
+                                                                            setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
                                                                         }
                                                                     }}
                                                                 />
@@ -1714,18 +1742,14 @@ const HomePage = () => {
                                                     className="hidden"
                                                     accept="image/*"
                                                     multiple
-                                                    onChange={(e) => {
+                                                    onChange={async (e) => {
                                                         const files = Array.from(e.target.files);
-                                                        files.forEach(file => {
-                                                            const reader = new FileReader();
-                                                            reader.onloadend = () => {
-                                                                setEditingError(prev => ({
-                                                                    ...prev,
-                                                                    imageUrls: [...(prev.imageUrls || []), reader.result]
-                                                                }));
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        });
+                                                        const compressedImages = await Promise.all(files.map(file => compressImage(file)));
+
+                                                        setEditingError(prev => ({
+                                                            ...prev,
+                                                            imageUrls: [...(prev.imageUrls || []), ...compressedImages]
+                                                        }));
                                                     }}
                                                 />
                                             </label>
@@ -1819,16 +1843,13 @@ const HomePage = () => {
                                                                         type="file"
                                                                         className="hidden"
                                                                         accept="image/*"
-                                                                        onChange={(e) => {
+                                                                        onChange={async (e) => {
                                                                             const file = e.target.files[0];
                                                                             if (file) {
-                                                                                const reader = new FileReader();
-                                                                                reader.onloadend = () => {
-                                                                                    const newSteps = [...editingError.solutionSteps];
-                                                                                    newSteps[index] = { ...newSteps[index], imageUrl: reader.result };
-                                                                                    setEditingError({ ...editingError, solutionSteps: newSteps });
-                                                                                };
-                                                                                reader.readAsDataURL(file);
+                                                                                const compressed = await compressImage(file);
+                                                                                const newSteps = [...editingError.solutionSteps];
+                                                                                newSteps[index] = { ...newSteps[index], imageUrl: compressed };
+                                                                                setEditingError({ ...editingError, solutionSteps: newSteps });
                                                                             }
                                                                         }}
                                                                     />
