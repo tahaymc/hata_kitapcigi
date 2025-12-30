@@ -900,6 +900,12 @@ const HomePage = () => {
     const handleAddErrorSubmit = async (e) => {
         e.preventDefault();
 
+        // Validate Error Code (Max 3 letters - 3 digits)
+        if (!/^[A-Z]{1,3}-\d{3}$/.test(newErrorData.code)) {
+            alert("Hata kodu formatı hatalı! Örnekler: ABC-123, X-001 (Maks 3 harf - 3 rakam)");
+            return;
+        }
+
         // Format solution always as steps
         const finalSolution = newErrorData.solutionSteps
             .filter(step => step.text.trim() !== '')
@@ -973,6 +979,12 @@ const HomePage = () => {
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate Error Code (Max 3 letters - 3 digits)
+        if (!/^[A-Z]{1,3}-\d{3}$/.test(editingError.code)) {
+            alert("Hata kodu formatı hatalı! Örnekler: ABC-123, X-001 (Maks 3 harf - 3 rakam)");
+            return;
+        }
 
         // Format solution always as steps
         const finalSolution = editingError.solutionSteps
@@ -1670,7 +1682,7 @@ const HomePage = () => {
                                                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                                 placeholder="Örn: SYS-101"
                                                 value={newErrorData.code}
-                                                onChange={e => setNewErrorData({ ...newErrorData, code: e.target.value })}
+                                                onChange={e => setNewErrorData({ ...newErrorData, code: e.target.value.toUpperCase() })}
                                             />
                                         </div>
                                         <div>
@@ -1896,7 +1908,7 @@ const HomePage = () => {
                                                 type="text"
                                                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
                                                 value={editingError.code}
-                                                onChange={e => setEditingError({ ...editingError, code: e.target.value })}
+                                                onChange={e => setEditingError({ ...editingError, code: e.target.value.toUpperCase() })}
                                             />
                                         </div>
                                         <div>
