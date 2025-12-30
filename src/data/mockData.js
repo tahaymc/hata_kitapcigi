@@ -245,7 +245,14 @@ export const addError = async (newError) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newError)
     });
-    return await response.json();
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.error || 'Veri eklenirken sunucu hatası oluştu');
+    }
+
+    return data;
 };
 
 export const updateError = async (id, updatedData) => {

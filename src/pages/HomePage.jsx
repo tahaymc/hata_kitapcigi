@@ -768,7 +768,8 @@ const HomePage = () => {
                 alert('Hata başarıyla eklendi!');
             }
         } catch (error) {
-            alert('Hata eklenirken bir sorun oluştu.');
+            console.error('Error adding record:', error);
+            alert(`Hata eklenirken bir sorun oluştu:\n${error.message}`);
         }
     };
 
