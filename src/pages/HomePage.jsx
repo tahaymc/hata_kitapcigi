@@ -662,6 +662,7 @@ const HomePage = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newErrorData, setNewErrorData] = useState({
         title: '', code: '', category: 'kasa', summary: '', solution: '', imageUrl: null, imageUrls: [],
+        relatedPeople: [],
         solutionType: 'steps', // Enforcing 'steps'
         solutionSteps: [{ text: '', imageUrl: null }]
     });
@@ -1747,6 +1748,19 @@ const HomePage = () => {
                                         </div>
                                     </div>
 
+                                    {/* Related People Input */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İlgili Kişiler (Personel)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                                            placeholder="Örn: Ahmet Yılmaz, Ayşe Demir"
+                                            value={newErrorData.relatedPeople ? newErrorData.relatedPeople.join(', ') : ''}
+                                            onChange={(e) => setNewErrorData({ ...newErrorData, relatedPeople: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
+                                        />
+                                        <p className="mt-1 text-xs text-slate-400">İsimleri virgül ile ayırarak yazınız.</p>
+                                    </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Başlığı</label>
                                         <input
@@ -1953,6 +1967,19 @@ const HomePage = () => {
                                                     }}
                                                 />
                                             </label>
+
+                                            {/* Related People Input (Edit) */}
+                                            <div className="mb-6">
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İlgili Kişiler (Personel)</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+                                                    placeholder="Örn: Ahmet Yılmaz, Ayşe Demir"
+                                                    value={editingError.relatedPeople ? editingError.relatedPeople.join(', ') : ''}
+                                                    onChange={(e) => setEditingError({ ...editingError, relatedPeople: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
+                                                />
+                                                <p className="mt-1 text-xs text-slate-400">İsimleri virgül ile ayırarak yazınız.</p>
+                                            </div>
 
                                             {/* Image Preview Grid */}
                                             {(editingError.imageUrls && editingError.imageUrls.length > 0) && (

@@ -21,6 +21,18 @@ const COLOR_STYLES = {
     slate: { text: 'text-slate-400', bg: 'bg-slate-500', bgLight: 'bg-slate-500/10', border: 'border-slate-500' }
 };
 
+const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return '';
+    // If it is already in DD.MM.YYYY format (legacy data)
+    if (dateStr.includes('.') && dateStr.split('.').length === 3) return dateStr;
+    // If it is YYYY-MM-DD (new standard)
+    if (dateStr.includes('-')) {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}.${month}.${year}`;
+    }
+    return dateStr;
+};
+
 const ErrorDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -77,48 +89,88 @@ const ErrorDetailPage = () => {
                             </p>
                         </div>
 
-                        {/* Solution Steps */}
-                        <div className="bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-xl">
-                            <div className="px-8 py-6 border-b border-slate-700/50 bg-[#253248] flex items-center gap-3">
-                                <CheckCircle className={`w-6 h-6 ${colorStyle.text}`} />
-                                <h2 className="text-xl font-bold text-white">Çözüm Adımları</h2>
-                            </div>
-                            <div className="p-8">
-                                <div className="prose prose-invert max-w-none">
-                                    <ul className="space-y-4">
-                                        {error.solution.split('\n').map((step, index) => (
-                                            <li key={index} className="flex gap-4 items-start text-slate-300">
-                                                <span className={`flex-shrink-0 w-8 h-8 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-sm`}>
-                                                    {index + 1}
-                                                </span>
-                                                <span className="mt-1 leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                        {/* Solution Steps - Redesigned to Neutral Card Theme */}
+                        <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-lg relative overflow-hidden">
+                            <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+
+                            {/* Header */}
+                            <div className="flex flex-col gap-4 mb-8">
+                                <div className="flex items-center gap-3">
+                                    <CheckCircle className={`w-5 h-5 ${colorStyle.text}`} />
+                                    <span className="text-sm font-bold text-slate-200 uppercase tracking-widest pl-1">Çözüm Adımları</span>
+                                    <div className="h-px flex-1 bg-slate-700/50 ml-2"></div>
                                 </div>
+                            </div>
+
+                            <div className="prose prose-invert max-w-none pl-2">
+                                <ul className="space-y-4">
+                                    {error.solution.split('\n').map((step, index) => (
+                                        <li key={index} className="flex gap-4 items-start text-slate-300">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#0f172a] border border-slate-700 shadow-sm relative overflow-hidden flex items-center justify-center group">
+                                                <div className={`absolute top-0 left-0 w-1 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                                <span className="font-bold text-sm text-slate-200 pl-1">{index + 1}</span>
+                                            </div>
+                                            <span className="mt-1 leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
 
-                        {/* Info Card */}
-                        <div className="flex items-center justify-between p-6 bg-[#1e293b] rounded-2xl border border-slate-700/50">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center text-slate-400">
-                                    <Calendar className="w-6 h-6" />
+                        {/* Footer Info: Date, Category, Related People */}
+                        <div className="space-y-3">
+                            {/* Compact Info Row - Redesigned */}
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Date Card */}
+                                <div className="bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                    <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                    <div className="p-2 rounded-lg bg-[#0f172a] shadow-sm border border-slate-700 text-slate-400">
+                                        <Calendar className="w-4 h-4" />
+                                    </div>
+                                    <div className="pl-1">
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Tarih</p>
+                                        <p className="text-sm font-bold text-slate-200 leading-none">{formatDisplayDate(error.date)}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Son Güncelleme</p>
-                                    <p className="text-white font-medium">{error.date}</p>
+
+                                {/* Category Card */}
+                                <div className="bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                    <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                    <div className={`p-2 rounded-lg bg-[#0f172a] shadow-sm border border-slate-700 ${colorStyle.text}`}>
+                                        {React.cloneElement(getCategoryIcon(error.category), { className: "w-4 h-4" })}
+                                    </div>
+                                    <div className="pl-1">
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Kategori</p>
+                                        <p className="text-sm font-bold text-slate-200 leading-none">{category?.name}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center text-slate-400">
-                                    {getCategoryIcon(error.category)}
+
+                            {/* Refined Related People Section - More Prominent per request - Neutral Card, Category Accent */}
+                            {error.relatedPeople && error.relatedPeople.length > 0 && (
+                                <div className="mt-2">
+                                    <div className="bg-[#1e293b] p-4 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group">
+                                        {/* Category Colored Accent Bar - Thicker and Solid to match Cards */}
+                                        <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-slate-200 uppercase tracking-widest pl-2">İlgili Kişiler</span>
+                                                <div className="h-px w-full bg-slate-700/50"></div>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 pl-2">
+                                                {error.relatedPeople.map((person, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2 pl-1 pr-3 py-1.5 bg-[#0f172a] border border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105">
+                                                        <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
+                                                            {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                        <span className="text-sm font-semibold text-slate-200">{person}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Kategori</p>
-                                    <p className="text-white font-medium">{category?.name}</p>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 

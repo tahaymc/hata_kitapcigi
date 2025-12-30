@@ -62,6 +62,8 @@ const ErrorDetailModal = ({ error, onClose }) => {
 
             {/* Modal Container */}
             <div className="relative w-full max-w-7xl max-h-[95vh] bg-white dark:bg-[#0f172a] rounded-[2.5rem] border border-slate-200 dark:border-slate-700/50 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+                {/* Top Accent Pill - Modal Main */}
+                <div className={`absolute -top-px left-1/2 -translate-x-1/2 w-1/2 h-2 ${colorStyle.border.replace('border-', 'bg-')} rounded-b-full shadow-lg z-20`}></div>
 
                 {/* Header */}
                 <div className="relative flex items-center justify-center px-8 py-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
@@ -83,7 +85,7 @@ const ErrorDetailModal = ({ error, onClose }) => {
 
                     {/* Right: Code & Close */}
                     <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                        <span className={`px-4 py-1.5 rounded-xl ${colorStyle.bgLight} border-2 border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-extrabold text-lg tracking-wider shadow-sm hidden sm:block`}>
+                        <span className={`px-3 py-1 rounded-lg ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider shadow-sm hidden sm:block`}>
                             {error.code || 'SYS-000'}
                         </span>
                         <button
@@ -107,20 +109,28 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                 </p>
                             </div>
 
-                            {/* Solution Steps */}
-                            <div className="bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden shadow-lg">
-                                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 bg-slate-100 dark:bg-[#253248] flex items-center gap-3">
-                                    <CheckCircle className={`w-5 h-5 ${colorStyle.text}`} />
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Çözüm Adımları</h3>
+                            {/* Solution Steps - Redesigned to Neutral Card Theme */}
+                            <div className="bg-slate-100/80 dark:bg-[#1e293b] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                                <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+
+                                {/* Header */}
+                                <div className="flex flex-col gap-4 mb-6">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle className={`w-4 h-4 ${colorStyle.text}`} />
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest pl-1">Çözüm Adımları</span>
+                                        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700/50 ml-2"></div>
+                                    </div>
                                 </div>
-                                <div className="p-6">
+
+                                <div className="pl-2">
                                     <ul className="space-y-6">
                                         {error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0 ? (
                                             error.solutionSteps.map((step, index) => (
                                                 <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
-                                                    <span className={`flex-shrink-0 w-8 h-8 rounded-lg ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-sm border border-${colorStyle.border}/20`}>
-                                                        {index + 1}
-                                                    </span>
+                                                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden flex items-center justify-center group">
+                                                        <div className={`absolute top-0 left-0 w-1 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                                        <span className="font-bold text-sm text-slate-700 dark:text-slate-200 pl-1">{index + 1}</span>
+                                                    </div>
                                                     <div className="flex-grow space-y-3 min-w-0">
                                                         <div className="mt-1 leading-relaxed text-sm md:text-base font-medium break-words whitespace-pre-wrap">
                                                             {step.text}
@@ -141,10 +151,11 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                         ) : (
                                             error.solution.split('\n').filter(s => s.trim() !== '').map((step, index) => (
                                                 <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
-                                                    <span className={`flex-shrink-0 w-7 h-7 rounded-full ${colorStyle.bgLight} ${colorStyle.text} flex items-center justify-center font-bold text-xs ring-1 ${colorStyle.ring}/30`}>
-                                                        {index + 1}
-                                                    </span>
-                                                    <div className="mt-0.5 leading-relaxed text-sm md:text-base break-words whitespace-pre-wrap min-w-0 flex-1">{step.replace(/^\d+\.\s*/, '')}</div>
+                                                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden flex items-center justify-center group">
+                                                        <div className={`absolute top-0 left-0 w-1 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                                        <span className="font-bold text-sm text-slate-700 dark:text-slate-200 pl-1">{index + 1}</span>
+                                                    </div>
+                                                    <div className="mt-1 leading-relaxed text-sm md:text-base break-words whitespace-pre-wrap min-w-0 flex-1">{step.replace(/^\d+\.\s*/, '')}</div>
                                                 </li>
                                             ))
                                         )}
@@ -152,27 +163,60 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                 </div>
                             </div>
 
-                            {/* Info Card */}
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className={`flex items-center gap-4 flex-1 p-4 rounded-2xl border ${colorStyle.bgLight} border-${colorStyle.border}/20`}>
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-[#0f172a] shadow-sm border border-${colorStyle.border}/20 ${colorStyle.text}`}>
-                                        <Calendar className="w-6 h-6" />
+                            {/* Footer Info: Date, Category, Related People */}
+                            <div className="space-y-3">
+                                {/* Compact Info Row - Redesigned to match Related People */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {/* Date Card */}
+                                    <div className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                        <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                        <div className={`p-2 rounded-lg bg-white dark:bg-[#0f172a] shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400`}>
+                                            <Calendar className="w-4 h-4" />
+                                        </div>
+                                        <div className="pl-1">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Tarih</p>
+                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-none">{formatDisplayDate(error.date)}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Tarih</p>
-                                        <p className={`text-lg font-bold ${colorStyle.text}`}>{formatDisplayDate(error.date)}</p>
+
+                                    {/* Category Card */}
+                                    <div className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                        <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                        <div className={`p-2 rounded-lg bg-white dark:bg-[#0f172a] shadow-sm border border-slate-200 dark:border-slate-700 ${colorStyle.text}`}>
+                                            {React.cloneElement(getCategoryIcon(error.category), { className: "w-4 h-4" })}
+                                        </div>
+                                        <div className="pl-1">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Kategori</p>
+                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-none">{category?.name}</p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className={`flex items-center gap-4 flex-1 p-4 rounded-2xl border ${colorStyle.bgLight} border-${colorStyle.border}/20`}>
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-[#0f172a] shadow-sm border border-${colorStyle.border}/20 ${colorStyle.text}`}>
-                                        {getCategoryIcon(error.category)}
+                                {/* Refined Related People Section - More Prominent per request - Neutral Card, Category Accent */}
+                                {error.relatedPeople && error.relatedPeople.length > 0 && (
+                                    <div className="mt-2">
+                                        <div className="bg-slate-100/80 dark:bg-[#1e293b] p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                                            {/* Category Colored Accent Bar - Thicker and Solid to match Cards */}
+                                            <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest pl-2">İlgili Kişiler</span>
+                                                    <div className="h-px w-full bg-slate-200 dark:bg-slate-700/50"></div>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2 pl-2">
+                                                    {error.relatedPeople.map((person, idx) => (
+                                                        <div key={idx} className="flex items-center gap-2 pl-1 pr-3 py-1.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105">
+                                                            <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
+                                                                {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{person}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Kategori</p>
-                                        <p className={`text-lg font-bold ${colorStyle.text}`}>{category?.name}</p>
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 

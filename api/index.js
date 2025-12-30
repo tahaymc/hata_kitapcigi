@@ -182,11 +182,27 @@ app.post('/api/errors', async (req, res) => {
         finalImageUrls = [finalImageUrl];
     }
 
+    // Date Handling fixed for TR Time YYYY-MM-DD
+    const now = new Date();
+    // Turkey is UTC+3. We manually adjust to get the correct date string.
+    // simpler: usage of toLocaleDateString with specific locale sometimes fails if Node locale is missing data.
+    // We will use formatting with Intl.DateTimeFormat 'en-CA' which standardizes YYYY-MM-DD.
+    // If that failed before, we can use a more manual approach.
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Istanbul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+
+    // formatter.format(now) returns YYYY-MM-DD
+    const dateStr = formatter.format(now);
+
     const payload = {
         ...req.body,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls,
-        date: new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' }), // YYYY-MM-DD in TR Time
+        date: dateStr,
         viewCount: 0
     };
 
