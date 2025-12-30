@@ -13,11 +13,11 @@ const getCategoryIcon = (categoryId) => {
 };
 
 const COLOR_STYLES = {
-    blue: { text: 'text-blue-400', bgLight: 'bg-blue-500/10', border: 'border-blue-500', ring: 'ring-blue-500' },
-    emerald: { text: 'text-emerald-400', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500', ring: 'ring-emerald-500' },
-    orange: { text: 'text-orange-400', bgLight: 'bg-orange-500/10', border: 'border-orange-500', ring: 'ring-orange-500' },
-    purple: { text: 'text-purple-400', bgLight: 'bg-purple-500/10', border: 'border-purple-500', ring: 'ring-purple-500' },
-    slate: { text: 'text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' }
+    blue: { text: 'text-blue-600 dark:text-blue-400', bgLight: 'bg-blue-500/10', border: 'border-blue-500', ring: 'ring-blue-500' },
+    emerald: { text: 'text-emerald-600 dark:text-emerald-400', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500', ring: 'ring-emerald-500' },
+    orange: { text: 'text-orange-600 dark:text-orange-400', bgLight: 'bg-orange-500/10', border: 'border-orange-500', ring: 'ring-orange-500' },
+    purple: { text: 'text-purple-600 dark:text-purple-400', bgLight: 'bg-purple-500/10', border: 'border-purple-500', ring: 'ring-purple-500' },
+    slate: { text: 'text-slate-600 dark:text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' }
 };
 
 const formatDisplayDate = (dateStr) => {
@@ -153,23 +153,24 @@ const ErrorDetailModal = ({ error, onClose }) => {
                             </div>
 
                             {/* Info Card */}
-                            <div className="flex flex-col sm:flex-row gap-4 p-5 bg-slate-50 dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50">
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className="w-10 h-10 bg-white dark:bg-[#0f172a] rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 dark:border-none shadow-sm dark:shadow-none">
-                                        <Calendar className="w-5 h-5" />
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <div className={`flex items-center gap-4 flex-1 p-4 rounded-2xl border ${colorStyle.bgLight} border-${colorStyle.border}/20`}>
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-[#0f172a] shadow-sm border border-${colorStyle.border}/20 ${colorStyle.text}`}>
+                                        <Calendar className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Tarih</p>
-                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{formatDisplayDate(error.date)}</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Tarih</p>
+                                        <p className={`text-lg font-bold ${colorStyle.text}`}>{formatDisplayDate(error.date)}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className="w-10 h-10 bg-white dark:bg-[#0f172a] rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 dark:border-none shadow-sm dark:shadow-none">
+
+                                <div className={`flex items-center gap-4 flex-1 p-4 rounded-2xl border ${colorStyle.bgLight} border-${colorStyle.border}/20`}>
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-[#0f172a] shadow-sm border border-${colorStyle.border}/20 ${colorStyle.text}`}>
                                         {getCategoryIcon(error.category)}
                                     </div>
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Kategori</p>
-                                        <p className="text-slate-900 dark:text-white text-sm font-medium">{category?.name}</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Kategori</p>
+                                        <p className={`text-lg font-bold ${colorStyle.text}`}>{category?.name}</p>
                                     </div>
                                 </div>
                             </div>
