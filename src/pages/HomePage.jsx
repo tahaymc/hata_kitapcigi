@@ -1677,12 +1677,10 @@ const HomePage = () => {
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                                placeholder="Örn: SYS-101"
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
+                                            <ErrorCodeInput
                                                 value={newErrorData.code}
-                                                onChange={e => setNewErrorData({ ...newErrorData, code: e.target.value.toUpperCase() })}
+                                                onChange={(val) => setNewErrorData({ ...newErrorData, code: val })}
                                             />
                                         </div>
                                         <div>
@@ -1904,11 +1902,10 @@ const HomePage = () => {
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
-                                            <input
-                                                type="text"
-                                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
+                                            <ErrorCodeInput
                                                 value={editingError.code}
-                                                onChange={e => setEditingError({ ...editingError, code: e.target.value.toUpperCase() })}
+                                                onChange={(val) => setEditingError({ ...editingError, code: val })}
                                             />
                                         </div>
                                         <div>
