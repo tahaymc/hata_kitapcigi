@@ -50,6 +50,7 @@ app.get('/api/debug-env', (req, res) => {
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'ok',
+        version: '1.1',
         service: 'Supabase-Only Backend (Serverless)',
         timestamp: new Date().toISOString()
     });
