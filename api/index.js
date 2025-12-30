@@ -16,13 +16,16 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 let supabase;
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are missing in environment.');
-    // We do NOT throw here anymore to prevent "FUNCTION_INVOCATION_FAILED"
-    // Instead we let endpoints fail if they try to use it.
-} else {
-    supabase = createClient(supabaseUrl, supabaseKey);
-    console.log('Supabase client initialized');
+try {
+    if (!supabaseUrl || !supabaseKey) {
+        console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are missing in environment.');
+    } else {
+        supabase = createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase client initialized');
+    }
+} catch (e) {
+    console.error('Supabase Initialization Failed:', e.message);
+    supabase = null;
 }
 
 // Endpoint to debug environment variables (Safe: shows only presence)
