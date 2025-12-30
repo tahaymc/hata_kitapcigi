@@ -30,7 +30,8 @@ const formatDisplayDate = (dateStr) => {
     return dateStr;
 };
 
-const ErrorDetailModal = ({ error, onClose }) => {
+const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
+
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
     const [zoomedStepImage, setZoomedStepImage] = React.useState(null);
@@ -69,7 +70,10 @@ const ErrorDetailModal = ({ error, onClose }) => {
                 <div className="relative flex items-center justify-center px-8 py-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
                     {/* Left: Icon */}
                     <div className="absolute left-8 top-1/2 -translate-y-1/2">
-                        <div className={`flex items-center justify-center w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm`}>
+                        <div
+                            onClick={() => onCategoryClick && onCategoryClick(error.category)}
+                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:scale-105 transition-transform`}
+                        >
                             <div className={`${colorStyle.text}`}>
                                 {getCategoryIcon(error.category)}
                             </div>
@@ -102,9 +106,9 @@ const ErrorDetailModal = ({ error, onClose }) => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Content */}
                         <div className="lg:col-span-2 space-y-8">
-                            <div className="bg-slate-50 dark:bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-500/30 transition-colors">
-
-                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium">
+                            <div className="bg-slate-50 dark:bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-500/30 transition-colors relative overflow-hidden group">
+                                <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium pl-2">
                                     {error.summary}
                                 </p>
                             </div>
@@ -168,7 +172,10 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                 {/* Compact Info Row - Redesigned to match Related People */}
                                 <div className="grid grid-cols-2 gap-3">
                                     {/* Date Card */}
-                                    <div className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                    <div
+                                        onClick={() => onDateClick && onDateClick(error.date)}
+                                        className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3 cursor-pointer hover:shadow-md transition-all sm:hover:scale-105"
+                                    >
                                         <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
                                         <div className={`p-2 rounded-lg bg-white dark:bg-[#0f172a] shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400`}>
                                             <Calendar className="w-4 h-4" />
@@ -180,7 +187,10 @@ const ErrorDetailModal = ({ error, onClose }) => {
                                     </div>
 
                                     {/* Category Card */}
-                                    <div className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                    <div
+                                        onClick={() => onCategoryClick && onCategoryClick(error.category)}
+                                        className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3 cursor-pointer hover:shadow-md transition-all sm:hover:scale-105"
+                                    >
                                         <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
                                         <div className={`p-2 rounded-lg bg-white dark:bg-[#0f172a] shadow-sm border border-slate-200 dark:border-slate-700 ${colorStyle.text}`}>
                                             {React.cloneElement(getCategoryIcon(error.category), { className: "w-4 h-4" })}

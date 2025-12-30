@@ -84,9 +84,12 @@ const ErrorDetailPage = () => {
                             <h1 className="text-4xl font-extrabold text-white mb-4 leading-tight">
                                 {error.title}
                             </h1>
-                            <p className="text-lg text-slate-400 leading-relaxed">
-                                {error.summary}
-                            </p>
+                            <div className="bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-700/50 relative overflow-hidden group">
+                                <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+                                <p className="text-lg text-slate-400 leading-relaxed pl-2">
+                                    {error.summary}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Solution Steps - Redesigned to Neutral Card Theme */}
@@ -122,7 +125,10 @@ const ErrorDetailPage = () => {
                             {/* Compact Info Row - Redesigned */}
                             <div className="grid grid-cols-2 gap-3">
                                 {/* Date Card */}
-                                <div className="bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                <div
+                                    onClick={() => navigate(`/?date=${error.date}`)}
+                                    className="bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3 cursor-pointer hover:shadow-md transition-all sm:hover:scale-105"
+                                >
                                     <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
                                     <div className="p-2 rounded-lg bg-[#0f172a] shadow-sm border border-slate-700 text-slate-400">
                                         <Calendar className="w-4 h-4" />
@@ -134,7 +140,10 @@ const ErrorDetailPage = () => {
                                 </div>
 
                                 {/* Category Card */}
-                                <div className="bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3">
+                                <div
+                                    onClick={() => navigate(`/?category=${error.category}`)}
+                                    className="bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3 cursor-pointer hover:shadow-md transition-all sm:hover:scale-105"
+                                >
                                     <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
                                     <div className={`p-2 rounded-lg bg-[#0f172a] shadow-sm border border-slate-700 ${colorStyle.text}`}>
                                         {React.cloneElement(getCategoryIcon(error.category), { className: "w-4 h-4" })}

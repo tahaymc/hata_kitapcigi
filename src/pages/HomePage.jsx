@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer, MoreHorizontal, UserCog } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCategories, searchErrors, getAllErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 import ErrorCodeInput from '../components/ErrorCodeInput';
@@ -620,6 +620,18 @@ const HomePage = () => {
     const [previewGallery, setPreviewGallery] = useState(null); // For Quick Image View { images: [], index: 0 }
     const [hoverSlideshow, setHoverSlideshow] = useState({ id: null, index: 0 }); // For Card Hover Effect
 
+    // Category Click Handler for Modal & Page
+    const handleCategoryClick = (categoryId) => {
+        setSelectedCategory(categoryId);
+        setSelectedError(null);
+    };
+
+    // Date Click Handler for Modal & Page
+    const handleDateClick = (date) => {
+        setSelectedDate(date);
+        setSelectedError(null);
+    };
+
     // Hover Slideshow Effect
     useEffect(() => {
         let interval;
@@ -720,6 +732,21 @@ const HomePage = () => {
     const defaultStyle = COLOR_STYLES['slate'];
 
     const [allErrors, setAllErrors] = useState([]); // Store all errors locally
+
+    // URL Params for Category
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const categoryParam = searchParams.get('category');
+        if (categoryParam) {
+            setSelectedCategory(categoryParam);
+        }
+
+        const dateParam = searchParams.get('date');
+        if (dateParam) {
+            setSelectedDate(dateParam);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         getCategories().then(setCategories);
@@ -1530,6 +1557,8 @@ const HomePage = () => {
                         <ErrorDetailModal
                             error={selectedError}
                             onClose={() => setSelectedError(null)}
+                            onCategoryClick={handleCategoryClick}
+                            onDateClick={handleDateClick}
                         />
                     )
                 }
