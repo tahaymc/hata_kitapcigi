@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer, MoreHorizontal, UserCog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getCategories, searchErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
+import { getCategories, searchErrors, getAllErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 
 const ICON_OPTIONS = {
@@ -717,14 +717,40 @@ const HomePage = () => {
     // Default fallback style
     const defaultStyle = COLOR_STYLES['slate'];
 
-    useEffect(() => {
-        getCategories().then(setCategories);
-        searchErrors('', null).then(setErrors);
-    }, []);
+    const [allErrors, setAllErrors] = useState([]); // Store all errors locally
 
     useEffect(() => {
-        searchErrors(searchTerm, selectedCategory, selectedDate).then(setErrors);
-    }, [searchTerm, selectedCategory, selectedDate]);
+        getCategories().then(setCategories);
+        // Fetch all errors once
+        getAllErrors().then(data => {
+            setAllErrors(data);
+            setErrors(data);
+        });
+    }, []);
+
+    // Filter locally when search/filter changes
+    useEffect(() => {
+        let filtered = allErrors;
+
+        if (selectedCategory) {
+            filtered = filtered.filter(e => e.category === selectedCategory);
+        }
+
+        if (selectedDate) {
+            filtered = filtered.filter(e => e.date === selectedDate);
+        }
+
+        if (searchTerm) {
+            const q = searchTerm.toLowerCase();
+            filtered = filtered.filter(e =>
+                e.title.toLowerCase().includes(q) ||
+                (e.summary && e.summary.toLowerCase().includes(q)) ||
+                (e.code && e.code.toLowerCase().includes(q))
+            );
+        }
+
+        setErrors(filtered);
+    }, [searchTerm, selectedCategory, selectedDate, allErrors]);
 
     const handleAddCategory = async (name, color, icon) => {
         try {
@@ -1297,6 +1323,8 @@ const HomePage = () => {
                                                     <img
                                                         src={error.imageUrls?.[0] || error.imageUrl}
                                                         alt={error.title}
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover/image:scale-105"
                                                     />
                                                     <div
@@ -1428,6 +1456,8 @@ const HomePage = () => {
                                                                         : (error.imageUrl || (error.imageUrls && error.imageUrls[0]))
                                                                 }
                                                                 alt="Önizleme"
+                                                                loading="lazy"
+                                                                decoding="async"
                                                                 className="w-full h-full object-cover"
                                                             />
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-end justify-center p-2">
