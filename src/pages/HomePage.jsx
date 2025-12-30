@@ -1358,11 +1358,17 @@ const HomePage = () => {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-blue-400"></div>
 
                             <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-                                    <Lock className="w-8 h-8 text-blue-400" />
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-600/20">
+                                        <BookOpen className="w-8 h-8 text-white" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                                            Hata Kitapçığı <span className="text-xs font-normal text-slate-400">v1.1</span>
+                                        </h1>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">Kurumsal Bilgi Bankası</p>
+                                    </div>
                                 </div>
-                                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Yönetici Girişi</h2>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm">Devam etmek için lütfen giriş yapın</p>
                             </div>
 
                             <form onSubmit={handleLogin} className="space-y-4">
