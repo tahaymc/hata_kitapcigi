@@ -1,8 +1,35 @@
 import React from 'react';
-import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
-import { CATEGORIES } from '../data/mockData';
+import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, HelpCircle, Database, Zap, Thermometer, BookOpen, Shield } from 'lucide-react';
 
-const getCategoryIcon = (categoryId) => {
+const ICON_OPTIONS = {
+    shoppingCart: ShoppingCart,
+    archive: Archive,
+    monitor: Monitor,
+    settings: Settings,
+    tag: Tag,
+    truck: Truck,
+    wifi: Wifi,
+    printer: Printer,
+    creditCard: CreditCard,
+    smartphone: Smartphone,
+    package: Package,
+    alertTriangle: AlertTriangle,
+    helpCircle: HelpCircle,
+    database: Database,
+    zap: Zap,
+    thermometer: Thermometer,
+    bookOpen: BookOpen,
+    shield: Shield
+};
+
+const getCategoryIcon = (categoryId, iconName = null) => {
+    // If iconName is provided (from category object), use it
+    if (iconName && ICON_OPTIONS[iconName]) {
+        const IconComponent = ICON_OPTIONS[iconName];
+        return <IconComponent className="w-6 h-6" />;
+    }
+
+    // Fallback for legacy hardcoded categories
     switch (categoryId) {
         case 'kasa': return <ShoppingCart className="w-6 h-6" />;
         case 'reyon': return <Archive className="w-6 h-6" />;
@@ -17,7 +44,20 @@ const COLOR_STYLES = {
     emerald: { text: 'text-emerald-600 dark:text-emerald-400', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500', ring: 'ring-emerald-500' },
     orange: { text: 'text-orange-600 dark:text-orange-400', bgLight: 'bg-orange-500/10', border: 'border-orange-500', ring: 'ring-orange-500' },
     purple: { text: 'text-purple-600 dark:text-purple-400', bgLight: 'bg-purple-500/10', border: 'border-purple-500', ring: 'ring-purple-500' },
-    slate: { text: 'text-slate-600 dark:text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' }
+    slate: { text: 'text-slate-600 dark:text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' },
+    red: { text: 'text-red-600 dark:text-red-400', bgLight: 'bg-red-500/10', border: 'border-red-500', ring: 'ring-red-500' },
+    amber: { text: 'text-amber-600 dark:text-amber-400', bgLight: 'bg-amber-500/10', border: 'border-amber-500', ring: 'ring-amber-500' },
+    yellow: { text: 'text-yellow-600 dark:text-yellow-400', bgLight: 'bg-yellow-500/10', border: 'border-yellow-500', ring: 'ring-yellow-500' },
+    lime: { text: 'text-lime-600 dark:text-lime-400', bgLight: 'bg-lime-500/10', border: 'border-lime-500', ring: 'ring-lime-500' },
+    green: { text: 'text-green-600 dark:text-green-400', bgLight: 'bg-green-500/10', border: 'border-green-500', ring: 'ring-green-500' },
+    teal: { text: 'text-teal-600 dark:text-teal-400', bgLight: 'bg-teal-500/10', border: 'border-teal-500', ring: 'ring-teal-500' },
+    cyan: { text: 'text-cyan-600 dark:text-cyan-400', bgLight: 'bg-cyan-500/10', border: 'border-cyan-500', ring: 'ring-cyan-500' },
+    sky: { text: 'text-sky-600 dark:text-sky-400', bgLight: 'bg-sky-500/10', border: 'border-sky-500', ring: 'ring-sky-500' },
+    indigo: { text: 'text-indigo-600 dark:text-indigo-400', bgLight: 'bg-indigo-500/10', border: 'border-indigo-500', ring: 'ring-indigo-500' },
+    violet: { text: 'text-violet-600 dark:text-violet-400', bgLight: 'bg-violet-500/10', border: 'border-violet-500', ring: 'ring-violet-500' },
+    fuchsia: { text: 'text-fuchsia-600 dark:text-fuchsia-400', bgLight: 'bg-fuchsia-500/10', border: 'border-fuchsia-500', ring: 'ring-fuchsia-500' },
+    pink: { text: 'text-pink-600 dark:text-pink-400', bgLight: 'bg-pink-500/10', border: 'border-pink-500', ring: 'ring-pink-500' },
+    rose: { text: 'text-rose-600 dark:text-rose-400', bgLight: 'bg-rose-500/10', border: 'border-rose-500', ring: 'ring-rose-500' }
 };
 
 const formatDisplayDate = (dateStr) => {
@@ -30,7 +70,7 @@ const formatDisplayDate = (dateStr) => {
     return dateStr;
 };
 
-const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
+const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, categories = [] }) => {
 
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
@@ -46,8 +86,8 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
 
     if (!error) return null;
 
-    const category = CATEGORIES.find(c => c.id === error.category);
-    const colorStyle = COLOR_STYLES[category?.color || 'slate'];
+    const category = categories.find(c => c.id === error.category);
+    const colorStyle = COLOR_STYLES[category?.color || 'slate'] || COLOR_STYLES.slate;
 
     const displayImages = error.imageUrls && error.imageUrls.length > 0
         ? error.imageUrls
@@ -75,7 +115,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
                             className={`flex items-center justify-center w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:scale-105 transition-transform`}
                         >
                             <div className={`${colorStyle.text}`}>
-                                {getCategoryIcon(error.category)}
+                                {getCategoryIcon(error.category, category?.icon)}
                             </div>
                         </div>
                     </div>
@@ -195,11 +235,11 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
                                     >
                                         <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
                                         <div className={`p-2 rounded-lg bg-white dark:bg-[#0f172a] shadow-sm border border-slate-200 dark:border-slate-700 ${colorStyle.text}`}>
-                                            {React.cloneElement(getCategoryIcon(error.category), { className: "w-4 h-4" })}
+                                            {React.cloneElement(getCategoryIcon(error.category, category?.icon), { className: "w-4 h-4" })}
                                         </div>
                                         <div className="pl-1">
                                             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Kategori</p>
-                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-none">{category?.name}</p>
+                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-none">{category?.name || 'Bilinmeyen'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -252,7 +292,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
                                                                     <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
                                                                         {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                                                                     </div>
-                                                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{person}</span>
+                                                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{person}</span>
                                                                 </div>
                                                             ))}
                                                         </div>

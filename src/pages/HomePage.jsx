@@ -595,7 +595,7 @@ const CategoryMoreDropdown = ({ categories, selectedCategory, onSelect, getCateg
                                     }`}
                             >
                                 <div className={`p-1.5 rounded-lg transition-transform group-hover/item:scale-110 ${style.bgLight} ${style.text}`}>
-                                    {getCategoryIcon(c.id, "w-4 h-4")}
+                                    {getCategoryIcon(c.id, "w-4 h-4", c.icon)}
                                 </div>
                                 <span className={`flex-1 transition-colors ${!isSelected && 'group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>{c.name}</span>
                                 {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
@@ -1203,7 +1203,7 @@ const HomePage = () => {
                                             : `bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 ${style.buttonUnselectedHover} ${style.hoverShadow}`
                                             }`}
                                     >
-                                        {getCategoryIcon(c.id, `w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 ${isSelected ? 'text-white' : style.text}`)}
+                                        {getCategoryIcon(c.id, `w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 ${isSelected ? 'text-white' : style.text}`, c.icon)}
                                         <span>{c.name}</span>
                                     </button>
                                 );
@@ -1288,7 +1288,8 @@ const HomePage = () => {
                     errors.length > 0 ? (
                         <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-4"}>
                             {errors.map((error) => {
-                                const colorKey = getCategoryColor(error.category);
+                                const cat = categories.find(c => c.id === error.category);
+                                const colorKey = cat ? cat.color : 'slate';
                                 const style = COLOR_STYLES[colorKey] || defaultStyle;
 
                                 return viewMode === 'grid' ? (
@@ -1311,10 +1312,10 @@ const HomePage = () => {
                                                         setSelectedCategory(error.category);
                                                     }}
                                                     className={`p-1.5 rounded-full border shadow-sm transition-transform group-hover:scale-110 cursor-pointer hover:opacity-80 relative ${style.bgLight} ${style.text} ${style.borderLight}`}
-                                                    title={`Kategoriye git: ${categories.find(c => c.id === error.category)?.name}`}
+                                                    title={`Kategoriye git: ${cat?.name || 'Bilinmeyen'}`}
                                                 >
                                                     <div className="flex items-center justify-center">
-                                                        {getCategoryIcon(error.category, "w-5 h-5")}
+                                                        {getCategoryIcon(error.category, "w-5 h-5", cat?.icon)}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1467,7 +1468,7 @@ const HomePage = () => {
                                         <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1.5 ${style.bar.replace('w-1', '')} bg-${style.bar.split(' ')[0].replace('bg-', '')} rounded-r-full opacity-0 group-hover:opacity-100 transition-all shadow-[2px_0_8px_-2px_rgba(0,0,0,0.5)]`}></div>
 
                                         <div className={`w-12 h-12 bg-slate-50 dark:bg-[#0f172a] rounded-xl flex flex-shrink-0 items-center justify-center border border-slate-200 dark:border-slate-700/50 ${style.text} ${style.groupHoverBg} transition-all`}>
-                                            {getCategoryIcon(error.category)}
+                                            {getCategoryIcon(error.category, "w-6 h-6", cat?.icon)}
                                         </div>
 
                                         <div className="flex-1 min-w-0">
@@ -1619,6 +1620,7 @@ const HomePage = () => {
                             onClose={() => setSelectedError(null)}
                             onCategoryClick={handleCategoryClick}
                             onDateClick={handleDateClick}
+                            categories={categories}
                         />
                     )
                 }
