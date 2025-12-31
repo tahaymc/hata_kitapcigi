@@ -1303,9 +1303,10 @@ const HomePage = () => {
                                         <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1.5 ${style.bar.split(' ')[0]} rounded-b-full shadow-sm`} />
 
                                         {/* Header: Title and Code/Icon */}
-                                        <div className="relative flex items-center justify-center mb-3 mt-2 min-h-[1.75rem]">
+                                        {/* Header: Title and Code/Icon */}
+                                        <div className="flex items-start gap-4 mb-4 mt-2">
                                             {/* Left: Category Icon */}
-                                            <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20">
+                                            <div className="flex-none">
                                                 <div
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -1321,15 +1322,15 @@ const HomePage = () => {
                                             </div>
 
                                             {/* Center: Title */}
-                                            <div className="w-full px-20 text-center">
-                                                <h3 className="font-extrabold text-base leading-snug line-clamp-2 text-slate-800 dark:text-slate-100">
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-extrabold text-sm md:text-base leading-snug line-clamp-2 text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                     {error.title}
                                                 </h3>
                                             </div>
 
                                             {/* Right: Code */}
-                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20">
-                                                <span className={`px-2.5 py-1 rounded-full border font-mono font-bold text-xs ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                                            <div className="flex-none">
+                                                <span className={`px-3 py-1 rounded-lg border font-mono font-bold text-[10px] sm:text-xs tracking-tight whitespace-nowrap shadow-sm transition-all ${style.bgLight} ${style.text} ${style.borderLight}`}>
                                                     {error.code || 'SYS-000'}
                                                 </span>
                                             </div>
