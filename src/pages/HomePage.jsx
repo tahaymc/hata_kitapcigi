@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer, MoreHorizontal, UserCog } from 'lucide-react';
+import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer, MoreHorizontal, UserCog, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCategories, searchErrors, getAllErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 import ErrorCodeInput from '../components/ErrorCodeInput';
+import PeopleManagerModal from '../components/PeopleManagerModal';
+import PersonSelect from '../components/PersonSelect';
 
 const ICON_OPTIONS = {
     shoppingCart: ShoppingCart,
@@ -619,6 +621,15 @@ const HomePage = () => {
     const [selectedError, setSelectedError] = useState(null); // For Modal
     const [previewGallery, setPreviewGallery] = useState(null); // For Quick Image View { images: [], index: 0 }
     const [hoverSlideshow, setHoverSlideshow] = useState({ id: null, index: 0 }); // For Card Hover Effect
+    const [toasts, setToasts] = useState([]);
+
+    const showToast = (message, type = 'success') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+        }, 3000);
+    };
 
     // Category Click Handler for Modal & Page
     const handleCategoryClick = (categoryId) => {
@@ -666,6 +677,7 @@ const HomePage = () => {
     }, [previewGallery]);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false); // Custom Dropdown State
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // Login Modal State
+    const [isPeopleManagerOpen, setIsPeopleManagerOpen] = useState(false); // People Manager Modal State
 
     const [loginData, setLoginData] = useState({ username: '', password: '' });
 
@@ -673,8 +685,9 @@ const HomePage = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newErrorData, setNewErrorData] = useState({
-        title: '', code: '', category: 'kasa', summary: '', solution: '', imageUrl: null, imageUrls: [],
-        relatedPeople: [],
+        title: '', code: '', category: 'sistem', summary: '', solution: '', imageUrl: null, imageUrls: [],
+        severity: 'low',
+        assignee_ids: [],
         solutionType: 'steps', // Enforcing 'steps'
         solutionSteps: [{ text: '', imageUrl: null }]
     });
@@ -931,7 +944,7 @@ const HomePage = () => {
 
         // Validate Error Code (Max 3 letters - 3 digits)
         if (!/^[A-Z]{1,3}-\d{3}$/.test(newErrorData.code)) {
-            alert("Hata kodu formatı hatalı! Örnekler: ABC-123, X-001 (Maks 3 harf - 3 rakam)");
+            showToast("Hata kodu formatı hatalı! (Örn: ABC-123)", 'error');
             return;
         }
 
@@ -947,19 +960,19 @@ const HomePage = () => {
                 solution: finalSolution, // For backward compatibility
                 solutionType: 'steps',
                 solutionSteps: newErrorData.solutionSteps,
-                imageUrl: newErrorData.imageUrls?.[0] || newErrorData.imageUrl
+                imageUrl: newErrorData.imageUrls?.[0] || newErrorData.imageUrl,
+                assignee_ids: newErrorData.assignee_ids, // Pass assignee_ids
             });
 
             if (newError) {
                 setErrors([newError, ...errors]);
                 setIsAddModalOpen(false);
-                setIsAddModalOpen(false);
-                setNewErrorData({ title: '', code: '', category: 'kasa', summary: '', solution: '', imageUrl: null, imageUrls: [], solutionType: 'steps', solutionSteps: [{ text: '', imageUrl: null }] });
-                alert('Hata başarıyla eklendi!');
+                setNewErrorData({ title: '', code: '', category: 'sistem', summary: '', solution: '', imageUrl: null, imageUrls: [], severity: 'low', assignee_ids: [], solutionType: 'steps', solutionSteps: [{ text: '', imageUrl: null }] });
+                showToast('Hata başarıyla eklendi!');
             }
         } catch (error) {
             console.error('Error adding record:', error);
-            alert(`Hata eklenirken bir sorun oluştu:\n${error.message}`);
+            showToast(`Hata eklenirken bir sorun oluştu: ${error.message}`, 'error');
         }
     };
 
@@ -1001,7 +1014,8 @@ const HomePage = () => {
             ...error,
             imageUrls: error.imageUrls || (error.imageUrl ? [error.imageUrl] : []),
             solutionType: 'steps',
-            solutionSteps: steps
+            solutionSteps: steps,
+            assignee_ids: error.assignees ? error.assignees.map(a => a.id) : (error.assignee_id ? [error.assignee_id] : []),
         });
         setIsEditModalOpen(true);
     };
@@ -1011,7 +1025,7 @@ const HomePage = () => {
 
         // Validate Error Code (Max 3 letters - 3 digits)
         if (!/^[A-Z]{1,3}-\d{3}$/.test(editingError.code)) {
-            alert("Hata kodu formatı hatalı! Örnekler: ABC-123, X-001 (Maks 3 harf - 3 rakam)");
+            showToast("Hata kodu formatı hatalı! (Örn: ABC-123)", 'error');
             return;
         }
 
@@ -1027,17 +1041,18 @@ const HomePage = () => {
                 solution: finalSolution,
                 solutionType: 'steps',
                 solutionSteps: editingError.solutionSteps,
-                imageUrls: editingError.imageUrls
+                imageUrls: editingError.imageUrls,
+                assignee_ids: editingError.assignee_ids, // Pass assignee_ids
             });
             setIsEditModalOpen(false);
             setEditingError(null);
             // Refresh errors
             const updatedErrors = await searchErrors(searchTerm, selectedCategory, selectedDate);
             setErrors(updatedErrors);
-            alert('Kayıt güncellendi!');
+            showToast('Kayıt güncellendi!');
         } catch (error) {
             console.error('Error updating record:', error);
-            alert(`Hata güncellenirken bir sorun oluştu:\n${error.message}`);
+            showToast(`Hata güncellenirken bir sorun oluştu: ${error.message}`, 'error');
         }
     };
 
@@ -1046,9 +1061,13 @@ const HomePage = () => {
         const updatedError = await incrementViewCount(error.id);
 
         if (updatedError) {
+            // Merge existing error (with assignees) with updated viewCount
+            // We MUST do this because the View Count API returns only the error columns, not the assignees relation
+            const mergedError = { ...error, ...updatedError };
+
             // Update local list state if successful
-            setErrors(prev => prev.map(e => e.id === error.id ? updatedError : e));
-            setSelectedError(updatedError);
+            setErrors(prev => prev.map(e => e.id === error.id ? mergedError : e));
+            setSelectedError(mergedError);
         } else {
             // Fallback: If API fails (e.g. Vercel static deployment), still open the modal with existing data
             setSelectedError(error);
@@ -1102,6 +1121,13 @@ const HomePage = () => {
                                     title="Yeni Ekle"
                                 >
                                     <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+                                </button>
+                                <button
+                                    onClick={() => setIsPeopleManagerOpen(true)}
+                                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                    title="Personel Yönetimi"
+                                >
+                                    <Users className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => setIsCredentialsModalOpen(true)}
@@ -1273,10 +1299,8 @@ const HomePage = () => {
                                         onClick={() => handleCardClick(error)}
                                     >
                                         {/* Top Accent Line */}
-                                        {/* Top Accent Line */}
                                         <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1.5 ${style.bar.split(' ')[0]} rounded-b-full shadow-sm`} />
 
-                                        {/* Header: Title and Code */}
                                         {/* Header: Title and Code/Icon */}
                                         <div className="relative flex items-center justify-center mb-3 mt-2 min-h-[1.75rem]">
                                             {/* Left: Category Icon */}
@@ -1320,7 +1344,6 @@ const HomePage = () => {
                                         {/* Footer Metadata (Pills) */}
                                         <div className="relative flex items-center justify-between gap-2 mb-4">
                                             {/* Category Pill (Left) */}
-                                            {/* Category Pill (Left) */}
                                             <div
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -1348,8 +1371,26 @@ const HomePage = () => {
                                                 <span>{formatDisplayDate(error.date)}</span>
                                             </div>
 
-                                            {/* View Count Pill (Right) */}
-                                            <div className="flex items-center justify-end">
+                                            {/* View Count & Assignee Pill (Right) */}
+                                            <div className="flex items-center justify-end gap-2">
+                                                {error.assignees && error.assignees.length > 0 ? (
+                                                    <div className="flex -space-x-2">
+                                                        {error.assignees.slice(0, 3).map(person => (
+                                                            <div key={person.id} className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200 shadow-sm relative z-10`} title={person.name}>
+                                                                {person.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                        ))}
+                                                        {error.assignees.length > 3 && (
+                                                            <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-slate-100 text-slate-500 border border-slate-200 shadow-sm relative z-0">
+                                                                +{error.assignees.length - 3}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : error.assignee ? (
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200 shadow-sm`} title={error.assignee.name}>
+                                                        {error.assignee.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                ) : null}
                                                 <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
                                                     <Eye className="w-4 h-4" />
                                                     <span>{error.viewCount || 0}</span>
@@ -1445,6 +1486,25 @@ const HomePage = () => {
                                         </div>
 
                                         <div className="hidden md:flex flex-row items-center gap-3 min-w-fit">
+                                            {error.assignees && error.assignees.length > 0 ? (
+                                                <div className="flex -space-x-2 mr-2">
+                                                    {error.assignees.slice(0, 3).map(person => (
+                                                        <div key={person.id} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200 shadow-sm relative z-10`} title={person.name}>
+                                                            {person.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    ))}
+                                                    {error.assignees.length > 3 && (
+                                                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-slate-100 text-slate-500 border border-slate-200 shadow-sm relative z-0">
+                                                            +{error.assignees.length - 3}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : error.assignee ? (
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200 shadow-sm`} title={error.assignee.name}>
+                                                    {error.assignee.name.charAt(0).toUpperCase()}
+                                                </div>
+                                            ) : null}
+
                                             <span
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -1779,15 +1839,12 @@ const HomePage = () => {
 
                                     {/* Related People Input */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İlgili Kişiler (Personel)</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-                                            placeholder="Örn: Ahmet Yılmaz, Ayşe Demir"
-                                            value={newErrorData.relatedPeople ? newErrorData.relatedPeople.join(', ') : ''}
-                                            onChange={(e) => setNewErrorData({ ...newErrorData, relatedPeople: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Atanan Personel</label>
+                                        <PersonSelect
+                                            value={newErrorData.assignee_ids}
+                                            onChange={(val) => setNewErrorData({ ...newErrorData, assignee_ids: val })}
+                                            multiple={true}
                                         />
-                                        <p className="mt-1 text-xs text-slate-400">İsimleri virgül ile ayırarak yazınız.</p>
                                     </div>
 
                                     <div>
@@ -1999,15 +2056,12 @@ const HomePage = () => {
 
                                             {/* Related People Input (Edit) */}
                                             <div className="mb-6">
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İlgili Kişiler (Personel)</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-                                                    placeholder="Örn: Ahmet Yılmaz, Ayşe Demir"
-                                                    value={editingError.relatedPeople ? editingError.relatedPeople.join(', ') : ''}
-                                                    onChange={(e) => setEditingError({ ...editingError, relatedPeople: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Atanan Personel</label>
+                                                <PersonSelect
+                                                    value={editingError.assignee_ids}
+                                                    onChange={(val) => setEditingError({ ...editingError, assignee_ids: val })}
+                                                    multiple={true}
                                                 />
-                                                <p className="mt-1 text-xs text-slate-400">İsimleri virgül ile ayırarak yazınız.</p>
                                             </div>
 
                                             {/* Image Preview Grid */}
@@ -2292,7 +2346,33 @@ const HomePage = () => {
                         </div>
                     </div>
                 )}
+                {/* People Manager Modal */}
+                {isPeopleManagerOpen && (
+                    <PeopleManagerModal onClose={() => setIsPeopleManagerOpen(false)} />
+                )}
             </main >
+            {/* Aesthetic Toasts Container */}
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[2000] flex flex-col gap-3 pointer-events-none w-full max-w-sm px-4">
+                {toasts.map(toast => (
+                    <div
+                        key={toast.id}
+                        className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 animate-in fade-in slide-in-from-bottom-6 duration-500 ${toast.type === 'success' ? 'bg-emerald-600/90 text-white shadow-emerald-500/20' : 'bg-red-600/90 text-white shadow-red-500/20'} w-full`}
+                    >
+                        <div className="flex-shrink-0 p-1.5 rounded-xl bg-white/20">
+                            {toast.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-bold text-sm leading-tight">{toast.message}</p>
+                        </div>
+                        <button
+                            onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                            className="p-1 rounded-lg hover:bg-white/20 transition-colors"
+                        >
+                            <X className="w-4 h-4 opacity-70" />
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div >
     );
 };

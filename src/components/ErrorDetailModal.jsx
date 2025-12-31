@@ -103,6 +103,8 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
 
                 {/* Scrollable Content */}
                 <div className="overflow-y-auto p-10 custom-scrollbar">
+
+
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Content */}
                         <div className="lg:col-span-2 space-y-8">
@@ -202,31 +204,64 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
                                     </div>
                                 </div>
 
-                                {/* Refined Related People Section - More Prominent per request - Neutral Card, Category Accent */}
-                                {error.relatedPeople && error.relatedPeople.length > 0 && (
+
+                                {/* Assigned Person / Related People / Multiple Assignees */}
+                                {(error.assignees && error.assignees.length > 0) || error.assignee || (error.relatedPeople && error.relatedPeople.length > 0) ? (
                                     <div className="mt-2">
                                         <div className="bg-slate-100/80 dark:bg-[#1e293b] p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
-                                            {/* Category Colored Accent Bar - Thicker and Solid to match Cards */}
+                                            {/* Category Colored Accent Bar */}
                                             <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
+
                                             <div className="flex flex-col gap-3">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest pl-2">İlgili Kişiler</span>
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest pl-2">
+                                                        {(error.assignees && error.assignees.length > 0) ? 'İlgili Personeller' : (error.assignee ? 'İlgili Personel' : 'İlgili Kişiler')}
+                                                    </span>
                                                     <div className="h-px w-full bg-slate-200 dark:bg-slate-700/50"></div>
                                                 </div>
-                                                <div className="flex flex-wrap gap-2 pl-2">
-                                                    {error.relatedPeople.map((person, idx) => (
-                                                        <div key={idx} className="flex items-center gap-2 pl-1 pr-3 py-1.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105">
-                                                            <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
-                                                                {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                                                            </div>
-                                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{person}</span>
+
+                                                <div className="pl-2">
+                                                    {error.assignees && error.assignees.length > 0 ? (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            {error.assignees.map(person => (
+                                                                <div key={person.id} className="flex items-center gap-3 p-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200`}>
+                                                                        {person.name.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{person.name}</h4>
+                                                                        {person.role && <p className="text-xs text-slate-500 font-medium">{person.role}</p>}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    ) : error.assignee ? (
+                                                        <div className="flex items-center gap-3 p-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200`}>
+                                                                {error.assignee.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{error.assignee.name}</h4>
+                                                                {error.assignee.role && <p className="text-xs text-slate-500 font-medium">{error.assignee.role}</p>}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {error.relatedPeople.map((person, idx) => (
+                                                                <div key={idx} className="flex items-center gap-2 pl-1 pr-3 py-1.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105">
+                                                                    <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
+                                                                        {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                                                    </div>
+                                                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{person}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         </div>
 
@@ -307,82 +342,87 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick }) => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Full Screen Image Overlay */}
-            {isImageEnlarged && (
-                <div
-                    className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
-                    onClick={() => setIsImageEnlarged(false)}
-                >
-                    <button
-                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+            {
+                isImageEnlarged && (
+                    <div
+                        className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
                         onClick={() => setIsImageEnlarged(false)}
                     >
-                        <X className="w-8 h-8" />
-                    </button>
+                        <button
+                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                            onClick={() => setIsImageEnlarged(false)}
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
 
-                    {/* Navigation Arrows */}
-                    {displayImages.length > 1 && (
-                        <>
-                            <button
-                                className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : displayImages.length - 1));
-                                }}
-                            >
-                                <ChevronLeft className="w-8 h-8" />
-                            </button>
-                            <button
-                                className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedImageIndex(prev => (prev < displayImages.length - 1 ? prev + 1 : 0));
-                                }}
-                            >
-                                <ChevronRight className="w-8 h-8" />
-                            </button>
-                        </>
-                    )}
+                        {/* Navigation Arrows */}
+                        {displayImages.length > 1 && (
+                            <>
+                                <button
+                                    className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : displayImages.length - 1));
+                                    }}
+                                >
+                                    <ChevronLeft className="w-8 h-8" />
+                                </button>
+                                <button
+                                    className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hover:scale-110 active:scale-95"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedImageIndex(prev => (prev < displayImages.length - 1 ? prev + 1 : 0));
+                                    }}
+                                >
+                                    <ChevronRight className="w-8 h-8" />
+                                </button>
+                            </>
+                        )}
 
-                    <img
-                        src={displayImages[selectedImageIndex]}
-                        alt={error.title}
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
-                        onClick={(e) => e.stopPropagation()}
-                    />
+                        <img
+                            src={displayImages[selectedImageIndex]}
+                            alt={error.title}
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        />
 
-                    {/* Counter Bubble */}
-                    {displayImages.length > 1 && (
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white font-medium text-sm border border-white/10">
-                            {selectedImageIndex + 1} / {displayImages.length}
-                        </div>
-                    )}
-                </div>
-            )}
+                        {/* Counter Bubble */}
+                        {displayImages.length > 1 && (
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white font-medium text-sm border border-white/10">
+                                {selectedImageIndex + 1} / {displayImages.length}
+                            </div>
+                        )}
+                    </div>
+                )
+            }
 
             {/* Step Image Full Screen Overlay */}
-            {zoomedStepImage && (
-                <div
-                    className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
-                    onClick={() => setZoomedStepImage(null)}
-                >
-                    <button
-                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+            {
+                zoomedStepImage && (
+                    <div
+                        className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
                         onClick={() => setZoomedStepImage(null)}
                     >
-                        <X className="w-8 h-8" />
-                    </button>
-                    <img
-                        src={zoomedStepImage}
-                        alt="Adım Görseli"
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            )}
-        </div>
+                        <button
+                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
+                            onClick={() => setZoomedStepImage(null)}
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+                        <img
+                            src={zoomedStepImage}
+                            alt="Adım Görseli"
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                )
+            }
+
+        </div >
     );
 };
 

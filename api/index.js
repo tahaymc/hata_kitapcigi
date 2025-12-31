@@ -71,15 +71,51 @@ const checkDb = (res) => {
 app.get('/api/errors', async (req, res) => {
     if (!checkDb(res)) return;
     try {
-        const { data, error } = await supabase
+        // Fetch errors with their related assignee IDs
+        const { data: errorsData, error: errorsError } = await supabase
             .from('errors')
-            .select('*')
+            .select(`
+                *,
+                error_assignees (
+                    person:people (*)
+                )
+            `)
             .order('id', { ascending: false });
 
-        if (error) throw error;
-        res.json(data);
+        if (errorsError) throw errorsError;
+
+        // Transform data to include assignees array
+        const transformedData = errorsData.map(error => {
+            // Safe access to joined data
+            const rawAssignees = error.error_assignees || [];
+            const mappedAssignees = rawAssignees
+                .map(ea => ea.person)
+                .filter(p => p !== null && p !== undefined); // Filter out any nulls
+
+            return {
+                ...error,
+                assignees: mappedAssignees,
+                // Legacy support: logic to get the first assignee or null
+                assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+            };
+        });
+
+        res.json(transformedData);
     } catch (e) {
         console.error('Supabase Error (GET /errors):', e.message);
+        // Fallback: If the relationship query failed (e.g. table missing), 
+        // try fetching just errors to keep the app working.
+        if (e.message.includes('error_assignees')) {
+            console.warn('Retrying fetch without assignees relationship due to schema error.');
+            const { data: simpleErrors, error: simpleError } = await supabase
+                .from('errors')
+                .select('*')
+                .order('id', { ascending: false });
+
+            if (!simpleError) {
+                return res.json(simpleErrors.map(e => ({ ...e, assignees: [], assignee: null })));
+            }
+        }
         res.status(500).json({ error: e.message });
     }
 });
@@ -168,8 +204,169 @@ app.delete('/api/categories/:id', async (req, res) => {
     }
 });
 
+// --- DEPARTMENTS ENDPOINTS ---
+
+// GET All Departments
+app.get('/api/departments', async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { data, error } = await supabase
+            .from('departments')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (GET /departments):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST New Department
+app.post('/api/departments', async (req, res) => {
+    if (!checkDb(res)) return;
+    const { name, color, icon } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('departments')
+            .insert([{ name, color, icon }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST /departments):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// PUT Update Department
+app.put('/api/departments/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = req.params.id;
+    const { name, color, icon } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('departments')
+            .update({ name, color, icon })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (PUT /departments):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE Department
+app.delete('/api/departments/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = req.params.id;
+
+    try {
+        const { error } = await supabase
+            .from('departments')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /departments):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- PEOPLE ENDPOINTS ---
+
+// GET All People
+app.get('/api/people', async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { data, error } = await supabase
+            .from('people')
+            .select('*, department:departments(*)')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (GET /people):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST New Person
+app.post('/api/people', async (req, res) => {
+    if (!checkDb(res)) return;
+    const { name, role, department_id, color, avatar_url } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('people')
+            .insert([{ name, role, department_id, color, avatar_url }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST /people):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// PUT Update Person
+app.put('/api/people/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = req.params.id;
+    const { name, role, department_id, color, avatar_url } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('people')
+            .update({ name, role, department_id, color, avatar_url })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (PUT /people):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE Person
+app.delete('/api/people/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = req.params.id;
+
+    try {
+        const { error } = await supabase
+            .from('people')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /people):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // POST New Error
 app.post('/api/errors', async (req, res) => {
+
     if (!checkDb(res)) return;
     // Process images
     let finalImageUrls = req.body.imageUrls || [];
@@ -182,21 +379,17 @@ app.post('/api/errors', async (req, res) => {
         finalImageUrls = [finalImageUrl];
     }
 
-    // Date Handling fixed for TR Time YYYY-MM-DD
+    // Date Handling
     const now = new Date();
-    // Turkey is UTC+3. We manually adjust to get the correct date string.
-    // simpler: usage of toLocaleDateString with specific locale sometimes fails if Node locale is missing data.
-    // We will use formatting with Intl.DateTimeFormat 'en-CA' which standardizes YYYY-MM-DD.
-    // If that failed before, we can use a more manual approach.
     const formatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Europe/Istanbul',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
     });
-
-    // formatter.format(now) returns YYYY-MM-DD
     const dateStr = formatter.format(now);
+
+    const assigneeIds = req.body.assignee_ids || [];
 
     const payload = {
         ...req.body,
@@ -206,17 +399,66 @@ app.post('/api/errors', async (req, res) => {
         viewCount: 0
     };
 
+    // Remove non-column fields
     delete payload.id;
+    delete payload.assignee_ids;
+    delete payload.assignee_id; // Clean up legacy if sent
+    delete payload.severity; // Remove if column doesn't exist yet
 
     try {
-        const { data, error } = await supabase
+        // 1. Insert Error
+        const { data: errorData, error: insertError } = await supabase
             .from('errors')
             .insert([payload])
             .select()
             .single();
 
-        if (error) throw error;
-        res.status(201).json(data);
+        if (insertError) throw insertError;
+
+        // 2. Insert Assignees
+        if (assigneeIds.length > 0) {
+            const assigneeRows = assigneeIds.map(personId => ({
+                error_id: errorData.id,
+                person_id: personId
+            }));
+
+            const { error: assignError } = await supabase
+                .from('error_assignees')
+                .insert(assigneeRows);
+
+            if (assignError) throw assignError;
+        }
+
+        // 3. Re-fetch the complete error with assignees for the Frontend
+        const { data: completeError, error: fetchError } = await supabase
+            .from('errors')
+            .select(`
+                *,
+                error_assignees (
+                    person:people (*)
+                )
+            `)
+            .eq('id', errorData.id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // Transform (sanitize assignees)
+        const rawAssignees = completeError.error_assignees || [];
+
+        const mappedAssignees = rawAssignees
+            .map(ea => ea.person)
+            .filter(p => p !== null && p !== undefined);
+
+
+        const responseData = {
+            ...completeError,
+            assignees: mappedAssignees,
+            assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+        };
+
+
+        res.status(201).json(responseData);
     } catch (e) {
         console.error('Supabase Error (POST /errors):', e.message);
         res.status(500).json({ error: e.message });
@@ -238,13 +480,22 @@ app.put('/api/errors/:id', async (req, res) => {
         finalImageUrls = [finalImageUrl];
     }
 
+    const assigneeIds = req.body.assignee_ids || [];
+
     const payload = {
         ...req.body,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls
     };
 
+    // Clean up non-column fields
+    delete payload.assignee_ids;
+    delete payload.assignee_id;
+    delete payload.assignees; // if present from GET
+    delete payload.severity; // Remove if column doesn't exist yet
+
     try {
+        // 1. Update Error
         const { data, error } = await supabase
             .from('errors')
             .update(payload)
@@ -253,8 +504,51 @@ app.put('/api/errors/:id', async (req, res) => {
             .single();
 
         if (error) throw error;
+
         if (data) {
-            res.json(data);
+            // 2. Sync Assignees
+            // Verify assigneeIds is an array
+            if (Array.isArray(assigneeIds)) {
+                // Delete existing
+                await supabase.from('error_assignees').delete().eq('error_id', id);
+
+                // Insert new
+                if (assigneeIds.length > 0) {
+                    const assigneeRows = assigneeIds.map(personId => ({
+                        error_id: id,
+                        person_id: personId
+                    }));
+                    await supabase.from('error_assignees').insert(assigneeRows);
+                }
+            }
+
+            // 3. Re-fetch the complete error with assignees
+            const { data: completeError, error: fetchError } = await supabase
+                .from('errors')
+                .select(`
+                    *,
+                    error_assignees (
+                        person:people (*)
+                    )
+                `)
+                .eq('id', id)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            // Transform
+            const rawAssignees = completeError.error_assignees || [];
+            const mappedAssignees = rawAssignees
+                .map(ea => ea.person)
+                .filter(p => p !== null && p !== undefined);
+
+            const responseData = {
+                ...completeError,
+                assignees: mappedAssignees,
+                assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+            };
+
+            res.json(responseData);
         } else {
             res.status(404).json({ error: 'Error not found' });
         }
@@ -270,6 +564,9 @@ app.delete('/api/errors/:id', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
+        // Delete assignees first (cascade might handle this, but explicit is safer)
+        await supabase.from('error_assignees').delete().eq('error_id', id);
+
         const { error } = await supabase
             .from('errors')
             .delete()

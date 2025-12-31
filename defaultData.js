@@ -6,6 +6,11 @@ export const DEFAULT_DATA = {
         { id: 'sistem', name: 'Sistem', color: 'purple' },
         { id: 'diger', name: 'Diğer', color: 'slate' },
     ],
+    people: [
+        { name: 'Ahmet Yılmaz', role: 'Mağaza Müdürü', color: 'blue' },
+        { name: 'Ayşe Demir', role: 'Kasa Sorumlusu', color: 'pink' },
+        { name: 'Mehmet Öz', role: 'Depo Görevlisi', color: 'orange' }
+    ],
     errors: [
         {
             id: 1,
