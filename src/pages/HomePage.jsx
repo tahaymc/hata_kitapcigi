@@ -1321,7 +1321,7 @@ const HomePage = () => {
                                             </div>
 
                                             {/* Center: Title */}
-                                            <div className="w-full px-12 text-center">
+                                            <div className="w-full px-20 text-center">
                                                 <h3 className="font-extrabold text-base leading-snug line-clamp-2 text-slate-800 dark:text-slate-100">
                                                     {error.title}
                                                 </h3>
