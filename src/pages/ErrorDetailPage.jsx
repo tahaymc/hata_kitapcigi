@@ -1,37 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Monitor, ShoppingCart, Archive, Settings, AlertTriangle, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, Image as ImageIcon, CheckCircle, AlertTriangle } from 'lucide-react';
+import { getCategoryIcon, getCategoryColor, formatDisplayDate } from '../utils/helpers';
+import { COLOR_STYLES } from '../utils/constants';
 import { getErrorById, CATEGORIES } from '../data/mockData';
 
-const getCategoryIcon = (categoryId) => {
-    switch (categoryId) {
-        case 'kasa': return <ShoppingCart className="w-6 h-6" />;
-        case 'reyon': return <Archive className="w-6 h-6" />;
-        case 'depo': return <Archive className="w-6 h-6" />;
-        case 'sistem': return <Monitor className="w-6 h-6" />;
-        default: return <Settings className="w-6 h-6" />;
-    }
-};
 
-const COLOR_STYLES = {
-    blue: { text: 'text-blue-400', bg: 'bg-blue-500', bgLight: 'bg-blue-500/10', border: 'border-blue-500' },
-    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500' },
-    orange: { text: 'text-orange-400', bg: 'bg-orange-500', bgLight: 'bg-orange-500/10', border: 'border-orange-500' },
-    purple: { text: 'text-purple-400', bg: 'bg-purple-500', bgLight: 'bg-purple-500/10', border: 'border-purple-500' },
-    slate: { text: 'text-slate-400', bg: 'bg-slate-500', bgLight: 'bg-slate-500/10', border: 'border-slate-500' }
-};
-
-const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return '';
-    // If it is already in DD.MM.YYYY format (legacy data)
-    if (dateStr.includes('.') && dateStr.split('.').length === 3) return dateStr;
-    // If it is YYYY-MM-DD (new standard)
-    if (dateStr.includes('-')) {
-        const [year, month, day] = dateStr.split('-');
-        return `${day}.${month}.${year}`;
-    }
-    return dateStr;
-};
 
 const ErrorDetailPage = () => {
     const { id } = useParams();
@@ -50,7 +24,7 @@ const ErrorDetailPage = () => {
     if (!error) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Hata bulunamadı.</div>;
 
     const category = CATEGORIES.find(c => c.id === error.category);
-    const colorStyle = COLOR_STYLES[category?.color || 'slate'];
+    const colorStyle = COLOR_STYLES[category?.color || 'slate'] || COLOR_STYLES.slate;
 
     return (
         <div className="min-h-screen bg-[#0f172a] font-sans text-slate-100 flex flex-col">
@@ -146,7 +120,7 @@ const ErrorDetailPage = () => {
                                 >
                                     <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
                                     <div className={`p-2 rounded-lg bg-[#0f172a] shadow-sm border border-slate-700 ${colorStyle.text}`}>
-                                        {React.cloneElement(getCategoryIcon(error.category), { className: "w-4 h-4" })}
+                                        {getCategoryIcon(error.category, "w-4 h-4", category?.icon)}
                                     </div>
                                     <div className="pl-1">
                                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Kategori</p>

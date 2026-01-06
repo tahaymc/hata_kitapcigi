@@ -403,6 +403,7 @@ app.post('/api/errors', async (req, res) => {
     delete payload.id;
     delete payload.assignee_ids;
     delete payload.assignee_id; // Clean up legacy if sent
+    delete payload.assignee; // Clean up legacy object if sent
     delete payload.severity; // Remove if column doesn't exist yet
 
     try {
@@ -492,6 +493,7 @@ app.put('/api/errors/:id', async (req, res) => {
     delete payload.assignee_ids;
     delete payload.assignee_id;
     delete payload.assignees; // if present from GET
+    delete payload.assignee; // if present from GET
     delete payload.severity; // Remove if column doesn't exist yet
 
     try {

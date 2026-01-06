@@ -1,612 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Monitor, ShoppingCart, Archive, Settings, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, ChevronDown, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, AlertTriangle, HelpCircle, Database, Zap, Thermometer, MoreHorizontal, UserCog, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { Search, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, BookOpen, Users, UserCog } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCategories, searchErrors, getAllErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
 import ErrorDetailModal from '../components/ErrorDetailModal';
-import ErrorCodeInput from '../components/ErrorCodeInput';
+
 import PeopleManagerModal from '../components/PeopleManagerModal';
-import PersonSelect from '../components/PersonSelect';
 
-const ICON_OPTIONS = {
-    shoppingCart: ShoppingCart,
-    archive: Archive,
-    monitor: Monitor,
-    settings: Settings,
-    tag: Tag,
-    truck: Truck,
-    wifi: Wifi,
-    printer: Printer,
-    creditCard: CreditCard,
-    smartphone: Smartphone,
-    package: Package,
-    alertTriangle: AlertTriangle,
-    helpCircle: HelpCircle,
-    database: Database,
-    zap: Zap,
-    thermometer: Thermometer,
-    bookOpen: BookOpen,
-    shield: Shield
-};
 
-const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = null) => {
-    // If iconName is provided (from category object), use it
-    if (iconName && ICON_OPTIONS[iconName]) {
-        const IconComponent = ICON_OPTIONS[iconName];
-        return <IconComponent className={className} />;
-    }
+import AddErrorModal from '../components/AddErrorModal';
+import EditErrorModal from '../components/EditErrorModal';
 
-    // Fallback for legacy hardcoded categories
-    switch (categoryId) {
-        case 'kasa': return <ShoppingCart className={className} />;
-        case 'reyon': return <Archive className={className} />;
-        case 'depo': return <Archive className={className} />;
-        case 'sistem': return <Monitor className={className} />;
-        default: return <Settings className={className} />;
-    }
-};
+import CategoryMoreDropdown from '../components/CategoryMoreDropdown';
+import { COLOR_STYLES } from '../utils/constants';
+import { getCategoryIcon, getCategoryColor, formatDisplayDate } from '../utils/helpers';
 
-const getCategoryColor = (categoryId) => {
-    const cat = CATEGORIES.find(c => c.id === categoryId);
-    return cat ? cat.color : 'slate';
-};
 
-const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return '';
-    if (dateStr.includes('.') && dateStr.split('.').length === 3) return dateStr;
-    if (dateStr.includes('-')) {
-        const [year, month, day] = dateStr.split('-');
-        return `${day}.${month}.${year}`;
-    }
-    return dateStr;
-};
-
-// Explicit mapping for Tailwind to detect classes
-const COLOR_STYLES = {
-    blue: {
-        gradient: 'from-blue-500 to-blue-400',
-        text: 'text-blue-600 dark:text-blue-400',
-        bgLight: 'bg-blue-500/10',
-        borderLight: 'border-blue-500/20',
-        groupHoverText: 'group-hover:text-blue-400',
-        groupHoverBg: 'group-hover:bg-blue-500/10',
-        hoverBorder: 'hover:border-blue-500/50 dark:hover:border-blue-500',
-        hoverShadow: 'hover:shadow-blue-500/25 dark:hover:shadow-blue-400/40',
-        buttonSelected: 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 border-blue-500',
-        buttonUnselectedHover: 'hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/50 dark:hover:bg-blue-900/40',
-        bar: 'bg-blue-500 w-1'
-    },
-    emerald: {
-        gradient: 'from-emerald-500 to-emerald-400',
-        text: 'text-emerald-600 dark:text-emerald-400',
-        bgLight: 'bg-emerald-500/10',
-        borderLight: 'border-emerald-500/20',
-        groupHoverText: 'group-hover:text-emerald-400',
-        groupHoverBg: 'group-hover:bg-emerald-500/10',
-        hoverBorder: 'hover:border-emerald-500/50 dark:hover:border-emerald-500',
-        hoverShadow: 'hover:shadow-emerald-500/25 dark:hover:shadow-emerald-400/40',
-        buttonSelected: 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 border-emerald-500',
-        buttonUnselectedHover: 'hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/50 dark:hover:bg-emerald-900/40',
-        bar: 'bg-emerald-500 w-1'
-    },
-    orange: {
-        gradient: 'from-orange-500 to-orange-400',
-        text: 'text-orange-600 dark:text-orange-400',
-        bgLight: 'bg-orange-500/10',
-        borderLight: 'border-orange-500/20',
-        groupHoverText: 'group-hover:text-orange-400',
-        groupHoverBg: 'group-hover:bg-orange-500/10',
-        hoverBorder: 'hover:border-orange-500/50 dark:hover:border-orange-500',
-        hoverShadow: 'hover:shadow-orange-500/25 dark:hover:shadow-orange-400/40',
-        buttonSelected: 'bg-orange-600 text-white shadow-lg shadow-orange-500/30 border-orange-500',
-        buttonUnselectedHover: 'hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/50 dark:hover:bg-orange-900/40',
-        bar: 'bg-orange-500 w-1'
-    },
-    purple: {
-        gradient: 'from-purple-500 to-purple-400',
-        text: 'text-purple-600 dark:text-purple-400',
-        bgLight: 'bg-purple-500/10',
-        borderLight: 'border-purple-500/20',
-        groupHoverText: 'group-hover:text-purple-400',
-        groupHoverBg: 'group-hover:bg-purple-500/10',
-        hoverBorder: 'hover:border-purple-500/50 dark:hover:border-purple-500',
-        hoverShadow: 'hover:shadow-purple-500/25 dark:hover:shadow-purple-400/40',
-        buttonSelected: 'bg-purple-600 text-white shadow-lg shadow-purple-500/30 border-purple-500',
-        buttonUnselectedHover: 'hover:bg-purple-500/10 hover:text-purple-400 hover:border-purple-500/50 dark:hover:bg-purple-900/40',
-        bar: 'bg-purple-500 w-1'
-    },
-    slate: {
-        gradient: 'from-slate-500 to-slate-400',
-        text: 'text-slate-600 dark:text-slate-400',
-        bgLight: 'bg-slate-500/10',
-        borderLight: 'border-slate-500/20',
-        groupHoverText: 'group-hover:text-slate-400',
-        groupHoverBg: 'group-hover:bg-slate-500/10',
-        hoverBorder: 'hover:border-slate-500/50 dark:hover:border-slate-500',
-        hoverShadow: 'hover:shadow-slate-500/25 dark:hover:shadow-slate-400/40',
-        buttonSelected: 'bg-slate-600 text-white shadow-lg shadow-slate-500/30 border-slate-500',
-        buttonUnselectedHover: 'hover:bg-slate-500/10 hover:text-slate-400 hover:border-slate-500/50 dark:hover:bg-slate-900/40',
-        bar: 'bg-slate-500 w-1'
-    },
-    red: {
-        gradient: 'from-red-500 to-red-400',
-        text: 'text-red-600 dark:text-red-400',
-        bgLight: 'bg-red-500/10',
-        borderLight: 'border-red-500/20',
-        groupHoverText: 'group-hover:text-red-400',
-        groupHoverBg: 'group-hover:bg-red-500/10',
-        hoverBorder: 'hover:border-red-500/50 dark:hover:border-red-500',
-        hoverShadow: 'hover:shadow-red-500/10',
-        buttonSelected: 'bg-red-600 text-white shadow-lg shadow-red-500/30 border-red-500',
-        buttonUnselectedHover: 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/50',
-        bar: 'bg-red-500 w-1'
-    },
-    amber: {
-        gradient: 'from-amber-500 to-amber-400',
-        text: 'text-amber-600 dark:text-amber-400',
-        bgLight: 'bg-amber-500/10',
-        borderLight: 'border-amber-500/20',
-        groupHoverText: 'group-hover:text-amber-400',
-        groupHoverBg: 'group-hover:bg-amber-500/10',
-        hoverBorder: 'hover:border-amber-500/50 dark:hover:border-amber-500',
-        hoverShadow: 'hover:shadow-amber-500/25 dark:hover:shadow-amber-400/40',
-        buttonSelected: 'bg-amber-600 text-white shadow-lg shadow-amber-500/30 border-amber-500',
-        buttonUnselectedHover: 'hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/50 dark:hover:bg-amber-900/40',
-        bar: 'bg-amber-500 w-1'
-    },
-    yellow: {
-        gradient: 'from-yellow-500 to-yellow-400',
-        text: 'text-yellow-600 dark:text-yellow-400',
-        bgLight: 'bg-yellow-500/10',
-        borderLight: 'border-yellow-500/20',
-        groupHoverText: 'group-hover:text-yellow-400',
-        groupHoverBg: 'group-hover:bg-yellow-500/10',
-        hoverBorder: 'hover:border-yellow-500/50 dark:hover:border-yellow-500',
-        hoverShadow: 'hover:shadow-yellow-500/25 dark:hover:shadow-yellow-400/40',
-        buttonSelected: 'bg-yellow-600 text-white shadow-lg shadow-yellow-500/30 border-yellow-500',
-        buttonUnselectedHover: 'hover:bg-yellow-500/10 hover:text-yellow-400 hover:border-yellow-500/50 dark:hover:bg-yellow-900/40',
-        bar: 'bg-yellow-500 w-1'
-    },
-    lime: {
-        gradient: 'from-lime-500 to-lime-400',
-        text: 'text-lime-600 dark:text-lime-400',
-        bgLight: 'bg-lime-500/10',
-        borderLight: 'border-lime-500/20',
-        groupHoverText: 'group-hover:text-lime-400',
-        groupHoverBg: 'group-hover:bg-lime-500/10',
-        hoverBorder: 'hover:border-lime-500/50 dark:hover:border-lime-500',
-        hoverShadow: 'hover:shadow-lime-500/25 dark:hover:shadow-lime-400/40',
-        buttonSelected: 'bg-lime-600 text-white shadow-lg shadow-lime-500/30 border-lime-500',
-        buttonUnselectedHover: 'hover:bg-lime-500/10 hover:text-lime-400 hover:border-lime-500/50 dark:hover:bg-lime-900/40',
-        bar: 'bg-lime-500 w-1'
-    },
-    green: {
-        gradient: 'from-green-500 to-green-400',
-        text: 'text-green-600 dark:text-green-400',
-        bgLight: 'bg-green-500/10',
-        borderLight: 'border-green-500/20',
-        groupHoverText: 'group-hover:text-green-400',
-        groupHoverBg: 'group-hover:bg-green-500/10',
-        hoverBorder: 'hover:border-green-500/50 dark:hover:border-green-500',
-        hoverShadow: 'hover:shadow-green-500/25 dark:hover:shadow-green-400/40',
-        buttonSelected: 'bg-green-600 text-white shadow-lg shadow-green-500/30 border-green-500',
-        buttonUnselectedHover: 'hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/50 dark:hover:bg-green-900/40',
-        bar: 'bg-green-500 w-1'
-    },
-    teal: {
-        gradient: 'from-teal-500 to-teal-400',
-        text: 'text-teal-600 dark:text-teal-400',
-        bgLight: 'bg-teal-500/10',
-        borderLight: 'border-teal-500/20',
-        groupHoverText: 'group-hover:text-teal-400',
-        groupHoverBg: 'group-hover:bg-teal-500/10',
-        hoverBorder: 'hover:border-teal-500/50 dark:hover:border-teal-500',
-        hoverShadow: 'hover:shadow-teal-500/25 dark:hover:shadow-teal-400/40',
-        buttonSelected: 'bg-teal-600 text-white shadow-lg shadow-teal-500/30 border-teal-500',
-        buttonUnselectedHover: 'hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/50 dark:hover:bg-teal-900/40',
-        bar: 'bg-teal-500 w-1'
-    },
-    cyan: {
-        gradient: 'from-cyan-500 to-cyan-400',
-        text: 'text-cyan-600 dark:text-cyan-400',
-        bgLight: 'bg-cyan-500/10',
-        borderLight: 'border-cyan-500/20',
-        groupHoverText: 'group-hover:text-cyan-400',
-        groupHoverBg: 'group-hover:bg-cyan-500/10',
-        hoverBorder: 'hover:border-cyan-500/50 dark:hover:border-cyan-500',
-        hoverShadow: 'hover:shadow-cyan-500/25 dark:hover:shadow-cyan-400/40',
-        buttonSelected: 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 border-cyan-500',
-        buttonUnselectedHover: 'hover:bg-cyan-500/10 hover:text-cyan-400 hover:border-cyan-500/50 dark:hover:bg-cyan-900/40',
-        bar: 'bg-cyan-500 w-1'
-    },
-    sky: {
-        gradient: 'from-sky-500 to-sky-400',
-        text: 'text-sky-600 dark:text-sky-400',
-        bgLight: 'bg-sky-500/10',
-        borderLight: 'border-sky-500/20',
-        groupHoverText: 'group-hover:text-sky-400',
-        groupHoverBg: 'group-hover:bg-sky-500/10',
-        hoverBorder: 'hover:border-sky-500/50 dark:hover:border-sky-500',
-        hoverShadow: 'hover:shadow-sky-500/25 dark:hover:shadow-sky-400/40',
-        buttonSelected: 'bg-sky-600 text-white shadow-lg shadow-sky-500/30 border-sky-500',
-        buttonUnselectedHover: 'hover:bg-sky-500/10 hover:text-sky-400 hover:border-sky-500/50 dark:hover:bg-sky-900/40',
-        bar: 'bg-sky-500 w-1'
-    },
-    indigo: {
-        gradient: 'from-indigo-500 to-indigo-400',
-        text: 'text-indigo-600 dark:text-indigo-400',
-        bgLight: 'bg-indigo-500/10',
-        borderLight: 'border-indigo-500/20',
-        groupHoverText: 'group-hover:text-indigo-400',
-        groupHoverBg: 'group-hover:bg-indigo-500/10',
-        hoverBorder: 'hover:border-indigo-500/50 dark:hover:border-indigo-500',
-        hoverShadow: 'hover:shadow-indigo-500/25 dark:hover:shadow-indigo-400/40',
-        buttonSelected: 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 border-indigo-500',
-        buttonUnselectedHover: 'hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/50 dark:hover:bg-indigo-900/40',
-        bar: 'bg-indigo-500 w-1'
-    },
-    violet: {
-        gradient: 'from-violet-500 to-violet-400',
-        text: 'text-violet-600 dark:text-violet-400',
-        bgLight: 'bg-violet-500/10',
-        borderLight: 'border-violet-500/20',
-        groupHoverText: 'group-hover:text-violet-400',
-        groupHoverBg: 'group-hover:bg-violet-500/10',
-        hoverBorder: 'hover:border-violet-500/50 dark:hover:border-violet-500',
-        hoverShadow: 'hover:shadow-violet-500/25 dark:hover:shadow-violet-400/40',
-        buttonSelected: 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-500',
-        buttonUnselectedHover: 'hover:bg-violet-500/10 hover:text-violet-400 hover:border-violet-500/50 dark:hover:bg-violet-900/40',
-        bar: 'bg-violet-500 w-1'
-    },
-    fuchsia: {
-        gradient: 'from-fuchsia-500 to-fuchsia-400',
-        text: 'text-fuchsia-600 dark:text-fuchsia-400',
-        bgLight: 'bg-fuchsia-500/10',
-        borderLight: 'border-fuchsia-500/20',
-        groupHoverText: 'group-hover:text-fuchsia-400',
-        groupHoverBg: 'group-hover:bg-fuchsia-500/10',
-        hoverBorder: 'hover:border-fuchsia-500/50 dark:hover:border-fuchsia-500',
-        hoverShadow: 'hover:shadow-fuchsia-500/25 dark:hover:shadow-fuchsia-400/40',
-        buttonSelected: 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/30 border-fuchsia-500',
-        buttonUnselectedHover: 'hover:bg-fuchsia-500/10 hover:text-fuchsia-400 hover:border-fuchsia-500/50 dark:hover:bg-fuchsia-900/40',
-        bar: 'bg-fuchsia-500 w-1'
-    },
-    pink: {
-        gradient: 'from-pink-500 to-pink-400',
-        text: 'text-pink-600 dark:text-pink-400',
-        bgLight: 'bg-pink-500/10',
-        borderLight: 'border-pink-500/20',
-        groupHoverText: 'group-hover:text-pink-400',
-        groupHoverBg: 'group-hover:bg-pink-500/10',
-        hoverBorder: 'hover:border-pink-500/50 dark:hover:border-pink-500',
-        hoverShadow: 'hover:shadow-pink-500/25 dark:hover:shadow-pink-400/40',
-        buttonSelected: 'bg-pink-600 text-white shadow-lg shadow-pink-500/30 border-pink-500',
-        buttonUnselectedHover: 'hover:bg-pink-500/10 hover:text-pink-400 hover:border-pink-500/50 dark:hover:bg-pink-900/40',
-        bar: 'bg-pink-500 w-1'
-    },
-    rose: {
-        gradient: 'from-rose-500 to-rose-400',
-        text: 'text-rose-600 dark:text-rose-400',
-        bgLight: 'bg-rose-500/10',
-        borderLight: 'border-rose-500/20',
-        groupHoverText: 'group-hover:text-rose-400',
-        groupHoverBg: 'group-hover:bg-rose-500/10',
-        hoverBorder: 'hover:border-rose-500/50 dark:hover:border-rose-500',
-        hoverShadow: 'hover:shadow-rose-500/25 dark:hover:shadow-rose-400/40',
-        buttonSelected: 'bg-rose-600 text-white shadow-lg shadow-rose-500/30 border-rose-500',
-        buttonUnselectedHover: 'hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/50 dark:hover:bg-rose-900/40',
-        bar: 'bg-rose-500 w-1'
-    }
-};
-
-const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori Seçin", onAddCategory, onUpdateCategory, onDeleteCategory }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isAdding, setIsAdding] = useState(false);
-    const [editingCatId, setEditingCatId] = useState(null);
-
-    // Shared form state for both Add and Edit
-    const [formName, setFormName] = useState("");
-    const [formColor, setFormColor] = useState("slate");
-    const [formIcon, setFormIcon] = useState("settings");
-
-    const dropdownRef = React.useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-                setIsAdding(false);
-                setEditingCatId(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const startAdd = () => {
-        setIsAdding(true);
-        setEditingCatId(null);
-        setFormName("");
-        setFormColor("slate");
-        setFormIcon("settings");
-    };
-
-    const startEdit = (e, c) => {
-        e.stopPropagation(); // Don't select the category
-        setEditingCatId(c.id);
-        setIsAdding(false);
-        setFormName(c.name);
-        setFormColor(c.color);
-        setFormIcon(c.icon || "settings");
-    };
-
-    const handleSaveAdd = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!formName.trim() || !onAddCategory) return;
-
-        const success = await onAddCategory(formName, formColor, formIcon);
-        if (success) {
-            setIsAdding(false);
-            setFormName("");
-            setFormColor("slate");
-            setFormIcon("settings");
-            // Optionally close dropdown or stay open
-        }
-    };
-
-    const handleSaveEdit = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!formName.trim() || !onUpdateCategory) return;
-
-        const success = await onUpdateCategory(editingCatId, formName, formColor, formIcon);
-        if (success) {
-            setEditingCatId(null);
-            setFormName("");
-            setFormColor("slate");
-            setFormIcon("settings");
-        }
-    };
-
-    const handleDelete = async (e, id) => {
-        e.stopPropagation();
-        if (!window.confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) return;
-        if (onDeleteCategory) {
-            await onDeleteCategory(id);
-            if (value === id) onChange(null); // Clear selection if deleted
-        }
-    };
-
-    const cancelForm = (e) => {
-        e.stopPropagation();
-        setIsAdding(false);
-        setEditingCatId(null);
-        setFormName("");
-        setFormColor("slate");
-    };
-
-    const selectedCat = categories.find(c => c.id === value);
-    const selectedColor = selectedCat ? (COLOR_STYLES[selectedCat.color] || COLOR_STYLES.slate) : COLOR_STYLES.slate;
-
-    // Helper to render the form (used for both Add and Edit)
-    const renderForm = (isEdit = false) => (
-        <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
-            <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                    {isEdit ? "Kategoriyi Düzenle" : "Yeni Kategori Adı"}
-                </label>
-                <input
-                    type="text"
-                    autoFocus
-                    className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="Örn: Muhasebe"
-                    value={formName}
-                    onChange={e => setFormName(e.target.value)}
-                    onClick={e => e.stopPropagation()}
-                />
-            </div>
-            <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Simge Seçin</label>
-                <div className="grid grid-cols-6 gap-2">
-                    {Object.entries(ICON_OPTIONS).map(([key, Icon]) => (
-                        <button
-                            key={key}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setFormIcon(key); }}
-                            className={`p-1.5 rounded-lg flex items-center justify-center transition-all ${formIcon === key ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                            title={key}
-                        >
-                            <Icon className="w-4 h-4" />
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Renk Seçin</label>
-                <div className="grid grid-cols-6 gap-2">
-                    {Object.keys(COLOR_STYLES).map(colorKey => (
-                        <button
-                            key={colorKey}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setFormColor(colorKey); }}
-                            className={`w-6 h-6 rounded-full ${COLOR_STYLES[colorKey].bar.replace('w-1', '')} ${formColor === colorKey ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-110'} transition-all`}
-                            title={colorKey}
-                        />
-                    ))}
-                </div>
-            </div>
-            <div className="flex gap-2 pt-1">
-                <button
-                    type="button"
-                    onClick={cancelForm}
-                    className="flex-1 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                >
-                    İptal
-                </button>
-                <button
-                    type="button"
-                    onClick={isEdit ? handleSaveEdit : handleSaveAdd}
-                    disabled={!formName.trim()}
-                    className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-                >
-                    {isEdit ? "Güncelle" : "Ekle"}
-                </button>
-            </div>
-        </div>
-    );
-
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className={`w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border rounded-lg flex items-center justify-between outline-none transition-all ${isOpen ? 'ring-2 ring-blue-500 border-transparent' : 'border-slate-200 dark:border-slate-700 focus:border-blue-500'}`}
-            >
-                {selectedCat ? (
-                    <div className="flex items-center gap-3">
-                        <span className={`${selectedColor.text} p-1 ${selectedColor.bgLight} rounded-lg`}>
-                            {getCategoryIcon(selectedCat.id, "w-4 h-4", selectedCat.icon)}
-                        </span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">{selectedCat.name}</span>
-                    </div>
-                ) : (
-                    <span className="text-slate-400">{placeholder}</span>
-                )}
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isOpen && (
-                <div className="absolute z-[100] w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl shadow-xl max-h-96 overflow-auto animate-in fade-in zoom-in-95 duration-100 p-1.5 flex flex-col gap-1">
-
-                    {/* List Categories */}
-                    {categories.map(c => {
-                        const isEditing = editingCatId === c.id;
-                        if (isEditing) {
-                            return <div key={c.id}>{renderForm(true)}</div>;
-                        }
-
-                        const cStyle = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
-                        const isSelected = c.id === value;
-                        return (
-                            <div key={c.id} className="group relative flex items-center">
-                                <button
-                                    type="button"
-                                    onClick={() => { onChange(c.id); setIsOpen(false); }}
-                                    className={`w-full px-3 py-2.5 flex items-center gap-3 rounded-lg transition-colors text-sm ${isSelected ? 'bg-slate-100 dark:bg-slate-700/50' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}
-                                >
-                                    <span className={`${cStyle.text} p-1.5 rounded-md ${cStyle.bgLight} group-hover:scale-110 transition-transform`}>
-                                        {getCategoryIcon(c.id, "w-4 h-4", c.icon)}
-                                    </span>
-                                    <span className={`font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                                        {c.name}
-                                    </span>
-                                    {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
-                                </button>
-
-                                {/* Edit/Delete Actions (Visible on Hover) */}
-                                <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 shadow-sm rounded-md border border-slate-100 dark:border-slate-700 p-0.5">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => startEdit(e, c)}
-                                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
-                                        title="Düzenle"
-                                    >
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => handleDelete(e, c.id)}
-                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                                        title="Sil"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-
-                    {/* Add New Section */}
-                    {isAdding ? (
-                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                            {renderForm(false)}
-                        </div>
-                    ) : (
-                        <div className="mt-1 pt-2 border-t border-slate-100 dark:border-slate-700">
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); startAdd(); }}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Yeni Kategori Ekle
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
-const CategoryMoreDropdown = ({ categories, selectedCategory, onSelect, getCategoryIcon }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = React.useRef(null);
-    const hasSelectedInside = categories.some(c => c.id === selectedCategory);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`group flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 border hover:-translate-y-1 hover:shadow-2xl hover:scale-[1.02] active:scale-95 whitespace-nowrap h-[42px] ${hasSelectedInside || isOpen
-                    ? 'bg-slate-800 text-white border-slate-800 shadow-xl shadow-slate-500/20 dark:bg-white dark:text-slate-900 dark:border-white'
-                    : 'bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-500/50 dark:hover:border-blue-400/50 hover:shadow-blue-500/10'
-                    }`}
-            >
-                <MoreHorizontal className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110" />
-                <span>Diğer</span>
-            </button>
-
-            {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 z-[70] bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-xl p-2 animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-1">
-                    {categories.map(c => {
-                        const style = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
-                        const isSelected = selectedCategory === c.id;
-                        return (
-                            <button
-                                key={c.id}
-                                onClick={() => {
-                                    onSelect(isSelected ? null : c.id);
-                                    setIsOpen(false);
-                                }}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 w-full text-left group/item ${isSelected
-                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
-                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
-                                    }`}
-                            >
-                                <div className={`p-1.5 rounded-lg transition-transform group-hover/item:scale-110 ${style.bgLight} ${style.text}`}>
-                                    {getCategoryIcon(c.id, "w-4 h-4", c.icon)}
-                                </div>
-                                <span className={`flex-1 transition-colors ${!isSelected && 'group-hover/item:text-slate-900 dark:group-hover/item:text-white'}`}>{c.name}</span>
-                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
-    );
-};
 
 
 
@@ -643,6 +51,12 @@ const HomePage = () => {
         setSelectedError(null);
     };
 
+    // Code Click Handler for Modal & Page (Toggles Search)
+    const handleCodeClick = (code) => {
+        setSearchTerm(prev => prev === code ? '' : code);
+        setSelectedError(null);
+    };
+
     // Hover Slideshow Effect
     useEffect(() => {
         let interval;
@@ -664,15 +78,23 @@ const HomePage = () => {
         return () => clearInterval(interval);
     }, [hoverSlideshow.id, errors]);
 
-    // Prevent body scroll when preview gallery is open
+    // Prevent body scroll and handle Escape key when preview gallery is open
     useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setPreviewGallery(null);
+            }
+        };
+
         if (previewGallery) {
             document.body.style.overflow = 'hidden';
+            window.addEventListener('keydown', handleKeyDown);
         } else {
             document.body.style.overflow = 'unset';
         }
         return () => {
             document.body.style.overflow = 'unset';
+            window.removeEventListener('keydown', handleKeyDown);
         };
     }, [previewGallery]);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false); // Custom Dropdown State
@@ -684,15 +106,10 @@ const HomePage = () => {
     // Admin State
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newErrorData, setNewErrorData] = useState({
-        title: '', code: '', category: 'sistem', summary: '', solution: '', imageUrl: null, imageUrls: [],
-        severity: 'low',
-        assignee_ids: [],
-        solutionType: 'steps', // Enforcing 'steps'
-        solutionSteps: [{ text: '', imageUrl: null }]
-    });
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Edit Modal State
     const [editingError, setEditingError] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     // Admin Credentials State
     const [adminCredentials, setAdminCredentials] = useState({ username: 'admin', password: 'admin' });
@@ -769,6 +186,17 @@ const HomePage = () => {
             setErrors(data);
         });
     }, []);
+
+    // Close Credentials Modal on ESC
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isCredentialsModalOpen) {
+                setIsCredentialsModalOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isCredentialsModalOpen]);
 
     // Filter locally when search/filter changes
     useEffect(() => {
@@ -893,168 +321,34 @@ const HomePage = () => {
         setIsAdmin(false);
     };
 
-    const compressImage = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1200;
-                    const MAX_HEIGHT = 1200;
-                    let width = img.width;
-                    let height = img.height;
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
 
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
-                };
-            };
-        });
+    const handleAddSuccess = (newError) => {
+        setErrors([newError, ...errors]);
     };
 
-    const handleImageUpload = async (e) => {
-        const files = Array.from(e.target.files);
-        const compressedImages = await Promise.all(files.map(file => compressImage(file)));
-
-        setNewErrorData(prev => ({
-            ...prev,
-            imageUrls: [...(prev.imageUrls || []), ...compressedImages]
-        }));
-    };
-
-    const handleAddErrorSubmit = async (e) => {
-        e.preventDefault();
-
-        // Validate Error Code (Max 3 letters - 3 digits)
-        if (!/^[A-Z]{1,3}-\d{3}$/.test(newErrorData.code)) {
-            showToast("Hata kodu formatı hatalı! (Örn: ABC-123)", 'error');
-            return;
-        }
-
-        // Format solution always as steps
-        const finalSolution = newErrorData.solutionSteps
-            .filter(step => step.text.trim() !== '')
-            .map((step, index) => `${index + 1}. ${step.text}`)
-            .join('\n');
-
-        try {
-            const newError = await addError({
-                ...newErrorData,
-                solution: finalSolution, // For backward compatibility
-                solutionType: 'steps',
-                solutionSteps: newErrorData.solutionSteps,
-                imageUrl: newErrorData.imageUrls?.[0] || newErrorData.imageUrl,
-                assignee_ids: newErrorData.assignee_ids, // Pass assignee_ids
-            });
-
-            if (newError) {
-                setErrors([newError, ...errors]);
-                setIsAddModalOpen(false);
-                setNewErrorData({ title: '', code: '', category: 'sistem', summary: '', solution: '', imageUrl: null, imageUrls: [], severity: 'low', assignee_ids: [], solutionType: 'steps', solutionSteps: [{ text: '', imageUrl: null }] });
-                showToast('Hata başarıyla eklendi!');
-            }
-        } catch (error) {
-            console.error('Error adding record:', error);
-            showToast(`Hata eklenirken bir sorun oluştu: ${error.message}`, 'error');
-        }
+    const handleEditSuccess = (updatedError) => {
+        setErrors(prev => prev.map(e => e.id === updatedError.id ? updatedError : e));
+        setEditingError(null);
     };
 
     const handleDeleteClick = async (e, errorId) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         if (window.confirm('Bu kaydı silmek istediğinize emin misiniz?')) {
             await deleteError(errorId);
             const updatedErrors = await searchErrors(searchTerm, selectedCategory, selectedDate);
             setErrors(updatedErrors);
+            setSelectedError(null); // Close modal if open
         }
     };
 
     const handleEditClick = (e, error) => {
-        e.stopPropagation();
-
-        let steps = [{ text: '', imageUrl: null }];
-
-        if (error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0) {
-            steps = error.solutionSteps;
-        } else {
-            // Fallback parsing for legacy data
-            const isSteps = /^\s*\d+\./.test(error.solution);
-            if (isSteps) {
-                const parsedSteps = error.solution.split('\n')
-                    .map(line => line.replace(/^\d+\.\s*/, ''))
-                    .filter(s => s.trim() !== '');
-
-                if (parsedSteps.length > 0) {
-                    steps = parsedSteps.map(text => ({ text, imageUrl: null }));
-                }
-            } else if (error.solution) {
-                // Determine if it looks like there are steps even without numbering (paragraphs)
-                // or just put everything in one step
-                steps = [{ text: error.solution, imageUrl: null }];
-            }
-        }
-
-        setEditingError({
-            ...error,
-            imageUrls: error.imageUrls || (error.imageUrl ? [error.imageUrl] : []),
-            solutionType: 'steps',
-            solutionSteps: steps,
-            assignee_ids: error.assignees ? error.assignees.map(a => a.id) : (error.assignee_id ? [error.assignee_id] : []),
-        });
+        if (e) e.stopPropagation();
+        setEditingError(error);
         setIsEditModalOpen(true);
     };
 
-    const handleEditSubmit = async (e) => {
-        e.preventDefault();
 
-        // Validate Error Code (Max 3 letters - 3 digits)
-        if (!/^[A-Z]{1,3}-\d{3}$/.test(editingError.code)) {
-            showToast("Hata kodu formatı hatalı! (Örn: ABC-123)", 'error');
-            return;
-        }
-
-        // Format solution always as steps
-        const finalSolution = editingError.solutionSteps
-            .filter(step => step.text.trim() !== '')
-            .map((step, index) => `${index + 1}. ${step.text}`)
-            .join('\n');
-
-        try {
-            await updateError(editingError.id, {
-                ...editingError,
-                solution: finalSolution,
-                solutionType: 'steps',
-                solutionSteps: editingError.solutionSteps,
-                imageUrls: editingError.imageUrls,
-                assignee_ids: editingError.assignee_ids, // Pass assignee_ids
-            });
-            setIsEditModalOpen(false);
-            setEditingError(null);
-            // Refresh errors
-            const updatedErrors = await searchErrors(searchTerm, selectedCategory, selectedDate);
-            setErrors(updatedErrors);
-            showToast('Kayıt güncellendi!');
-        } catch (error) {
-            console.error('Error updating record:', error);
-            showToast(`Hata güncellenirken bir sorun oluştu: ${error.message}`, 'error');
-        }
-    };
 
     const handleCardClick = async (error) => {
         // Attempt to increment view count
@@ -1084,6 +378,7 @@ const HomePage = () => {
                         setSearchTerm('');
                         setSelectedCategory(null);
                         setSelectedDate(null);
+                        setViewMode('grid');
                         navigate('/');
                     }}>
                         <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 group-hover:scale-105 transition-all duration-300 ring-2 ring-white/20 overflow-hidden">
@@ -1096,7 +391,7 @@ const HomePage = () => {
                             </h1>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <span className="h-0.5 w-4 bg-blue-500 rounded-full animate-pulse"></span>
-                                <p className="text-[11px] font-bold tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 dark:from-blue-500 dark:via-cyan-300 dark:to-blue-500 animate-gradient-x">Hata Kitapçığı</p>
+                                <p className="text-[11px] font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 dark:from-blue-500 dark:via-cyan-300 dark:to-blue-500 animate-gradient-x">Çözüm Kitapçığı</p>
                             </div>
                         </div>
                     </div>
@@ -1215,7 +510,6 @@ const HomePage = () => {
                                     categories={categories.slice(4)}
                                     selectedCategory={selectedCategory}
                                     onSelect={setSelectedCategory}
-                                    getCategoryIcon={getCategoryIcon}
                                 />
                             )}
                         </div>
@@ -1330,7 +624,13 @@ const HomePage = () => {
 
                                             {/* Right: Code */}
                                             <div className="flex-none">
-                                                <span className={`px-3 py-1 rounded-lg border font-mono font-bold text-[10px] sm:text-xs tracking-tight whitespace-nowrap shadow-sm transition-all ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                                                <span
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleCodeClick(error.code);
+                                                    }}
+                                                    className={`px-3 py-1 rounded-lg border font-mono font-bold text-[10px] sm:text-xs tracking-tight whitespace-nowrap shadow-sm transition-all cursor-pointer hover:opacity-80 ${style.bgLight} ${style.text} ${style.borderLight}`}
+                                                >
                                                     {error.code || 'SYS-000'}
                                                 </span>
                                             </div>
@@ -1474,7 +774,13 @@ const HomePage = () => {
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-1">
-                                                <span className={`px-2 py-0.5 rounded ${style.bgLight} border ${style.borderLight} ${style.text} font-mono font-bold text-[10px] tracking-wider`}>
+                                                <span
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleCodeClick(error.code);
+                                                    }}
+                                                    className={`px-2 py-0.5 rounded ${style.bgLight} border ${style.borderLight} ${style.text} font-mono font-bold text-[10px] tracking-wider cursor-pointer hover:opacity-80`}
+                                                >
                                                     {error.code || 'SYS-000'}
                                                 </span>
                                                 <h3 className={`text-lg font-bold text-slate-800 dark:text-white ${style.groupHoverText} transition-colors truncate flex-1`}>
@@ -1621,7 +927,11 @@ const HomePage = () => {
                             onClose={() => setSelectedError(null)}
                             onCategoryClick={handleCategoryClick}
                             onDateClick={handleDateClick}
+                            onCodeClick={handleCodeClick}
                             categories={categories}
+                            isAdmin={isAdmin}
+                            onEdit={(e) => handleEditClick(e, selectedError)}
+                            onDelete={(e) => handleDeleteClick(e, selectedError.id)}
                         />
                     )
                 }
@@ -1704,7 +1014,7 @@ const HomePage = () => {
                 {
                     previewGallery && (
                         <div
-                            className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
                             onClick={() => setPreviewGallery(null)}
                         >
                             <button
@@ -1756,485 +1066,33 @@ const HomePage = () => {
                 }
 
                 {/* Add Error Modal */}
-                {
-                    isAddModalOpen && (
-                        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsAddModalOpen(false)}>
-                            <div className="bg-white dark:bg-[#1e293b] rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
-                                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50">
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Yeni Hata Ekle</h2>
-                                    <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                                        <X className="w-6 h-6" />
-                                    </button>
-                                </div>
-
-                                <form onSubmit={handleAddErrorSubmit} className="p-6 space-y-6">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
-                                            <ErrorCodeInput
-                                                value={newErrorData.code}
-                                                onChange={(val) => setNewErrorData({ ...newErrorData, code: val })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
-                                            <CategorySelect
-                                                value={newErrorData.category}
-                                                onChange={(val) => setNewErrorData({ ...newErrorData, category: val })}
-                                                categories={categories}
-                                                onAddCategory={handleAddCategory}
-                                                onUpdateCategory={handleUpdateCategory}
-                                                onDeleteCategory={handleDeleteCategory}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Image Upload Section */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Görselleri</label>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 5MB (Çoklu Seçim)</span>
-                                        </div>
-
-                                        <div className="flex flex-col gap-4">
-                                            {/* Upload Area */}
-                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group">
-                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-3 group-hover:scale-110 transition-transform">
-                                                        <ImageIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold text-blue-600 dark:text-blue-400">Görsel yüklemek için tıklayın</span> veya sürükleyin</p>
-                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">PNG, JPG, GIF</p>
-                                                </div>
-                                                <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
-                                            </label>
-
-                                            {/* Image Preview Grid */}
-                                            {(newErrorData.imageUrls && newErrorData.imageUrls.length > 0) && (
-                                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 animate-in fade-in duration-300">
-                                                    {newErrorData.imageUrls.map((url, index) => (
-                                                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 dark:border-slate-700/50 shadow-sm">
-                                                            <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newImages = newErrorData.imageUrls.filter((_, i) => i !== index);
-                                                                        setNewErrorData({ ...newErrorData, imageUrls: newImages, imageUrl: newImages[0] || null });
-                                                                    }}
-                                                                    className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors transform scale-90 hover:scale-100"
-                                                                    title="Görseli Kaldır"
-                                                                >
-                                                                    <X className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                            {index === 0 && (
-                                                                <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-blue-500/90 backdrop-blur-sm rounded text-[10px] font-bold text-white shadow-sm">
-                                                                    Kapak
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Related People Input */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Atanan Personel</label>
-                                        <PersonSelect
-                                            value={newErrorData.assignee_ids}
-                                            onChange={(val) => setNewErrorData({ ...newErrorData, assignee_ids: val })}
-                                            multiple={true}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Başlığı</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                            placeholder="Hata başlığını giriniz"
-                                            value={newErrorData.title}
-                                            onChange={e => setNewErrorData({ ...newErrorData, title: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Özet (Listede görünür)</label>
-                                        <textarea
-                                            required
-                                            rows="2"
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                            placeholder="Sorunu kısaca açıklayın..."
-                                            value={newErrorData.summary}
-                                            onChange={e => setNewErrorData({ ...newErrorData, summary: e.target.value })}
-                                        ></textarea>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Çözüm Adımları</label>
-                                        <div className="space-y-4">
-                                            {newErrorData.solutionSteps.map((step, index) => (
-                                                <div key={index} className="flex gap-3 group items-start">
-                                                    <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 font-mono text-sm mt-1">
-                                                        {index + 1}.
-                                                    </span>
-                                                    <div className="flex-grow space-y-2">
-                                                        <div className="relative">
-                                                            <textarea
-                                                                rows="2"
-                                                                className="w-full pl-4 pr-28 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 resize-y"
-                                                                placeholder={`${index + 1}. Adımı girin...`}
-                                                                value={step.text}
-                                                                onChange={(e) => {
-                                                                    const newSteps = [...newErrorData.solutionSteps];
-                                                                    newSteps[index] = { ...newSteps[index], text: e.target.value };
-                                                                    setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
-                                                                }}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                                        e.preventDefault();
-                                                                        setNewErrorData({ ...newErrorData, solutionSteps: [...newErrorData.solutionSteps, { text: '', imageUrl: null }] });
-                                                                    }
-                                                                }}
-                                                            ></textarea>
-                                                            <div className="absolute right-2 top-2 flex items-center gap-1">
-                                                                <label className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer select-none border border-slate-200 dark:border-slate-700">
-                                                                    <ImageIcon className="w-3.5 h-3.5" />
-                                                                    <span>Görsel</span>
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={async (e) => {
-                                                                            const file = e.target.files[0];
-                                                                            if (file) {
-                                                                                const compressed = await compressImage(file);
-                                                                                const newSteps = [...newErrorData.solutionSteps];
-                                                                                newSteps[index] = { ...newSteps[index], imageUrl: compressed };
-                                                                                setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                </label>
-                                                                {newErrorData.solutionSteps.length > 1 && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            const newSteps = newErrorData.solutionSteps.filter((_, i) => i !== index);
-                                                                            setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
-                                                                        }}
-                                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                                                                        title="Adımı Sil"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        {step.imageUrl && (
-                                                            <div className="relative inline-block group/img">
-                                                                <img src={step.imageUrl} alt="" className="h-20 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newSteps = [...newErrorData.solutionSteps];
-                                                                        newSteps[index] = { ...newSteps[index], imageUrl: null };
-                                                                        setNewErrorData({ ...newErrorData, solutionSteps: newSteps });
-                                                                    }}
-                                                                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
-                                                                >
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            <button
-                                                type="button"
-                                                onClick={() => setNewErrorData({ ...newErrorData, solutionSteps: [...newErrorData.solutionSteps, { text: '', imageUrl: null }] })}
-                                                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                Yeni Adım Ekle
-                                            </button>
-                                        </div>
-                                    </div>
-
-
-
-                                    <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsAddModalOpen(false)}
-                                            className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                                        >
-                                            İptal
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors flex items-center gap-2"
-                                        >
-                                            <Save className="w-4 h-4" />
-                                            Kaydet
-                                        </button>
-                                    </div>
-                                </form >
-                            </div >
-                        </div >
-                    )
-                }
+                {/* Add Error Modal */}
+                <AddErrorModal
+                    isOpen={isAddModalOpen}
+                    onClose={() => setIsAddModalOpen(false)}
+                    onSuccess={handleAddSuccess}
+                    categories={categories}
+                    onAddCategory={handleAddCategory}
+                    onUpdateCategory={handleUpdateCategory}
+                    onDeleteCategory={handleDeleteCategory}
+                    showToast={showToast}
+                />
 
                 {/* Edit Error Modal */}
-                {
-                    isEditModalOpen && editingError && (
-                        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsEditModalOpen(false)}>
-                            <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
-                                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50">
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Kaydı Düzenle</h2>
-                                    <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                                        <X className="w-6 h-6" />
-                                    </button>
-                                </div>
-
-                                <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Kodu</label>
-                                            <ErrorCodeInput
-                                                value={editingError.code}
-                                                onChange={(val) => setEditingError({ ...editingError, code: val })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
-                                            <CategorySelect
-                                                value={editingError.category}
-                                                onChange={(val) => setEditingError({ ...editingError, category: val })}
-                                                categories={categories}
-                                                onAddCategory={handleAddCategory}
-                                                onUpdateCategory={handleUpdateCategory}
-                                                onDeleteCategory={handleDeleteCategory}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Image Upload Section */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Görselleri</label>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 5MB (Çoklu Seçim)</span>
-                                        </div>
-
-                                        <div className="flex flex-col gap-4">
-                                            {/* Upload Area */}
-                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group">
-                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-3 group-hover:scale-110 transition-transform">
-                                                        <ImageIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold text-blue-600 dark:text-blue-400">Görsel yüklemek için tıklayın</span> veya sürükleyin</p>
-                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">PNG, JPG, GIF</p>
-                                                </div>
-                                                <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    multiple
-                                                    onChange={async (e) => {
-                                                        const files = Array.from(e.target.files);
-                                                        const compressedImages = await Promise.all(files.map(file => compressImage(file)));
-
-                                                        setEditingError(prev => ({
-                                                            ...prev,
-                                                            imageUrls: [...(prev.imageUrls || []), ...compressedImages]
-                                                        }));
-                                                    }}
-                                                />
-                                            </label>
-
-                                            {/* Related People Input (Edit) */}
-                                            <div className="mb-6">
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Atanan Personel</label>
-                                                <PersonSelect
-                                                    value={editingError.assignee_ids}
-                                                    onChange={(val) => setEditingError({ ...editingError, assignee_ids: val })}
-                                                    multiple={true}
-                                                />
-                                            </div>
-
-                                            {/* Image Preview Grid */}
-                                            {(editingError.imageUrls && editingError.imageUrls.length > 0) && (
-                                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 animate-in fade-in duration-300">
-                                                    {editingError.imageUrls.map((url, index) => (
-                                                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-200 dark:border-slate-700/50 shadow-sm">
-                                                            <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newImages = editingError.imageUrls.filter((_, i) => i !== index);
-                                                                        setEditingError({ ...editingError, imageUrls: newImages, imageUrl: newImages[0] || null });
-                                                                    }}
-                                                                    className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors transform scale-90 hover:scale-100"
-                                                                    title="Görseli Kaldır"
-                                                                >
-                                                                    <X className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                            {index === 0 && (
-                                                                <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-blue-500/90 backdrop-blur-sm rounded text-[10px] font-bold text-white shadow-sm">
-                                                                    Kapak
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hata Başlığı</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                            value={editingError.title}
-                                            onChange={e => setEditingError({ ...editingError, title: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Özet</label>
-                                        <textarea
-                                            required
-                                            rows="2"
-                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                            value={editingError.summary}
-                                            onChange={e => setEditingError({ ...editingError, summary: e.target.value })}
-                                        ></textarea>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Çözüm Adımları</label>
-                                        <div className="space-y-4">
-                                            {editingError.solutionSteps.map((step, index) => (
-                                                <div key={index} className="flex gap-3 group items-start">
-                                                    <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 font-mono text-sm mt-1">
-                                                        {index + 1}.
-                                                    </span>
-                                                    <div className="flex-grow space-y-2">
-                                                        <div className="relative">
-                                                            <textarea
-                                                                rows="2"
-                                                                className="w-full pl-4 pr-28 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 resize-y"
-                                                                placeholder={`${index + 1}. Adımı girin...`}
-                                                                value={step.text}
-                                                                onChange={(e) => {
-                                                                    const newSteps = [...editingError.solutionSteps];
-                                                                    newSteps[index] = { ...newSteps[index], text: e.target.value };
-                                                                    setEditingError({ ...editingError, solutionSteps: newSteps });
-                                                                }}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                                        e.preventDefault();
-                                                                        setEditingError({ ...editingError, solutionSteps: [...editingError.solutionSteps, { text: '', imageUrl: null }] });
-                                                                    }
-                                                                }}
-                                                            ></textarea>
-                                                            <div className="absolute right-2 top-2 flex items-center gap-1">
-                                                                <label className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer select-none border border-slate-200 dark:border-slate-700">
-                                                                    <ImageIcon className="w-3.5 h-3.5" />
-                                                                    <span>Görsel</span>
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={async (e) => {
-                                                                            const file = e.target.files[0];
-                                                                            if (file) {
-                                                                                const compressed = await compressImage(file);
-                                                                                const newSteps = [...editingError.solutionSteps];
-                                                                                newSteps[index] = { ...newSteps[index], imageUrl: compressed };
-                                                                                setEditingError({ ...editingError, solutionSteps: newSteps });
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                </label>
-                                                                {editingError.solutionSteps.length > 1 && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            const newSteps = editingError.solutionSteps.filter((_, i) => i !== index);
-                                                                            setEditingError({ ...editingError, solutionSteps: newSteps });
-                                                                        }}
-                                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                                                                        title="Adımı Sil"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        {step.imageUrl && (
-                                                            <div className="relative inline-block group/img">
-                                                                <img src={step.imageUrl} alt="" className="h-20 w-auto rounded-lg border border-slate-200 dark:border-slate-700 object-cover" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const newSteps = [...editingError.solutionSteps];
-                                                                        newSteps[index] = { ...newSteps[index], imageUrl: null };
-                                                                        setEditingError({ ...editingError, solutionSteps: newSteps });
-                                                                    }}
-                                                                    className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
-                                                                >
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditingError({ ...editingError, solutionSteps: [...editingError.solutionSteps, { text: '', imageUrl: null }] })}
-                                                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                Yeni Adım Ekle
-                                            </button>
-                                        </div>
-                                    </div>
-
-
-
-                                    <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsEditModalOpen(false)}
-                                            className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                                        >
-                                            İptal
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors flex items-center gap-2"
-                                        >
-                                            <Save className="w-4 h-4" />
-                                            Kaydet
-                                        </button>
-                                    </div>
-                                </form >
-                            </div >
-                        </div >
-                    )
-                }
+                <EditErrorModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditingError(null);
+                    }}
+                    onSuccess={handleEditSuccess}
+                    errorToEdit={editingError}
+                    categories={categories}
+                    onAddCategory={handleAddCategory}
+                    onUpdateCategory={handleUpdateCategory}
+                    onDeleteCategory={handleDeleteCategory}
+                    showToast={showToast}
+                />
 
                 {/* Credentials Update Modal */}
                 {isCredentialsModalOpen && (

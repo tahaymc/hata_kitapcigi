@@ -44,9 +44,26 @@ const PeopleManagerModal = ({ onClose }) => {
     const [editingId, setEditingId] = useState(null);
     const [departmentFormData, setDepartmentFormData] = useState({ name: '', color: 'blue', icon: 'settings' });
     const [personFormData, setPersonFormData] = useState({ name: '', role: '', department_id: '', color: 'blue' });
+    const [filterDepartment, setFilterDepartment] = useState('ALL');
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
 
     useEffect(() => {
         fetchData();
+
+        // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
     }, []);
 
     const fetchData = async () => {
@@ -205,7 +222,7 @@ const PeopleManagerModal = ({ onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
-            <div className="bg-white dark:bg-[#1e293b] rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-[#1e293b] rounded-[2rem] shadow-2xl w-full max-w-7xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
@@ -243,9 +260,9 @@ const PeopleManagerModal = ({ onClose }) => {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
 
                     {activeTab === 'departments' ? (
-                        <>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                             {/* Department Form */}
-                            <form onSubmit={handleDepartmentSubmit} className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4 shadow-sm">
+                            <form onSubmit={handleDepartmentSubmit} className="p-5 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4 shadow-sm h-fit sticky top-0">
                                 <div className="flex items-center gap-2 mb-2">
                                     {editingId ? <Edit2 className="w-4 h-4 text-blue-500" /> : <Plus className="w-4 h-4 text-blue-500" />}
                                     <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
@@ -308,8 +325,8 @@ const PeopleManagerModal = ({ onClose }) => {
 
                             {/* Department List */}
                             <div className="space-y-3">
-                                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 ml-1">Kayıtlı Departmanlar ({departments.length})</h3>
-                                <div className="grid gap-2">
+                                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 ml-1 sticky top-0 bg-white dark:bg-[#1e293b] py-2 z-10">Kayıtlı Departmanlar ({departments.length})</h3>
+                                <div className="grid gap-2 max-h-[600px] overflow-y-auto pr-1">
                                     {departments.map(dept => {
                                         const IconComponent = ICON_OPTIONS[dept.icon] || Briefcase;
                                         return (
@@ -329,11 +346,11 @@ const PeopleManagerModal = ({ onClose }) => {
                                     })}
                                 </div>
                             </div>
-                        </>
+                        </div>
                     ) : (
-                        <>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                             {/* Person Form */}
-                            <form onSubmit={handlePersonSubmit} className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4 shadow-sm">
+                            <form onSubmit={handlePersonSubmit} className="p-5 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4 shadow-sm h-fit sticky top-0">
                                 <div className="flex items-center gap-2 mb-2">
                                     {editingId ? <Edit2 className="w-4 h-4 text-blue-500" /> : <Plus className="w-4 h-4 text-blue-500" />}
                                     <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
@@ -408,31 +425,74 @@ const PeopleManagerModal = ({ onClose }) => {
 
                             {/* People List */}
                             <div className="space-y-3">
-                                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 ml-1">Kayıtlı Personel ({people.length})</h3>
-                                <div className="grid gap-2">
-                                    {people.map(person => (
-                                        <div key={person.id} className="group flex items-center justify-between p-3 bg-white dark:bg-slate-800 border rounded-xl hover:shadow-sm transition-all hover:border-blue-200">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${COLOR_STYLES[person.department ? person.department.color : (person.color || 'slate')]} border`}>
-                                                    {person.name.charAt(0).toUpperCase()}
+                                <div className="sticky top-0 bg-white dark:bg-[#1e293b] z-10 space-y-2 pb-2">
+                                    <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 ml-1">Kayıtlı Personel ({people.length})</h3>
+
+                                    {/* Department Filter */}
+                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                                        <button
+                                            onClick={() => setFilterDepartment('ALL')}
+                                            className={`flex-shrink-0 px-3 py-1 text-xs font-bold rounded-full border transition-all ${filterDepartment === 'ALL'
+                                                ? 'bg-slate-800 text-white border-slate-800 dark:bg-slate-200 dark:text-slate-900'
+                                                : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                                                }`}
+                                        >
+                                            Tümü
+                                        </button>
+                                        {departments.map(dept => {
+                                            const IconComponent = ICON_OPTIONS[dept.icon] || Briefcase;
+                                            return (
+                                                <button
+                                                    key={dept.id}
+                                                    onClick={() => setFilterDepartment(dept.id)}
+                                                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border transition-all ${filterDepartment === dept.id
+                                                        ? `${COLOR_STYLES[dept.color].split(' ')[0]} ${COLOR_STYLES[dept.color].split(' ')[1]} ring-1 ring-inset ring-black/10`
+                                                        : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                                                        }`}
+                                                >
+                                                    <IconComponent className="w-3 h-3" />
+                                                    {dept.name}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-1 pt-1">
+                                    {people
+                                        .filter(p => filterDepartment === 'ALL' || (p.department && p.department.id === filterDepartment))
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(person => (
+                                            <div key={person.id} className="group flex items-center justify-between p-3 bg-white dark:bg-slate-800 border rounded-xl hover:shadow-sm transition-all hover:border-blue-200">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${COLOR_STYLES[person.department ? person.department.color : (person.color || 'slate')]} border`}>
+                                                        {person.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{person.name}</h4>
+                                                        <div className="flex flex-wrap items-center gap-y-1 gap-x-2 mt-0.5">
+                                                            <span className="text-xs text-slate-500 dark:text-slate-400">{person.role || 'Personel'}</span>
+                                                            {person.department && (() => {
+                                                                const deptStyle = COLOR_STYLES[person.department.color] || COLOR_STYLES.slate;
+                                                                const DeptIcon = ICON_OPTIONS[person.department.icon] || Briefcase;
+                                                                return (
+                                                                    <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${deptStyle}`}>
+                                                                        <DeptIcon className="w-3 h-3" />
+                                                                        {person.department.name}
+                                                                    </span>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{person.name}</h4>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {person.role || 'Personel'}
-                                                        {person.department && <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-${person.department.color}-100 text-${person.department.color}-700 border border-${person.department.color}-200`}>{person.department.name}</span>}
-                                                    </p>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => startEditPerson(person)} className="p-1.5 text-slate-400 hover:text-blue-500"><Edit2 className="w-4 h-4" /></button>
+                                                    <button onClick={() => deletePerson(person.id)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => startEditPerson(person)} className="p-1.5 text-slate-400 hover:text-blue-500"><Edit2 className="w-4 h-4" /></button>
-                                                <button onClick={() => deletePerson(person.id)} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             </div>
-                        </>
+                        </div>
                     )}
 
                 </div>

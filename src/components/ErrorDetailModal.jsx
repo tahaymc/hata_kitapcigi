@@ -1,88 +1,43 @@
 import React from 'react';
-import { X, Calendar, Monitor, ShoppingCart, Archive, Settings, CheckCircle, AlertTriangle, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, Tag, Truck, Wifi, Printer, CreditCard, Smartphone, Package, HelpCircle, Database, Zap, Thermometer, BookOpen, Shield } from 'lucide-react';
+import { X, Calendar, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Edit2, Trash2, Info, Users } from 'lucide-react';
+import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
+import { COLOR_STYLES } from '../utils/constants';
 
-const ICON_OPTIONS = {
-    shoppingCart: ShoppingCart,
-    archive: Archive,
-    monitor: Monitor,
-    settings: Settings,
-    tag: Tag,
-    truck: Truck,
-    wifi: Wifi,
-    printer: Printer,
-    creditCard: CreditCard,
-    smartphone: Smartphone,
-    package: Package,
-    alertTriangle: AlertTriangle,
-    helpCircle: HelpCircle,
-    database: Database,
-    zap: Zap,
-    thermometer: Thermometer,
-    bookOpen: BookOpen,
-    shield: Shield
-};
 
-const getCategoryIcon = (categoryId, iconName = null) => {
-    // If iconName is provided (from category object), use it
-    if (iconName && ICON_OPTIONS[iconName]) {
-        const IconComponent = ICON_OPTIONS[iconName];
-        return <IconComponent className="w-6 h-6" />;
-    }
 
-    // Fallback for legacy hardcoded categories
-    switch (categoryId) {
-        case 'kasa': return <ShoppingCart className="w-6 h-6" />;
-        case 'reyon': return <Archive className="w-6 h-6" />;
-        case 'depo': return <Archive className="w-6 h-6" />;
-        case 'sistem': return <Monitor className="w-6 h-6" />;
-        default: return <Settings className="w-6 h-6" />;
-    }
-};
-
-const COLOR_STYLES = {
-    blue: { text: 'text-blue-600 dark:text-blue-400', bgLight: 'bg-blue-500/10', border: 'border-blue-500', ring: 'ring-blue-500' },
-    emerald: { text: 'text-emerald-600 dark:text-emerald-400', bgLight: 'bg-emerald-500/10', border: 'border-emerald-500', ring: 'ring-emerald-500' },
-    orange: { text: 'text-orange-600 dark:text-orange-400', bgLight: 'bg-orange-500/10', border: 'border-orange-500', ring: 'ring-orange-500' },
-    purple: { text: 'text-purple-600 dark:text-purple-400', bgLight: 'bg-purple-500/10', border: 'border-purple-500', ring: 'ring-purple-500' },
-    slate: { text: 'text-slate-600 dark:text-slate-400', bgLight: 'bg-slate-500/10', border: 'border-slate-500', ring: 'ring-slate-500' },
-    red: { text: 'text-red-600 dark:text-red-400', bgLight: 'bg-red-500/10', border: 'border-red-500', ring: 'ring-red-500' },
-    amber: { text: 'text-amber-600 dark:text-amber-400', bgLight: 'bg-amber-500/10', border: 'border-amber-500', ring: 'ring-amber-500' },
-    yellow: { text: 'text-yellow-600 dark:text-yellow-400', bgLight: 'bg-yellow-500/10', border: 'border-yellow-500', ring: 'ring-yellow-500' },
-    lime: { text: 'text-lime-600 dark:text-lime-400', bgLight: 'bg-lime-500/10', border: 'border-lime-500', ring: 'ring-lime-500' },
-    green: { text: 'text-green-600 dark:text-green-400', bgLight: 'bg-green-500/10', border: 'border-green-500', ring: 'ring-green-500' },
-    teal: { text: 'text-teal-600 dark:text-teal-400', bgLight: 'bg-teal-500/10', border: 'border-teal-500', ring: 'ring-teal-500' },
-    cyan: { text: 'text-cyan-600 dark:text-cyan-400', bgLight: 'bg-cyan-500/10', border: 'border-cyan-500', ring: 'ring-cyan-500' },
-    sky: { text: 'text-sky-600 dark:text-sky-400', bgLight: 'bg-sky-500/10', border: 'border-sky-500', ring: 'ring-sky-500' },
-    indigo: { text: 'text-indigo-600 dark:text-indigo-400', bgLight: 'bg-indigo-500/10', border: 'border-indigo-500', ring: 'ring-indigo-500' },
-    violet: { text: 'text-violet-600 dark:text-violet-400', bgLight: 'bg-violet-500/10', border: 'border-violet-500', ring: 'ring-violet-500' },
-    fuchsia: { text: 'text-fuchsia-600 dark:text-fuchsia-400', bgLight: 'bg-fuchsia-500/10', border: 'border-fuchsia-500', ring: 'ring-fuchsia-500' },
-    pink: { text: 'text-pink-600 dark:text-pink-400', bgLight: 'bg-pink-500/10', border: 'border-pink-500', ring: 'ring-pink-500' },
-    rose: { text: 'text-rose-600 dark:text-rose-400', bgLight: 'bg-rose-500/10', border: 'border-rose-500', ring: 'ring-rose-500' }
-};
-
-const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return '';
-    if (dateStr.includes('.') && dateStr.split('.').length === 3) return dateStr;
-    if (dateStr.includes('-')) {
-        const [year, month, day] = dateStr.split('-');
-        return `${day}.${month}.${year}`;
-    }
-    return dateStr;
-};
-
-const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, categories = [] }) => {
-
+const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCodeClick, categories = [], isAdmin, onEdit, onDelete }) => {
+    console.log('ErrorDetailModal Debug:', {
+        errorCategory: error?.category,
+        foundCategory: categories.find(c => c.id === error?.category),
+        allCategories: categories
+    });
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
     const [zoomedStepImage, setZoomedStepImage] = React.useState(null);
 
     // Prevent body scroll when modal is open
+    // Handle Escape key to close modal or zoomed images
     React.useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                if (zoomedStepImage) {
+                    setZoomedStepImage(null);
+                } else if (isImageEnlarged) {
+                    setIsImageEnlarged(false);
+                } else {
+                    onClose();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
         document.body.style.overflow = 'hidden';
+
         return () => {
+            window.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
         };
-    }, []);
+    }, [onClose, isImageEnlarged, zoomedStepImage]);
 
     if (!error) return null;
 
@@ -106,37 +61,61 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, catego
                 {/* Top Accent Pill - Modal Main */}
                 <div className={`absolute -top-px left-1/2 -translate-x-1/2 w-1/2 h-2 ${colorStyle.border.replace('border-', 'bg-')} rounded-b-full shadow-lg z-20`}></div>
 
-                {/* Header */}
-                <div className="relative flex items-center justify-center px-8 py-6 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#1e293b]">
+                {/* Header - Left Icon, Center Title, Right Code & Close */}
+                <div className="relative flex items-center justify-between px-10 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-[#1e293b]/50 backdrop-blur-md">
+                    {/* Gradient Shine */}
+                    <div className={`absolute inset-0 opacity-[0.03] ${colorStyle.border.replace('border-', 'bg-')} pointer-events-none`}></div>
+
                     {/* Left: Icon */}
-                    <div className="absolute left-8 top-1/2 -translate-y-1/2">
+                    <div className="flex-shrink-0 z-10">
                         <div
                             onClick={() => onCategoryClick && onCategoryClick(error.category)}
-                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:scale-105 transition-transform`}
+                            className={`flex items-center justify-center w-12 h-12 rounded-2xl ${colorStyle.bgLight} border ${colorStyle.borderLight} ${colorStyle.text} shadow-sm cursor-pointer hover:scale-110 active:scale-95 transition-all duration-300 group`}
                         >
-                            <div className={`${colorStyle.text}`}>
-                                {getCategoryIcon(error.category, category?.icon)}
-                            </div>
+                            {getCategoryIcon(error.category, "w-6 h-6 transition-transform group-hover:rotate-12", category?.icon)}
                         </div>
                     </div>
 
                     {/* Center: Title */}
-                    <div className="w-full px-20 text-center">
-                        <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                    <div className="flex-1 px-4 text-center z-10">
+                        <h2 className="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100 leading-tight tracking-tight">
                             {error.title}
                         </h2>
                     </div>
 
                     {/* Right: Code & Close */}
-                    <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-lg ${colorStyle.bgLight} border border-${colorStyle.border}/20 ${colorStyle.text} font-mono font-bold text-sm tracking-wider shadow-sm hidden sm:block`}>
+                    <div className="flex-shrink-0 z-10 flex items-center gap-3">
+                        <div
+                            onClick={() => onCodeClick && onCodeClick(error.code)}
+                            className={`hidden sm:inline-flex items-center justify-center px-3 py-1 rounded-lg border font-mono font-bold text-[10px] sm:text-xs tracking-tight whitespace-nowrap shadow-sm cursor-pointer hover:opacity-80 transition-opacity ${colorStyle.bgLight} ${colorStyle.borderLight} ${colorStyle.text}`}
+                        >
                             {error.code || 'SYS-000'}
-                        </span>
+                        </div>
+
+                        {isAdmin && (
+                            <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700/50">
+                                <button
+                                    onClick={onEdit}
+                                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 transition-colors"
+                                    title="Düzenle"
+                                >
+                                    <Edit2 className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={onDelete}
+                                    className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors"
+                                    title="Sil"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                            </div>
+                        )}
+
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-red-500 hover:rotate-90 transition-all duration-300 shadow-sm"
                         >
-                            <X className="w-6 h-6" />
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -148,9 +127,17 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, catego
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left Content */}
                         <div className="lg:col-span-2 space-y-8">
-                            <div className="bg-slate-50 dark:bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700/50 hover:border-blue-500/30 transition-colors relative overflow-hidden group">
+                            {/* Summary Card - Redesigned */}
+                            <div className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                 <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
-                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium pl-2">
+
+                                {/* Header */}
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Info className={`w-5 h-5 ${colorStyle.text}`} />
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Hata Özeti</h3>
+                                </div>
+
+                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed break-words whitespace-pre-line font-medium">
                                     {error.summary}
                                 </p>
                             </div>
@@ -168,43 +155,77 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, catego
                                     </div>
                                 </div>
 
-                                <div className="pl-2">
-                                    <ul className="space-y-6">
-                                        {error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0 ? (
-                                            error.solutionSteps.map((step, index) => (
-                                                <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
-                                                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden flex items-center justify-center group">
-                                                        <div className={`absolute top-0 left-0 w-1 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
-                                                        <span className="font-bold text-sm text-slate-700 dark:text-slate-200 pl-1">{index + 1}</span>
-                                                    </div>
-                                                    <div className="flex-grow space-y-3 min-w-0">
-                                                        <div className="mt-1 leading-relaxed text-sm md:text-base font-medium break-words whitespace-pre-wrap">
+                                {/* Redesigned Solution Timeline */}
+                                <div className="pl-2 relative">
+                                    {/* Vertical Connecting Line */}
+                                    <div className={`absolute top-4 left-[19px] bottom-10 w-0.5 ${colorStyle.bg} opacity-20 rounded-full`}></div>
+
+                                    <ul className="space-y-8 relative z-10">
+                                        {(error.solutionType === 'steps' && error.solutionSteps && error.solutionSteps.length > 0
+                                            ? error.solutionSteps
+                                            : (error.solution ? error.solution.split('\n').filter(s => s.trim() !== '').map(s => ({ text: s.replace(/^\d+\.\s*/, ''), imageUrl: null })) : [])
+                                        ).map((step, index) => (
+                                            <li key={index} className="flex gap-6 items-start group/step">
+                                                {/* Step Number Badge */}
+                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full ${colorStyle.bgLight} border-2 ${colorStyle.border} flex items-center justify-center shadow-lg shadow-${colorStyle.text.split('-')[1]}-500/20 z-10 group-hover/step:scale-110 transition-transform duration-300 bg-white dark:bg-slate-800`}>
+                                                    <span className={`font-black text-sm ${colorStyle.text}`}>{index + 1}</span>
+                                                </div>
+
+                                                {/* Content Card */}
+                                                <div className="flex-1 bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 group-hover/step:translate-x-1 relative">
+                                                    {/* Little stylized arrow pointing to badge */}
+                                                    <div className="absolute top-5 -left-1.5 w-3 h-3 bg-white dark:bg-[#0f172a] border-l border-b border-slate-200 dark:border-slate-700 transform rotate-45"></div>
+
+                                                    <div className="relative z-10">
+                                                        <div className="text-slate-700 dark:text-slate-200 leading-relaxed text-sm md:text-base whitespace-pre-wrap font-medium">
                                                             {step.text}
                                                         </div>
                                                         {step.imageUrl && (
-                                                            <div className="relative group/step-img w-full max-w-sm rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                            <div className="mt-4 relative group/step-img w-full max-w-lg rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-slate-50 dark:bg-slate-900">
                                                                 <img
                                                                     src={step.imageUrl}
                                                                     alt={`Adım ${index + 1}`}
                                                                     className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
                                                                     onClick={() => setZoomedStepImage(step.imageUrl)}
                                                                 />
+                                                                <div className="absolute inset-0 bg-black/0 group-hover/step-img:bg-black/10 transition-colors pointer-events-none"></div>
+                                                                <div className="absolute bottom-2 right-2 opacity-0 group-hover/step-img:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm pointer-events-none">
+                                                                    Büyütmek için tıkla
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Sub Steps Display */}
+                                                        {step.subSteps && step.subSteps.length > 0 && (
+                                                            <div className="mt-6 flex flex-col gap-4 border-t border-slate-100 dark:border-slate-800/50 pt-4">
+                                                                {step.subSteps.map((subStep, subIndex) => (
+                                                                    <div key={subIndex} className="flex gap-4 items-start pl-2">
+                                                                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-100 dark:border-slate-700 text-slate-400 font-mono text-[10px]">
+                                                                            {index + 1}.{subIndex + 1}
+                                                                        </div>
+                                                                        <div className="flex-1 space-y-3">
+                                                                            <div className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                                                                {subStep.text}
+                                                                            </div>
+                                                                            {subStep.imageUrl && (
+                                                                                <div className="relative group/sub-img w-full max-w-xs rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-slate-50 dark:bg-slate-900">
+                                                                                    <img
+                                                                                        src={subStep.imageUrl}
+                                                                                        alt={`Alt Adım ${index + 1}.${subIndex + 1}`}
+                                                                                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                                                                                        onClick={() => setZoomedStepImage(subStep.imageUrl)}
+                                                                                    />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         )}
                                                     </div>
-                                                </li>
-                                            ))
-                                        ) : (
-                                            error.solution.split('\n').filter(s => s.trim() !== '').map((step, index) => (
-                                                <li key={index} className="flex gap-4 items-start text-slate-600 dark:text-slate-300">
-                                                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden flex items-center justify-center group">
-                                                        <div className={`absolute top-0 left-0 w-1 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
-                                                        <span className="font-bold text-sm text-slate-700 dark:text-slate-200 pl-1">{index + 1}</span>
-                                                    </div>
-                                                    <div className="mt-1 leading-relaxed text-sm md:text-base break-words whitespace-pre-wrap min-w-0 flex-1">{step.replace(/^\d+\.\s*/, '')}</div>
-                                                </li>
-                                            ))
-                                        )}
+                                                </div>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
                             </div>
@@ -234,8 +255,8 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, catego
                                         className="bg-slate-100/80 dark:bg-[#1e293b] px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group flex items-center gap-3 cursor-pointer hover:shadow-md transition-all sm:hover:scale-105"
                                     >
                                         <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
-                                        <div className={`p-2 rounded-lg bg-white dark:bg-[#0f172a] shadow-sm border border-slate-200 dark:border-slate-700 ${colorStyle.text}`}>
-                                            {React.cloneElement(getCategoryIcon(error.category, category?.icon), { className: "w-4 h-4" })}
+                                        <div className={`p-2 rounded-lg ${colorStyle.bgLight} border ${colorStyle.borderLight} ${colorStyle.text} shadow-sm`}>
+                                            {getCategoryIcon(error.category, "w-4 h-4", category?.icon)}
                                         </div>
                                         <div className="pl-1">
                                             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none mb-1">Kategori</p>
@@ -245,59 +266,58 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, catego
                                 </div>
 
 
-                                {/* Assigned Person / Related People / Multiple Assignees */}
+                                {/* Assigned Person / Related People / Multiple Assignees - Redesigned */}
                                 {(error.assignees && error.assignees.length > 0) || error.assignee || (error.relatedPeople && error.relatedPeople.length > 0) ? (
                                     <div className="mt-2">
-                                        <div className="bg-slate-100/80 dark:bg-[#1e293b] p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
+                                        <div className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
                                             {/* Category Colored Accent Bar */}
                                             <div className={`absolute top-0 left-0 w-1.5 h-full ${colorStyle.border.replace('border-', 'bg-')} shadow-[1px_0_2px_rgba(0,0,0,0.1)]`}></div>
 
-                                            <div className="flex flex-col gap-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest pl-2">
-                                                        {(error.assignees && error.assignees.length > 0) ? 'İlgili Personeller' : (error.assignee ? 'İlgili Personel' : 'İlgili Kişiler')}
-                                                    </span>
-                                                    <div className="h-px w-full bg-slate-200 dark:bg-slate-700/50"></div>
-                                                </div>
+                                            {/* Header */}
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Users className={`w-5 h-5 ${colorStyle.text}`} />
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                                    {(error.assignees && error.assignees.length > 0) ? 'İlgili Personeller' : (error.assignee ? 'İlgili Personel' : 'İlgili Kişiler')}
+                                                </h3>
+                                            </div>
 
-                                                <div className="pl-2">
-                                                    {error.assignees && error.assignees.length > 0 ? (
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            {error.assignees.map(person => (
-                                                                <div key={person.id} className="flex items-center gap-3 p-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200`}>
-                                                                        {person.name.charAt(0).toUpperCase()}
-                                                                    </div>
-                                                                    <div>
-                                                                        <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{person.name}</h4>
-                                                                        {person.role && <p className="text-xs text-slate-500 font-medium">{person.role}</p>}
-                                                                    </div>
+                                            <div className="">
+                                                {error.assignees && error.assignees.length > 0 ? (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        {error.assignees.map(person => (
+                                                            <div key={person.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200`}>
+                                                                    {person.name.charAt(0).toUpperCase()}
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : error.assignee ? (
-                                                        <div className="flex items-center gap-3 p-3 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200`}>
-                                                                {error.assignee.name.charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{error.assignee.name}</h4>
-                                                                {error.assignee.role && <p className="text-xs text-slate-500 font-medium">{error.assignee.role}</p>}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {error.relatedPeople.map((person, idx) => (
-                                                                <div key={idx} className="flex items-center gap-2 pl-1 pr-3 py-1.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105">
-                                                                    <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
-                                                                        {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                                                                    </div>
-                                                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{person}</span>
+                                                                <div>
+                                                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{person.name}</h4>
+                                                                    {person.role && <p className="text-xs text-slate-500 font-medium">{person.role}</p>}
                                                                 </div>
-                                                            ))}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : error.assignee ? (
+                                                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200`}>
+                                                            {error.assignee.name.charAt(0).toUpperCase()}
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{error.assignee.name}</h4>
+                                                            {error.assignee.role && <p className="text-xs text-slate-500 font-medium">{error.assignee.role}</p>}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {error.relatedPeople.map((person, idx) => (
+                                                            <div key={idx} className="flex items-center gap-2 pl-1 pr-3 py-1.5 bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105">
+                                                                <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-sm bg-gradient-to-br ${Object.values(COLOR_STYLES)[idx % 5].text.replace('text-', 'from-').split(' ')[0]} ${Object.values(COLOR_STYLES)[(idx + 1) % 5].text.replace('text-', 'to-').split(' ')[0].replace('400', '500')}`}>
+                                                                    {person.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                                                </div>
+                                                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{person}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
