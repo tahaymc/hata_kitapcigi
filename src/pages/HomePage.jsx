@@ -581,7 +581,7 @@ const HomePage = () => {
                 {
                     errors.length > 0 ? (
                         <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-4"}>
-                            {errors.map((error) => {
+                            {errors.map((error, index) => {
                                 const cat = categories.find(c => c.id === error.category);
                                 const colorKey = cat ? cat.color : 'slate';
                                 const style = COLOR_STYLES[colorKey] || defaultStyle;
@@ -592,6 +592,10 @@ const HomePage = () => {
                                         key={error.id}
                                         className={`bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full overflow-hidden`}
                                         onClick={() => handleCardClick(error)}
+                                        onDoubleClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }}
                                     >
                                         {/* Top Accent Line */}
                                         <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1.5 ${style.bar.split(' ')[0]} rounded-b-full shadow-sm`} />
@@ -638,9 +642,10 @@ const HomePage = () => {
 
                                         {/* Middle Section: Description */}
                                         <div className="flex-1 mb-4 min-h-[60px]">
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium">
-                                                {error.summary}
-                                            </p>
+                                            <div
+                                                className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium"
+                                                dangerouslySetInnerHTML={{ __html: error.summary }}
+                                            />
                                         </div>
 
                                         {/* Footer Metadata (Pills) */}
@@ -701,42 +706,56 @@ const HomePage = () => {
                                         </div>
 
                                         {/* Bottom: Image */}
-                                        <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900/50 relative group/image border border-slate-100 dark:border-slate-800">
-                                            {(error.imageUrl || (error.imageUrls && error.imageUrls.length > 0)) ? (
-                                                <>
-                                                    <img
-                                                        src={error.imageUrls?.[0] || error.imageUrl}
-                                                        alt={error.title}
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover/image:scale-105"
-                                                    />
-                                                    <div
-                                                        className="absolute inset-0 bg-black/0 transition-colors flex items-center justify-center opacity-0 group-hover/image:opacity-100 cursor-pointer"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
-                                                            setPreviewGallery({ images, index: 0 });
-                                                        }}
-                                                    >
-                                                        <button
-                                                            className="transform scale-90 group-hover/image:scale-100 transition-all duration-300 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-900 dark:text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow-lg flex items-center gap-2 border border-white/20 pointer-events-none"
-                                                        >
-                                                            <ImageIcon className="w-3.5 h-3.5" />
-                                                            <span>İncele</span>
-                                                        </button>
-                                                    </div>
-                                                    {(error.imageUrls && error.imageUrls.length > 1) && (
-                                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-white/10 shadow-sm">
-                                                            +{error.imageUrls.length - 1}
+                                        {/* Bottom: Image Section */}
+                                        <div className="mt-auto pt-4">
+                                            <div className="flex items-center gap-2 mb-2 px-1 opacity-60">
+                                                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hata Görseli</span>
+                                                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+                                            </div>
+                                            <div className={`aspect-video w-full rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900/50 relative group/image border-4 ${style.borderLight} transition-colors`}>
+                                                {(error.imageUrl || (error.imageUrls && error.imageUrls.length > 0)) ? (
+                                                    <>
+                                                        <img
+                                                            src={error.imageUrls?.[0] || error.imageUrl}
+                                                            alt={error.title}
+                                                            loading={index < 6 ? "eager" : "lazy"}
+                                                            fetchpriority={index === 0 ? "high" : "auto"}
+                                                            decoding="async"
+                                                            className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover/image:scale-105 cursor-zoom-in relative z-10"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                                                setPreviewGallery({ images, index: 0 });
+                                                            }}
+                                                        />
+                                                        {/* Hover Overlay - Passes clicks to card (pointer-events-none), Button catches click (pointer-events-auto) */}
+                                                        <div className="absolute inset-0 bg-slate-900/5 transition-colors flex items-center justify-center opacity-0 group-hover/image:opacity-100 pointer-events-none z-20">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                                                    setPreviewGallery({ images, index: 0 });
+                                                                }}
+                                                                className="pointer-events-auto transform translate-y-4 group-hover/image:translate-y-0 transition-all duration-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-xl font-bold text-xs shadow-xl flex items-center gap-2 border border-slate-100 dark:border-slate-700 hover:scale-105 active:scale-95 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
+                                                            >
+                                                                <ImageIcon className="w-3.5 h-3.5" />
+                                                                <span>Büyüt</span>
+                                                            </button>
                                                         </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 gap-2">
-                                                    <ImageIcon className="w-8 h-8 opacity-50" />
-                                                </div>
-                                            )}
+                                                        {(error.imageUrls && error.imageUrls.length > 1) && (
+                                                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-2 py-1 rounded-full border border-white/10 shadow-sm z-20">
+                                                                +{error.imageUrls.length - 1}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600 gap-2 bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <ImageIcon className="w-6 h-6 opacity-40" />
+                                                        <span className="text-[10px] font-medium opacity-60">Görsel Yok</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Admin Actions */}
@@ -765,6 +784,10 @@ const HomePage = () => {
                                         key={error.id}
                                         className={`bg-white dark:bg-[#1e293b] py-5 px-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl border border-slate-100 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-1 hover:scale-[1.01] flex items-center gap-6 hover:z-50`}
                                         onClick={() => handleCardClick(error)}
+                                        onDoubleClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }}
                                     >
                                         <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1.5 ${style.bar.replace('w-1', '')} bg-${style.bar.split(' ')[0].replace('bg-', '')} rounded-r-full opacity-0 group-hover:opacity-100 transition-all shadow-[2px_0_8px_-2px_rgba(0,0,0,0.5)]`}></div>
 
@@ -788,9 +811,10 @@ const HomePage = () => {
                                                 </h3>
 
                                             </div>
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm truncate">
-                                                {error.summary}
-                                            </p>
+                                            <div
+                                                className="text-slate-500 dark:text-slate-400 text-sm truncate"
+                                                dangerouslySetInnerHTML={{ __html: error.summary }}
+                                            />
                                         </div>
 
                                         <div className="hidden md:flex flex-row items-center gap-3 min-w-fit">
