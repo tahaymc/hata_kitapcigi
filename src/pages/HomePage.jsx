@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Search, LayoutGrid, List, Calendar, Edit2, Eye, X, Image as ImageIcon, Shield, Lock, ArrowRight, Moon, Sun, Plus, Save, Trash2, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, BookOpen, Users, UserCog } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCategories, searchErrors, getAllErrors, CATEGORIES, incrementViewCount, addError, updateError, deleteError } from '../data/mockData';
-// Lazy Load Modals
-const ErrorDetailModal = React.lazy(() => import('../components/ErrorDetailModal'));
-const PeopleManagerModal = React.lazy(() => import('../components/PeopleManagerModal'));
-const AddErrorModal = React.lazy(() => import('../components/AddErrorModal'));
-const EditErrorModal = React.lazy(() => import('../components/EditErrorModal'));
+// Define imports for prefetching
+const importErrorDetailModal = () => import('../components/ErrorDetailModal');
+const importPeopleManagerModal = () => import('../components/PeopleManagerModal');
+const importAddErrorModal = () => import('../components/AddErrorModal');
+const importEditErrorModal = () => import('../components/EditErrorModal');
+
+// Lazy Load Modals using the defined imports
+const ErrorDetailModal = React.lazy(importErrorDetailModal);
+const PeopleManagerModal = React.lazy(importPeopleManagerModal);
+const AddErrorModal = React.lazy(importAddErrorModal);
+const EditErrorModal = React.lazy(importEditErrorModal);
 
 import CategoryMoreDropdown from '../components/CategoryMoreDropdown';
 import { COLOR_STYLES } from '../utils/constants';
@@ -411,6 +417,7 @@ const HomePage = () => {
                                 <div className="flex items-center gap-1">
                                     <button
                                         onClick={() => setIsAddModalOpen(true)}
+                                        onMouseEnter={() => importAddErrorModal()}
                                         className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 group"
                                         title="Yeni Ekle"
                                     >
@@ -418,6 +425,7 @@ const HomePage = () => {
                                     </button>
                                     <button
                                         onClick={() => setIsPeopleManagerOpen(true)}
+                                        onMouseEnter={() => importPeopleManagerModal()}
                                         className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                                         title="Personel Yönetimi"
                                     >
@@ -591,6 +599,7 @@ const HomePage = () => {
                                             key={error.id}
                                             className={`bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full overflow-hidden`}
                                             onClick={() => handleCardClick(error)}
+                                            onMouseEnter={() => importErrorDetailModal()}
                                             onDoubleClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -783,6 +792,7 @@ const HomePage = () => {
                                             key={error.id}
                                             className={`bg-white dark:bg-[#1e293b] py-5 px-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl border border-slate-100 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-1 hover:scale-[1.01] flex items-center gap-6 hover:z-50`}
                                             onClick={() => handleCardClick(error)}
+                                            onMouseEnter={() => importErrorDetailModal()}
                                             onDoubleClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -869,6 +879,8 @@ const HomePage = () => {
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
+                                                                // Prefetch detail modal on image click too if logical, but mainly ensuring card click does it
+                                                                importErrorDetailModal();
                                                                 const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
                                                                 setPreviewGallery({ images, index: 0 });
                                                             }}
