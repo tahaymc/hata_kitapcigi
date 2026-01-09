@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingCart, Archive, Monitor, Settings } from 'lucide-react';
 import { ICON_OPTIONS } from './constants';
-import { CATEGORIES } from '../data/mockData';
+import { CATEGORIES } from '../utils/staticData';
 
 export const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = null) => {
     // If iconName is provided (from category object), use it
@@ -65,7 +65,7 @@ export const compressImage = (file) => {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
             };
         };
     });

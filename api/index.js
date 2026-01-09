@@ -1,13 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
 
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // Supabase Connection
 const supabaseUrl = process.env.SUPABASE_URL;

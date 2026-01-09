@@ -6,11 +6,6 @@ import { COLOR_STYLES } from '../utils/constants';
 
 
 const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCodeClick, categories = [], isAdmin, onEdit, onDelete }) => {
-    console.log('ErrorDetailModal Debug:', {
-        errorCategory: error?.category,
-        foundCategory: categories.find(c => c.id === error?.category),
-        allCategories: categories
-    });
     const [isImageEnlarged, setIsImageEnlarged] = React.useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
     const [zoomedStepImage, setZoomedStepImage] = React.useState(null);
@@ -60,12 +55,9 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
     // Detect image orientation reliably
     React.useEffect(() => {
         if (displayImages.length > 0 && displayImages[selectedImageIndex]) {
-            console.log('Checking orientation for:', displayImages[selectedImageIndex]);
             const img = new Image();
             img.onload = () => {
-                console.log('Image loaded. Width:', img.naturalWidth, 'Height:', img.naturalHeight);
                 const isLands = img.naturalWidth > img.naturalHeight;
-                console.log('Is Landscape?', isLands);
                 setIsLandscape(isLands);
             };
             img.src = displayImages[selectedImageIndex];

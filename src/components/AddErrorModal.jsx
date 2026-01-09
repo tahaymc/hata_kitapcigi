@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Image as ImageIcon, Plus, Save, Trash2, GripVertical } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
 import { compressImage } from '../utils/helpers';
-import { addError } from '../data/mockData';
+import { addError } from '../services/api';
 import PersonSelect from './PersonSelect';
 import CategorySelect from './CategorySelect';
 import TextEditorToolbar from './TextEditorToolbar';
