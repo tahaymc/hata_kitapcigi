@@ -176,7 +176,7 @@ const HomePage = () => {
     };
 
     const handleCodeClick = (code) => {
-        setSearchTerm(prev => prev === code ? '' : code);
+        setSearchTerm(searchTerm === code ? '' : code);
         setSelectedError(null);
     };
 
@@ -191,6 +191,7 @@ const HomePage = () => {
             alert("Hatalı kullanıcı adı veya şifre!");
         }
     };
+
 
     const handleUpdateCredentials = (e) => {
         e.preventDefault();
@@ -327,6 +328,9 @@ const HomePage = () => {
                         onEdit={(e) => handleEditClick(e, selectedError)}
                         onDelete={(e) => handleDeleteClick(e, selectedError.id)}
                         categories={categories}
+                        onCategoryClick={handleCategoryClick}
+                        onDateClick={handleDateClick}
+                        onCodeClick={handleCodeClick}
                     />
                 )}
 
