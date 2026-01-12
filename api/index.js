@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -115,6 +120,44 @@ app.get('/api/errors', async (req, res) => {
                 return res.json(simpleErrors.map(e => ({ ...e, assignees: [], assignee: null })));
             }
         }
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// GET Single Error by ID
+app.get('/api/errors/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        const { data: errorData, error: fetchError } = await supabase
+            .from('errors')
+            .select(`
+                *,
+                error_assignees (
+                    person:people (*)
+                )
+            `)
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // Transform data
+        const rawAssignees = errorData.error_assignees || [];
+        const mappedAssignees = rawAssignees
+            .map(ea => ea.person)
+            .filter(p => p !== null && p !== undefined);
+
+        const responseData = {
+            ...errorData,
+            assignees: mappedAssignees,
+            assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+        };
+
+        res.json(responseData);
+    } catch (e) {
+        console.error('Supabase Error (GET /errors/:id):', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -671,12 +714,23 @@ app.get('/api/diagnose-db', async (req, res) => {
 });
 const PORT = 3001;
 
+// Serve Static Files (Frontend)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// SPA Fallback: Redirect all non-API requests to index.html
+app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+    } else {
+        next();
+    }
+});
+
 // Conditional Listen for Local Development
-if (!process.env.VERCEL) {
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server running on http://0.0.0.0:${PORT}`);
-    });
-}
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log('VERCEL ENV:', process.env.VERCEL); // Debug log
+});
 
 // Export app for Vercel Serverless
 export default app;

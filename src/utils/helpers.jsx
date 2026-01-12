@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingCart, Archive, Monitor, Settings } from 'lucide-react';
 import { ICON_OPTIONS } from './constants';
-import { CATEGORIES } from '../utils/staticData';
+
 
 export const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = null) => {
     // If iconName is provided (from category object), use it
@@ -20,10 +20,7 @@ export const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = nu
     }
 };
 
-export const getCategoryColor = (categoryId) => {
-    const cat = CATEGORIES.find(c => c.id === categoryId);
-    return cat ? cat.color : 'slate';
-};
+
 
 export const formatDisplayDate = (dateStr) => {
     if (!dateStr) return '';

@@ -54,8 +54,14 @@ export const searchErrors = async (query, categoryId, date) => {
 };
 
 export const getErrorById = async (id) => {
-    const errors = await getAllErrors();
-    return errors.find(e => e.id == id);
+    try {
+        const response = await fetch(`${API_URL}/errors/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch error');
+        return await response.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return null;
+    }
 };
 
 // Write Functions

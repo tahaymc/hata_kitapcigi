@@ -1,32 +1,27 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllErrors } from '../services/api';
 
 const useErrors = () => {
-    const [allErrors, setAllErrors] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [filters, setFilters] = useState({
         query: '',
         category: null,
         date: null
     });
 
-    const refreshErrors = async () => {
-        setLoading(true);
-        try {
-            const data = await getAllErrors();
-            setAllErrors(data);
-        } catch (error) {
-            console.error("Failed to fetch errors:", error);
-        } finally {
-            setLoading(false);
-        }
+    // Fetch errors using React Query
+    const { data: allErrors = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ['errors'],
+        queryFn: getAllErrors,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+
+    const refreshErrors = () => {
+        refetch();
     };
 
-    // Initial Fetch
-    useEffect(() => {
-        refreshErrors();
-    }, []);
-
+    // Filter Logic
     const errors = useMemo(() => {
         let filtered = allErrors;
 
@@ -50,19 +45,24 @@ const useErrors = () => {
         return filtered;
     }, [allErrors, filters]);
 
-    // Helpers to update local state without full refetch (optimistic updates)
+    // Helpers to update local cache (optimistic updates or simple cache updates)
     const addLocalError = (newError) => {
-        setAllErrors(prev => [newError, ...prev]);
+        queryClient.setQueryData(['errors'], (oldData) => {
+            return oldData ? [newError, ...oldData] : [newError];
+        });
     };
 
     const updateLocalError = (updatedError) => {
-        setAllErrors(prev => prev.map(e => e.id === updatedError.id ? updatedError : e));
+        queryClient.setQueryData(['errors'], (oldData) => {
+            return oldData ? oldData.map(e => e.id === updatedError.id ? updatedError : e) : [];
+        });
     };
 
     const removeLocalError = (id) => {
-        setAllErrors(prev => prev.filter(e => e.id !== id));
+        queryClient.setQueryData(['errors'], (oldData) => {
+            return oldData ? oldData.filter(e => e.id !== id) : [];
+        });
     };
-
 
     return {
         errors,

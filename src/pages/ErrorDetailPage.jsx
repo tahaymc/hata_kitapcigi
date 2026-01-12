@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Image as ImageIcon, CheckCircle, AlertTriangle } from 'lucide-react';
-import { getCategoryIcon, getCategoryColor, formatDisplayDate } from '../utils/helpers';
+import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
 import { COLOR_STYLES } from '../utils/constants';
-import { getErrorById, CATEGORIES } from '../data/mockData';
+
+import { getErrorById, getCategories } from '../services/api';
 
 
 
@@ -13,17 +14,25 @@ const ErrorDetailPage = () => {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [categories, setCategories] = useState([]);
+
     useEffect(() => {
-        getErrorById(id).then(data => {
-            setError(data);
+        const fetchData = async () => {
+            const [errorData, categoriesData] = await Promise.all([
+                getErrorById(id),
+                getCategories()
+            ]);
+            setError(errorData);
+            setCategories(categoriesData || []);
             setLoading(false);
-        });
+        };
+        fetchData();
     }, [id]);
 
     if (loading) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Yükleniyor...</div>;
     if (!error) return <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white">Hata bulunamadı.</div>;
 
-    const category = CATEGORIES.find(c => c.id === error.category);
+    const category = categories.find(c => c.id === error.category);
     const colorStyle = COLOR_STYLES[category?.color || 'slate'] || COLOR_STYLES.slate;
 
     return (

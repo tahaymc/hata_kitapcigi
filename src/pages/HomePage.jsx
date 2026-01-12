@@ -8,15 +8,15 @@ import { COLOR_STYLES } from '../utils/constants';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import ErrorGrid from '../components/ErrorGrid';
+import Toast from '../components/Toast';
+import ErrorDetailModal from '../components/ErrorDetailModal';
 
 // Define imports for prefetching
-const importErrorDetailModal = () => import('../components/ErrorDetailModal');
 const importPeopleManagerModal = () => import('../components/PeopleManagerModal');
 const importAddErrorModal = () => import('../components/AddErrorModal');
 const importEditErrorModal = () => import('../components/EditErrorModal');
 
 // Lazy Load Modals
-const ErrorDetailModal = React.lazy(importErrorDetailModal);
 const PeopleManagerModal = React.lazy(importPeopleManagerModal);
 const AddErrorModal = React.lazy(importAddErrorModal);
 const EditErrorModal = React.lazy(importEditErrorModal);
@@ -100,8 +100,16 @@ const HomePage = () => {
         newUsername: '',
         currentPassword: '',
         newPassword: '',
+        newPassword: '',
         confirmPassword: ''
     });
+
+    // Toast State
+    const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type, visible: true });
+    };
 
     useEffect(() => {
         const storedCreds = localStorage.getItem('adminCredentials');
@@ -243,15 +251,19 @@ const HomePage = () => {
         setIsEditModalOpen(true);
     };
 
-    const handleCardClick = async (error) => {
-        const updatedError = await incrementViewCount(error.id);
-        if (updatedError) {
-            const mergedError = { ...error, ...updatedError };
-            updateLocalError(mergedError);
-            setSelectedError(mergedError);
-        } else {
-            setSelectedError(error);
-        }
+    const handleCardClick = (error) => {
+        // Optimistic UI: Open modal immediately
+        setSelectedError(error);
+
+        // Update view count in background
+        incrementViewCount(error.id).then(updatedError => {
+            if (updatedError) {
+                const mergedError = { ...error, ...updatedError };
+                updateLocalError(mergedError);
+                // Also update the selected error if it's still the same one being viewed
+                setSelectedError(current => current?.id === error.id ? mergedError : current);
+            }
+        }).catch(err => console.error("Failed to increment view count", err));
     };
 
     return (
@@ -301,7 +313,6 @@ const HomePage = () => {
                             const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
                             setPreviewGallery({ images, index: 0 });
                         }}
-                        onMouseEnter={importErrorDetailModal}
                         isAdmin={isAdmin}
                     />
                 </main>
@@ -322,24 +333,34 @@ const HomePage = () => {
                 {/* Add Error Modal */}
                 {isAddModalOpen && (
                     <AddErrorModal
+                        isOpen={true}
                         onClose={() => setIsAddModalOpen(false)}
                         onSuccess={handleAddSuccess}
                         categories={categories}
+                        showToast={showToast}
                     />
                 )}
 
                 {/* Edit Error Modal */}
                 {isEditModalOpen && editingError && (
                     <EditErrorModal
-                        error={editingError}
+                        isOpen={true}
+                        errorToEdit={editingError}
                         onClose={() => {
                             setIsEditModalOpen(false);
                             setEditingError(null);
                         }}
                         onSuccess={handleEditSuccess}
                         categories={categories}
+                        showToast={showToast}
                     />
                 )}
+
+                <Toast
+                    message={toast.visible ? toast.message : null}
+                    type={toast.type}
+                    onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+                />
 
                 {/* People Manager Modal */}
                 {isPeopleManagerOpen && (
