@@ -421,7 +421,14 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                                             cyan: 'bg-cyan-100 text-cyan-600',
                                                             teal: 'bg-teal-100 text-teal-600',
                                                             orange: 'bg-orange-100 text-orange-600',
-                                                            slate: 'bg-slate-200 text-slate-600'
+                                                            slate: 'bg-slate-200 text-slate-600',
+                                                            emerald: 'bg-emerald-100 text-emerald-600',
+                                                            amber: 'bg-amber-100 text-amber-600',
+                                                            lime: 'bg-lime-100 text-lime-600',
+                                                            sky: 'bg-sky-100 text-sky-600',
+                                                            violet: 'bg-violet-100 text-violet-600',
+                                                            fuchsia: 'bg-fuchsia-100 text-fuchsia-600',
+                                                            rose: 'bg-rose-100 text-rose-600'
                                                         };
                                                         return colors[c] || colors.slate;
                                                     };
