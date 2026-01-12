@@ -114,7 +114,13 @@ const HomePage = () => {
     useEffect(() => {
         const storedCreds = localStorage.getItem('adminCredentials');
         if (storedCreds) {
-            setAdminCredentials(JSON.parse(storedCreds));
+            try {
+                setAdminCredentials(JSON.parse(storedCreds));
+            } catch (error) {
+                console.error("Failed to parse admin credentials:", error);
+                // Fail gracefully, keeping default credentials or maybe clearing invalid storage
+                localStorage.removeItem('adminCredentials');
+            }
         }
     }, []);
 
@@ -182,7 +188,10 @@ const HomePage = () => {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        if (loginData.username === adminCredentials.username && loginData.password === adminCredentials.password) {
+        const inputUsername = loginData.username.trim();
+        const inputPassword = loginData.password.trim();
+
+        if (inputUsername === adminCredentials.username && inputPassword === adminCredentials.password) {
             localStorage.setItem('isAdminAuthenticated', 'true');
             setIsAdmin(true);
             setIsLoginModalOpen(false);
@@ -212,8 +221,8 @@ const HomePage = () => {
         }
 
         const newCreds = {
-            username: credentialsForm.newUsername || adminCredentials.username,
-            password: credentialsForm.newPassword
+            username: (credentialsForm.newUsername || adminCredentials.username).trim(),
+            password: credentialsForm.newPassword.trim()
         };
 
         setAdminCredentials(newCreds);
