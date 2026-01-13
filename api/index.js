@@ -84,6 +84,8 @@ app.get('/api/errors', async (req, res) => {
                     person:people (*)
                 )
             `)
+            // Sort by sort_order first (if exists/populated), then by ID desc
+            .order('sort_order', { ascending: true, nullsFirst: false })
             .order('id', { ascending: false });
 
         if (errorsError) throw errorsError;
@@ -107,6 +109,37 @@ app.get('/api/errors', async (req, res) => {
         res.json(transformedData);
     } catch (e) {
         console.error('Supabase Error (GET /errors):', e.message);
+        // Fallback: If sorting by sort_order failed (column missing), try standard sort
+        if (e.message.includes('sort_order')) {
+            console.warn('Retrying fetch without sort_order (column likely missing).');
+            try {
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('errors')
+                    .select(`
+                        *,
+                        error_assignees (
+                            person:people (*)
+                        )
+                    `)
+                    .order('id', { ascending: false });
+
+                if (fallbackError) throw fallbackError;
+
+                const transformedFallback = fallbackData.map(error => {
+                    const rawAssignees = error.error_assignees || [];
+                    const mappedAssignees = rawAssignees.map(ea => ea.person).filter(p => p);
+                    return {
+                        ...error,
+                        assignees: mappedAssignees,
+                        assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+                    };
+                });
+                return res.json(transformedFallback);
+            } catch (retryErr) {
+                console.error('Retry failed:', retryErr.message);
+            }
+        }
+
         // Fallback: If the relationship query failed (e.g. table missing), 
         // try fetching just errors to keep the app working.
         if (e.message.includes('error_assignees')) {
@@ -120,6 +153,46 @@ app.get('/api/errors', async (req, res) => {
                 return res.json(simpleErrors.map(e => ({ ...e, assignees: [], assignee: null })));
             }
         }
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ... (GET Single Error remains same) ...
+// ... (GET/POST/PUT/DELETE Categories/Departments/People/Errors remain same) ...
+
+// [EXISTING CODE ENDS AT LINE 677 for reset-view]
+// [Start of NEW Reorder Endpoint]
+
+// Reorder Errors
+app.post('/api/errors/reorder', async (req, res) => {
+    if (!checkDb(res)) return;
+    const { orderedIds } = req.body; // Array of IDs in new order
+
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+        return res.status(400).json({ error: 'orderedIds array is required' });
+    }
+
+    try {
+        // Prepare updates: [{ id: 1, sort_order: 0 }, { id: 5, sort_order: 1 }, ...]
+        const updates = orderedIds.map((id, index) => ({
+            id: parseInt(id),
+            sort_order: index
+        }));
+
+        // Perform Bulk Update (Upsert)
+        // Note: For upsert to work effectively for updates, usage of 'id' as conflict key is correct.
+        // We only send id and sort_order, preventing overwrite of other fields if not specified? 
+        // Supabase upsert updates columns present in the payload.
+        const { data, error } = await supabase
+            .from('errors')
+            .upsert(updates, { onConflict: 'id' })
+            .select('id, sort_order');
+
+        if (error) throw error;
+
+        res.json({ success: true, count: updates.length });
+    } catch (e) {
+        console.error('Supabase Error (POST reorder):', e.message);
         res.status(500).json({ error: e.message });
     }
 });

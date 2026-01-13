@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
-import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError } from '../services/api';
+import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError, reorderErrors } from '../services/api';
 import { COLOR_STYLES } from '../utils/constants';
+import { arrayMove } from '@dnd-kit/sortable';
 
 // Import Components
 import Header from '../components/Header';
@@ -39,7 +40,7 @@ const HomePage = () => {
     const [categories, setCategories] = useState([]);
 
     // Custom Hook
-    const { errors, loading, filters, setFilters, addLocalError, updateLocalError, removeLocalError, refreshErrors } = useErrors();
+    const { errors, loading, filters, setFilters, addLocalError, updateLocalError, setLocalErrors, removeLocalError, refreshErrors } = useErrors();
 
     // Derived state for UI consistency
     const searchTerm = filters.query;
@@ -99,7 +100,6 @@ const HomePage = () => {
     const [credentialsForm, setCredentialsForm] = useState({
         newUsername: '',
         currentPassword: '',
-        newPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
@@ -276,6 +276,30 @@ const HomePage = () => {
         }).catch(err => console.error("Failed to increment view count", err));
     };
 
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            const oldIndex = errors.findIndex((e) => e.id === active.id);
+            const newIndex = errors.findIndex((e) => e.id === over.id);
+
+            const newErrors = arrayMove(errors, oldIndex, newIndex);
+            setLocalErrors(newErrors);
+
+            // Persist order
+            const orderedIds = newErrors.map(e => e.id);
+            reorderErrors(orderedIds)
+                .then(() => {
+                    // Optional: showToast('Sıralama kaydedildi', 'success');
+                })
+                .catch(err => {
+                    console.error('Reorder persistence failed:', err);
+                    showToast('Sıralama kaydedilirken hata oluştu', 'error');
+                    // Optionally revert state here if needed
+                });
+        }
+    };
+
     return (
         <React.Suspense fallback={<div className="fixed inset-0 bg-white/50 dark:bg-slate-900/50 z-[200]" />}>
             <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -333,6 +357,7 @@ const HomePage = () => {
                             setPreviewGallery({ images, index: 0 });
                         }}
                         isAdmin={isAdmin}
+                        onDragEnd={handleDragEnd}
                     />
                 </main>
 

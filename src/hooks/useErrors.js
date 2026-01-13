@@ -58,6 +58,10 @@ const useErrors = () => {
         });
     };
 
+    const setLocalErrors = (newErrors) => {
+        queryClient.setQueryData(['errors'], newErrors);
+    };
+
     const removeLocalError = (id) => {
         queryClient.setQueryData(['errors'], (oldData) => {
             return oldData ? oldData.filter(e => e.id !== id) : [];
@@ -72,6 +76,7 @@ const useErrors = () => {
         refreshErrors,
         addLocalError,
         updateLocalError,
+        setLocalErrors,
         removeLocalError
     };
 };

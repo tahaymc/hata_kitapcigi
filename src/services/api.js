@@ -146,3 +146,21 @@ export const resetViewCount = async (id) => {
     }
     return null;
 };
+
+export const reorderErrors = async (orderedIds) => {
+    try {
+        const response = await fetch(`${API_URL}/errors/reorder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds })
+        });
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Reorder failed');
+        }
+        return await response.json();
+    } catch (e) {
+        console.error('Failed to reorder errors', e);
+        throw e;
+    }
+};
