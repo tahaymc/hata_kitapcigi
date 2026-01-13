@@ -655,6 +655,27 @@ app.post('/api/errors/:id/view', async (req, res) => {
     }
 });
 
+// Reset View Count
+app.post('/api/errors/:id/reset-view', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        const { data, error } = await supabase
+            .from('errors')
+            .update({ viewCount: 0 })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST reset-view):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 // Diagnostic Endpoint to check DB schema and permissions
 app.get('/api/diagnose-db', async (req, res) => {

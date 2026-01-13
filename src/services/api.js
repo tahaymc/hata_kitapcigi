@@ -131,3 +131,18 @@ export const incrementViewCount = async (id) => {
     }
     return null;
 };
+
+export const resetViewCount = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/errors/${id}/reset-view`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+    } catch (e) {
+        console.error("Failed to reset view count", e);
+    }
+    return null;
+};

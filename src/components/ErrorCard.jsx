@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2, RotateCcw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
 import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
@@ -15,6 +15,7 @@ const ErrorCard = ({
     onCodeClick,
     onEditClick,
     onDeleteClick,
+    onResetViewClick,
     onImageClick,
     isAdmin,
     viewMode = 'grid',
@@ -205,6 +206,13 @@ const ErrorCard = ({
                 {isAdmin && (
                     <div className="absolute top-2 right-6 flex gap-2 z-10">
                         <button
+                            onClick={(e) => onResetViewClick(e, error)}
+                            className="text-slate-300 hover:text-orange-500 transition-colors"
+                            title="Görüntülenmeyi Sıfırla"
+                        >
+                            <RotateCcw className="w-4 h-4" />
+                        </button>
+                        <button
                             onClick={(e) => onEditClick(e, error)}
                             className="text-slate-300 hover:text-blue-500 transition-colors"
                             title="Düzenle"
@@ -280,6 +288,13 @@ const ErrorCard = ({
             {/* Admin Actions */}
             {isAdmin && (
                 <div className="flex items-center gap-2 pl-4 border-l border-slate-100 dark:border-slate-800 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={(e) => onResetViewClick(e, error)}
+                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-orange-500 transition-all"
+                        title="Görüntülenmeyi Sıfırla"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={(e) => onEditClick(e, error)}
                         className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-all"

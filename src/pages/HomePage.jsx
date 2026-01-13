@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
-import { getCategories, getAllErrors, incrementViewCount, addError, updateError, deleteError } from '../services/api';
+import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError } from '../services/api';
 import { COLOR_STYLES } from '../utils/constants';
 
 // Import Components
@@ -319,6 +319,15 @@ const HomePage = () => {
                         onCodeClick={handleCodeClick}
                         onEditClick={handleEditClick}
                         onDeleteClick={handleDeleteClick}
+                        onResetViewClick={async (e, error) => {
+                            if (e) e.stopPropagation();
+                            if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
+                                await resetViewCount(error.id);
+                                const updatedError = { ...error, viewCount: 0 };
+                                updateLocalError(updatedError);
+                                showToast('Görüntülenme sayısı sıfırlandı.', 'success');
+                            }
+                        }}
                         onImageClick={(error) => {
                             const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
                             setPreviewGallery({ images, index: 0 });
@@ -506,7 +515,7 @@ const HomePage = () => {
                 {/* Preview Gallery (Quick View) */}
                 {previewGallery && (
                     <div className="fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
-                        <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+                        <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center overflow-hidden">
                             <button
                                 onClick={() => setPreviewGallery(null)}
                                 className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
@@ -514,11 +523,12 @@ const HomePage = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
 
-                            <div className="w-full flex-1 relative flex items-center justify-center">
+                            <div className="w-full flex-1 relative flex items-center justify-center min-h-0">
                                 <img
                                     src={previewGallery.images[previewGallery.index]}
                                     alt="Preview"
                                     className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                    onClick={(e) => e.stopPropagation()}
                                 />
 
                                 {previewGallery.images.length > 1 && (
@@ -550,11 +560,14 @@ const HomePage = () => {
                                     </>
                                 )}
                             </div>
-                            <div className="mt-4 flex gap-2 overflow-x-auto max-w-full p-2">
+                            <div className="mt-4 flex gap-2 overflow-x-auto overflow-y-hidden max-w-full p-2">
                                 {previewGallery.images.map((img, idx) => (
                                     <button
                                         key={idx}
-                                        onClick={() => setPreviewGallery(prev => ({ ...prev, index: idx }))}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPreviewGallery(prev => ({ ...prev, index: idx }));
+                                        }}
                                         className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
                                     >
                                         <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />

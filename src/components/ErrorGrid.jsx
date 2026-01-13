@@ -15,6 +15,7 @@ const ErrorGrid = ({
     onCodeClick,
     onEditClick,
     onDeleteClick,
+    onResetViewClick,
     onImageClick,
     onMouseEnter,
     isAdmin,
@@ -50,6 +51,7 @@ const ErrorGrid = ({
                     onCodeClick={onCodeClick}
                     onEditClick={onEditClick}
                     onDeleteClick={onDeleteClick}
+                    onResetViewClick={onResetViewClick}
                     onImageClick={onImageClick}
                 />
             ))}
