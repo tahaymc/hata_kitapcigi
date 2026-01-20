@@ -26,10 +26,8 @@ try {
         console.error('CRITICAL ERROR: SUPABASE_URL and SUPABASE_KEY are missing in environment.');
         initError = 'Missing environment variables';
     } else {
-        // Use Service Role Key if available, otherwise fall back to Anon Key
-        const key = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseKey;
-        supabase = createClient(supabaseUrl, key);
-        console.log(`Supabase client initialized with ${process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SERVICE ROLE' : 'ANON'} key`);
+        supabase = createClient(supabaseUrl, supabaseKey);
+        console.log('Supabase client initialized');
     }
 } catch (e) {
     console.error('Supabase Initialization Failed:', e.message);
