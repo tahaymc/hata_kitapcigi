@@ -67,21 +67,42 @@ export const getErrorById = async (id) => {
 
 // Write Functions
 export const uploadVideo = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
+    try {
+        // 1. Get Signed URL
+        const genResponse = await fetch(`${API_URL}/generate-upload-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: file.name,
+                type: file.type
+            })
+        });
 
-    const response = await fetch(`${API_URL}/upload-video`, {
-        method: 'POST',
-        body: formData
-    });
+        if (!genResponse.ok) {
+            const errData = await genResponse.json();
+            throw new Error(errData.error || 'Upload URL oluşturulamadı');
+        }
 
-    if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Video yüklenirken hata oluştu');
+        const { signedUrl, publicUrl } = await genResponse.json();
+
+        // 2. Upload directly to storage via Signed URL
+        const uploadResponse = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': file.type
+            },
+            body: file
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error('Dosya yükleme başarısız oldu (Storage)');
+        }
+
+        return publicUrl;
+    } catch (e) {
+        console.error('Video Upload Error:', e);
+        throw e;
     }
-
-    const data = await response.json();
-    return data.url;
 };
 
 export const addError = async (newError) => {

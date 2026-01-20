@@ -66,32 +66,46 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB
 });
 
-// Video Upload Endpoint
-app.post('/api/upload-video', upload.single('file'), async (req, res) => {
+// Video Upload Endpoint (Deprecated - replaced by client-side upload)
+// app.post('/api/upload-video', ...);
+
+// Generate Signed Upload URL
+app.post('/api/generate-upload-url', async (req, res) => {
     if (!checkDb(res)) return;
     try {
-        const file = req.file;
-        if (!file) return res.status(400).json({ error: 'No file uploaded' });
+        const { name, type } = req.body;
+        if (!name || !type) return res.status(400).json({ error: 'File name and type are required' });
 
         // Sanitize filename
-        const fileName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const cleanName = name.replace(/[^a-zA-Z0-9.]/g, '_');
+        const fileName = `${Date.now()}_${cleanName}`;
 
+        // Generate Signed URL for Upload
+        // 'video' is the bucket name
         const { data, error } = await supabase.storage
             .from('videos')
-            .upload(fileName, file.buffer, {
-                contentType: file.mimetype,
-                upsert: false
-            });
+            .createSignedUploadUrl(fileName);
 
         if (error) throw error;
 
+        // Verify signedUrl generation
+        if (!data || !data.signedUrl) {
+            throw new Error('Failed to generate signed URL');
+        }
+
+        // Generate Public URL for future access
         const { data: { publicUrl } } = supabase.storage
             .from('videos')
             .getPublicUrl(fileName);
 
-        res.json({ url: publicUrl });
+        res.json({
+            signedUrl: data.signedUrl,
+            path: data.path, // May trigger 'token' in older versions, but 'signedUrl' is key
+            publicUrl: publicUrl,
+            fileName: fileName
+        });
     } catch (e) {
-        console.error('Video Upload Failed:', e.message);
+        console.error('Generate Upload URL Failed:', e.message);
         res.status(500).json({ error: e.message });
     }
 });
