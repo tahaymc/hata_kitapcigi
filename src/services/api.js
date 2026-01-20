@@ -64,7 +64,26 @@ export const getErrorById = async (id) => {
     }
 };
 
+
 // Write Functions
+export const uploadVideo = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_URL}/upload-video`, {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Video yüklenirken hata oluştu');
+    }
+
+    const data = await response.json();
+    return data.url;
+};
+
 export const addError = async (newError) => {
     // Sanitize payload to remove non-DB columns
     const payload = { ...newError };
@@ -163,4 +182,126 @@ export const reorderErrors = async (orderedIds) => {
         console.error('Failed to reorder errors', e);
         throw e;
     }
+};
+
+// --- Guides ---
+
+export const getAllGuides = async () => {
+    try {
+        const response = await fetch(`${API_URL}/guides`);
+        if (!response.ok) throw new Error('Failed to fetch guides');
+        return await response.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return [];
+    }
+};
+
+export const getGuideById = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/guides/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch guide');
+        return await response.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return null;
+    }
+};
+
+export const addGuide = async (newGuide) => {
+    const payload = { ...newGuide };
+    delete payload.assignee;
+    delete payload.assignees;
+    delete payload.guide_assignees;
+    delete payload.id;
+
+    const response = await fetch(`${API_URL}/guides`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'Guide creation failed');
+    }
+    return data;
+};
+
+export const updateGuide = async (id, updatedData) => {
+    const payload = { ...updatedData };
+    delete payload.assignee;
+    delete payload.assignees;
+    delete payload.guide_assignees;
+
+    const response = await fetch(`${API_URL}/guides/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Guide update failed');
+    }
+    return await response.json();
+};
+
+export const deleteGuide = async (id) => {
+    const response = await fetch(`${API_URL}/guides/${id}`, {
+        method: 'DELETE'
+    });
+    return response.ok;
+};
+
+export const incrementGuideViewCount = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/guides/${id}/view`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+    } catch (e) {
+        console.error("Failed to increment guide view count", e);
+    }
+    return null;
+};
+
+// --- Categories ---
+
+export const addCategory = async (newCategory) => {
+    const response = await fetch(`${API_URL}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCategory)
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Category creation failed');
+    }
+    return await response.json();
+};
+
+export const updateCategory = async (id, updatedData) => {
+    const response = await fetch(`${API_URL}/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Category update failed');
+    }
+    return await response.json();
+};
+
+export const deleteCategory = async (id) => {
+    const response = await fetch(`${API_URL}/categories/${id}`, {
+        method: 'DELETE'
+    });
+    return response.ok;
 };

@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +60,42 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// Multer Config for Video Uploads
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
+// Video Upload Endpoint
+app.post('/api/upload-video', upload.single('file'), async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+        // Sanitize filename
+        const fileName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+
+        const { data, error } = await supabase.storage
+            .from('videos')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+                upsert: false
+            });
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('videos')
+            .getPublicUrl(fileName);
+
+        res.json({ url: publicUrl });
+    } catch (e) {
+        console.error('Video Upload Failed:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Helper to check DB connection
 const checkDb = (res) => {
     if (!supabase) {
@@ -70,6 +107,292 @@ const checkDb = (res) => {
     }
     return true;
 };
+
+// --- GUIDES ENDPOINTS ---
+
+// GET All Guides
+app.get('/api/guides', async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { data: guidesData, error: guidesError } = await supabase
+            .from('guides')
+            .select(`
+                *,
+                guide_assignees (
+                    person:people (*)
+                )
+            `)
+            .order('created_at', { ascending: false });
+
+        if (guidesError) throw guidesError;
+
+        const transformedData = guidesData.map(guide => {
+            const rawAssignees = guide.guide_assignees || [];
+            const mappedAssignees = rawAssignees
+                .map(ga => ga.person)
+                .filter(p => p !== null && p !== undefined);
+
+            return {
+                ...guide,
+                assignees: mappedAssignees,
+                assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+            };
+        });
+
+        res.json(transformedData);
+    } catch (e) {
+        console.error('Supabase Error (GET /guides):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// GET Single Guide
+app.get('/api/guides/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        const { data: guideData, error: fetchError } = await supabase
+            .from('guides')
+            .select(`
+                *,
+                guide_assignees (
+                    person:people (*)
+                )
+            `)
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const rawAssignees = guideData.guide_assignees || [];
+        const mappedAssignees = rawAssignees
+            .map(ga => ga.person)
+            .filter(p => p !== null && p !== undefined);
+
+        const responseData = {
+            ...guideData,
+            assignees: mappedAssignees,
+            assignee: mappedAssignees.length > 0 ? mappedAssignees[0] : null
+        };
+
+        res.json(responseData);
+    } catch (e) {
+        console.error('Supabase Error (GET /guides/:id):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST New Guide
+app.post('/api/guides', async (req, res) => {
+    if (!checkDb(res)) return;
+
+    let finalImageUrls = req.body.imageUrls || [];
+    let finalImageUrl = req.body.imageUrl;
+
+    if (!finalImageUrl && finalImageUrls.length > 0) {
+        finalImageUrl = finalImageUrls[0];
+    }
+    if (finalImageUrl && (!finalImageUrls || finalImageUrls.length === 0)) {
+        finalImageUrls = [finalImageUrl];
+    }
+
+    const assigneeIds = req.body.assignee_ids || [];
+
+    const payload = {
+        code: req.body.code,
+        title: req.body.title,
+        summary: req.body.summary,
+        content: req.body.content,
+        steps: req.body.steps,
+        category: req.body.category,
+        image_url: finalImageUrl,
+        image_urls: finalImageUrls,
+        video_url: req.body.videoUrl,
+        view_count: 0
+    };
+
+    try {
+        // 1. Insert Guide
+        const { data: guideData, error: insertError } = await supabase
+            .from('guides')
+            .insert([payload])
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        // 2. Insert Assignees
+        if (assigneeIds.length > 0) {
+            const assigneeRows = assigneeIds.map(personId => ({
+                guide_id: guideData.id,
+                person_id: personId
+            }));
+
+            const { error: assignError } = await supabase
+                .from('guide_assignees')
+                .insert(assigneeRows);
+
+            if (assignError) throw assignError;
+        }
+
+        // 3. Re-fetch
+        const { data: completeGuide, error: fetchError } = await supabase
+            .from('guides')
+            .select(`
+                *,
+                guide_assignees (
+                    person:people (*)
+                )
+            `)
+            .eq('id', guideData.id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const mappedAssignees = (completeGuide.guide_assignees || []).map(ga => ga.person).filter(p => p);
+
+        res.status(201).json({
+            ...completeGuide,
+            assignees: mappedAssignees,
+            assignee: mappedAssignees[0] || null
+        });
+    } catch (e) {
+        console.error('Supabase Error (POST /guides):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// PUT Update Guide
+app.put('/api/guides/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    let finalImageUrls = req.body.imageUrls || [];
+    let finalImageUrl = req.body.imageUrl;
+
+    if (!finalImageUrl && finalImageUrls.length > 0) finalImageUrl = finalImageUrls[0];
+    if (finalImageUrl && (!finalImageUrls || finalImageUrls.length === 0)) finalImageUrls = [finalImageUrl];
+
+    const assigneeIds = req.body.assignee_ids || [];
+
+    // Construct payload explicitly
+    const payload = {
+        code: req.body.code,
+        title: req.body.title,
+        summary: req.body.summary,
+        content: req.body.content,
+        steps: req.body.steps,
+        category: req.body.category,
+        image_url: finalImageUrl,
+        image_urls: finalImageUrls,
+        video_url: req.body.videoUrl
+    };
+
+    try {
+        const { data, error } = await supabase
+            .from('guides')
+            .update(payload)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        if (data) {
+            // Update assignees
+            if (Array.isArray(assigneeIds)) {
+                await supabase.from('guide_assignees').delete().eq('guide_id', id);
+                if (assigneeIds.length > 0) {
+                    const assigneeRows = assigneeIds.map(pid => ({ guide_id: id, person_id: pid }));
+                    await supabase.from('guide_assignees').insert(assigneeRows);
+                }
+            }
+
+            // Re-fetch
+            const { data: completeGuide, error: fetchError } = await supabase
+                .from('guides')
+                .select(`
+                    *,
+                    guide_assignees (
+                        person:people (*)
+                    )
+                `)
+                .eq('id', id)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            const mappedAssignees = (completeGuide.guide_assignees || []).map(ga => ga.person).filter(p => p);
+
+            res.json({
+                ...completeGuide,
+                assignees: mappedAssignees,
+                assignee: mappedAssignees[0] || null
+            });
+        } else {
+            res.status(404).json({ error: 'Guide not found' });
+        }
+    } catch (e) {
+        console.error('Supabase Error (PUT /guides):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE Guide
+app.delete('/api/guides/:id', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        await supabase.from('guide_assignees').delete().eq('guide_id', id);
+        const { error } = await supabase.from('guides').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /guides):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Increment Guide View Count
+app.post('/api/guides/:id/view', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        // RPC or direct update? Supabase doesn't have atomic increment in simple update unless using RPC or custom query.
+        // But for simplicity in this setup (and since we can't easily add RPCs from here), we will fetch and update.
+        // OR better: use rpc if available. Assuming no rpc 'increment_guide_view'.
+        // Concurrency issue: read-modify-write.
+        // For this app, RMW is probably acceptable.
+
+        const { data: guide, error: fetchError } = await supabase
+            .from('guides')
+            .select('view_count')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newCount = (guide.view_count || 0) + 1;
+
+        const { data, error: updateError } = await supabase
+            .from('guides')
+            .update({ view_count: newCount })
+            .eq('id', id)
+            .select('view_count') // Only return what we need, or return full object?
+            // Returning the changed field is enough to update frontend optimistically or definitively.
+            // But frontend usually expects just success or the updated fields.
+            .single();
+
+        if (updateError) throw updateError;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST /guides/:id/view):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // GET All Errors
 app.get('/api/errors', async (req, res) => {
@@ -254,10 +577,16 @@ app.get('/api/categories', async (req, res) => {
 // POST New Category
 app.post('/api/categories', async (req, res) => {
     if (!checkDb(res)) return;
-    const { name, color, icon } = req.body;
+    const { name, color, icon, type } = req.body;
     const id = req.body.id || name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const newCategory = { id, name, color, icon: icon || 'settings' };
+    const newCategory = {
+        id,
+        name,
+        color,
+        icon: icon || 'settings',
+        type: type || 'errors' // Default to 'errors' if not provided
+    };
 
     try {
         const { data, error } = await supabase
@@ -278,12 +607,12 @@ app.post('/api/categories', async (req, res) => {
 app.put('/api/categories/:id', async (req, res) => {
     if (!checkDb(res)) return;
     const { id } = req.params;
-    const { name, color, icon } = req.body;
+    const { name, color, icon, type } = req.body;
 
     try {
         const { data, error } = await supabase
             .from('categories')
-            .update({ name, color, icon })
+            .update({ name, color, icon, type })
             .eq('id', id)
             .select()
             .single();
@@ -507,19 +836,29 @@ app.post('/api/errors', async (req, res) => {
     const assigneeIds = req.body.assignee_ids || [];
 
     const payload = {
-        ...req.body,
-        imageUrl: finalImageUrl,
-        imageUrls: finalImageUrls,
-        date: dateStr,
-        viewCount: 0
+        title: req.body.title,
+        code: req.body.code,
+        summary: req.body.summary,
+        solution: req.body.solution,
+        solutionType: req.body.solutionType,
+        solutionSteps: req.body.solutionSteps,
+        category: req.body.category,
+        image_url: finalImageUrl,
+        image_urls: finalImageUrls,
+        video_url: req.body.videoUrl,
+        date: dateStr, // specific to creation
+        view_count: 0
     };
+
 
     // Remove non-column fields
     delete payload.id;
     delete payload.assignee_ids;
     delete payload.assignee_id; // Clean up legacy if sent
     delete payload.assignee; // Clean up legacy object if sent
+    delete payload.assignee; // Clean up legacy object if sent
     delete payload.severity; // Remove if column doesn't exist yet
+    delete payload.videoUrl;
 
     try {
         // 1. Insert Error
@@ -599,17 +938,23 @@ app.put('/api/errors/:id', async (req, res) => {
     const assigneeIds = req.body.assignee_ids || [];
 
     const payload = {
-        ...req.body,
+        title: req.body.title,
+        code: req.body.code,
+        summary: req.body.summary,
+        solution: req.body.solution,
+        solutionType: req.body.solutionType,
+        solutionSteps: req.body.solutionSteps,
+        category: req.body.category,
         imageUrl: finalImageUrl,
-        imageUrls: finalImageUrls
+        imageUrls: finalImageUrls,
+        video_url: req.body.videoUrl,
+        date: req.body.date,
+        // Do not include created_at, id, or viewCount
     };
 
-    // Clean up non-column fields
-    delete payload.assignee_ids;
-    delete payload.assignee_id;
-    delete payload.assignees; // if present from GET
-    delete payload.assignee; // if present from GET
-    delete payload.severity; // Remove if column doesn't exist yet
+    // Clean up non-column fields handled above or not needed
+    // delete payload.assignee_ids; // Not in payload object anyway
+    // delete payload.content; // Not in payload object anyway
 
     try {
         // 1. Update Error

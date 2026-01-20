@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon, Plus, Save, Trash2, GripVertical } from 'lucide-react';
+import { X, Image as ImageIcon, Plus, Save, Trash2, GripVertical, Video } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
 import { compressImage } from '../utils/helpers';
-import { addError } from '../services/api';
+import { addError, uploadVideo } from '../services/api';
 import PersonSelect from './PersonSelect';
 import CategorySelect from './CategorySelect';
 import TextEditorToolbar from './TextEditorToolbar';
@@ -279,8 +279,13 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
         severity: 'low',
         assignee_ids: [],
         solutionType: 'steps',
-        solutionSteps: [{ id: 'init-1', text: '', imageUrl: null, subSteps: [] }]
+        assignee_ids: [],
+        solutionType: 'steps',
+        solutionSteps: [{ id: 'init-1', text: '', imageUrl: null, subSteps: [] }],
+        videoUrl: null
     });
+
+    const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -302,6 +307,28 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
             ...prev,
             imageUrls: [...(prev.imageUrls || []), ...compressedImages]
         }));
+    };
+
+    const handleVideoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 50 * 1024 * 1024) {
+            showToast('Video boyutu 50MB\'dan küçük olmalıdır.', 'error');
+            return;
+        }
+
+        try {
+            setIsUploadingVideo(true);
+            const url = await uploadVideo(file);
+            setNewErrorData(prev => ({ ...prev, videoUrl: url }));
+            showToast('Video başarıyla yüklendi.', 'success');
+        } catch (error) {
+            console.error('Video upload error:', error);
+            showToast('Video yüklenirken hata oluştu.', 'error');
+        } finally {
+            setIsUploadingVideo(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -346,8 +373,12 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                     severity: 'low',
                     assignee_ids: [],
                     solutionType: 'steps',
-                    solutionSteps: [{ id: Math.random().toString(36).substr(2, 9), text: '', imageUrl: null, subSteps: [] }]
+                    assignee_ids: [],
+                    solutionType: 'steps',
+                    solutionSteps: [{ id: Math.random().toString(36).substr(2, 9), text: '', imageUrl: null, subSteps: [] }],
+                    videoUrl: null
                 });
+                setIsUploadingVideo(false);
             }
         } catch (error) {
             console.error('Error adding record:', error);
@@ -478,6 +509,40 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Video Upload Section */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Hata Çözüm Videosu</label>
+                            <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 50MB</span>
+                        </div>
+
+                        {!newErrorData.videoUrl ? (
+                            <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative overflow-hidden group ${isUploadingVideo ? 'opacity-50 pointer-events-none' : ''}`}>
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                                        <Video className="w-6 h-6 text-red-500 dark:text-red-400" />
+                                    </div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        {isUploadingVideo ? 'Video Yükleniyor...' : <><span className="font-semibold text-red-600 dark:text-red-400">Video yüklemek için tıklayın</span> veya sürükleyin</>}
+                                    </p>
+                                </div>
+                                <input type="file" className="hidden" accept="video/mp4,video/webm,video/ogg" onChange={handleVideoUpload} disabled={isUploadingVideo} />
+                            </label>
+                        ) : (
+                            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-black">
+                                <video src={newErrorData.videoUrl} controls className="w-full h-48 object-contain" />
+                                <button
+                                    type="button"
+                                    onClick={() => setNewErrorData({ ...newErrorData, videoUrl: null })}
+                                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg z-10"
+                                    title="Videoyu Kaldır"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div>

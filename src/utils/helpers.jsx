@@ -22,15 +22,24 @@ export const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = nu
 
 
 
-export const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return '';
-    if (dateStr.includes('.') && dateStr.split('.').length === 3) return dateStr;
-    if (dateStr.includes('-')) {
-        const [year, month, day] = dateStr.split('-');
-        return `${day}.${month}.${year}`;
+export const formatDate = (dateString) => {
+    if (!dateString) return 'Tarih Belirtilmedi';
+    try {
+        const date = new Date(dateString);
+        // Geçersiz tarih kontrolü
+        if (isNaN(date.getTime())) return 'Geçersiz Tarih';
+
+        return new Intl.DateTimeFormat('tr-TR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(date);
+    } catch (e) {
+        return dateString;
     }
-    return dateStr;
 };
+
+export const formatDisplayDate = formatDate; // Alias for backward compatibility
 
 export const compressImage = (file) => {
     return new Promise((resolve) => {

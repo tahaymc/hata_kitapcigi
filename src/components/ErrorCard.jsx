@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2, RotateCcw, GripVertical } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
-import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
+import { getCategoryIcon, formatDate } from '../utils/helpers';
 import { getErrorById } from '../services/api';
 
 const ErrorCard = ({
@@ -121,33 +121,16 @@ const ErrorCard = ({
                             ? style.buttonSelected
                             : `bg-white dark:bg-slate-900 ${style.text} ${style.borderLight} hover:${style.bgLight}`
                             }`}
-                        title={`Tarihe göre filtrele: ${formatDisplayDate(error.date)}`}
+                        title={`Tarihe göre filtrele: ${formatDate(error.date)}`}
                     >
                         <Calendar className={`w-3 h-3 ${selectedDate === error.date ? 'text-white' : 'currentColor'}`} />
-                        <span>{formatDisplayDate(error.date)}</span>
+                        <span>{formatDate(error.date)}</span>
                     </div>
 
                     {/* View Count & Assignee Pill (Right) */}
                     <div className="flex items-center justify-end gap-2">
-                        {error.assignees && error.assignees.length > 0 ? (
-                            <div className="flex -space-x-2">
-                                {error.assignees.slice(0, 3).map(person => (
-                                    <div key={person.id} className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200 shadow-sm relative z-10`} title={person.name}>
-                                        {person.name.charAt(0).toUpperCase()}
-                                    </div>
-                                ))}
-                                {error.assignees.length > 3 && (
-                                    <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-slate-100 text-slate-500 border border-slate-200 shadow-sm relative z-0">
-                                        +{error.assignees.length - 3}
-                                    </div>
-                                )}
-                            </div>
-                        ) : error.assignee ? (
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200 shadow-sm`} title={error.assignee.name}>
-                                {error.assignee.name.charAt(0).toUpperCase()}
-                            </div>
-                        ) : null}
-                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
+
+                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-2 whitespace-nowrap min-w-[3.5rem] justify-center ${style.bgLight} ${style.text} ${style.borderLight}`}>
                             <Eye className="w-4 h-4" />
                             <span>{error.viewCount || 0}</span>
                         </div>
@@ -199,46 +182,53 @@ const ErrorCard = ({
                                 <ImageIcon className="w-6 h-6 opacity-40" />
                                 <span className="text-[10px] font-medium opacity-60">Görsel Yok</span>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Admin Actions */}
-                {isAdmin && (
-                    <div className="absolute top-2 right-6 flex gap-2 z-10">
-                        {dragHandleProps && (
-                            <button
-                                {...dragHandleProps}
-                                className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
-                                title="Sıralamak için sürükleyin"
-                                onClick={e => e.stopPropagation()}
-                            >
-                                <GripVertical className="w-5 h-5" />
-                            </button>
                         )}
-                        <button
-                            onClick={(e) => onResetViewClick(e, error)}
-                            className="text-slate-300 hover:text-orange-500 transition-colors"
-                            title="Görüntülenmeyi Sıfırla"
-                        >
-                            <RotateCcw className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={(e) => onEditClick(e, error)}
-                            className="text-slate-300 hover:text-blue-500 transition-colors"
-                            title="Düzenle"
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={(e) => onDeleteClick(e, error.id)}
-                            className="text-slate-300 hover:text-red-500 transition-colors"
-                            title="Sil"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+
+                        {/* Assignees Overlay (Bottom Left) */}
+
                     </div>
-                )}
+
+
+                    {/* Admin Actions */}
+                    {
+                        isAdmin && (
+                            <div className="absolute top-2 right-6 flex gap-2 z-10">
+                                {dragHandleProps && (
+                                    <button
+                                        {...dragHandleProps}
+                                        className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+                                        title="Sıralamak için sürükleyin"
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        <GripVertical className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={(e) => onResetViewClick(e, error)}
+                                    className="text-slate-300 hover:text-orange-500 transition-colors"
+                                    title="Görüntülenmeyi Sıfırla"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={(e) => onEditClick(e, error)}
+                                    className="text-slate-300 hover:text-blue-500 transition-colors"
+                                    title="Düzenle"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={(e) => onDeleteClick(e, error.id)}
+                                    className="text-slate-300 hover:text-red-500 transition-colors"
+                                    title="Sil"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )
+                    }
+                </div >
             </div>
         );
     }
@@ -276,7 +266,7 @@ const ErrorCard = ({
                     </h3>
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                         <Calendar className="w-3 h-3" />
-                        <span>{formatDisplayDate(error.date)}</span>
+                        <span>{formatDate(error.date)}</span>
                     </div>
                 </div>
 

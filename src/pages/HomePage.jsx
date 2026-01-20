@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
-import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError, reorderErrors } from '../services/api';
+import useGuides from '../hooks/useGuides';
+import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError, reorderErrors, deleteGuide, addGuide, updateGuide, addCategory, updateCategory, deleteCategory, incrementGuideViewCount } from '../services/api';
+
+
+
 import { COLOR_STYLES } from '../utils/constants';
 import { arrayMove } from '@dnd-kit/sortable';
+import { LayoutGrid, List, Calendar, X } from 'lucide-react';
 
 // Import Components
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
+
 import ErrorGrid from '../components/ErrorGrid';
+import GuideGrid from '../components/GuideGrid';
+import Sidebar from '../components/Sidebar';
+import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
 import Toast from '../components/Toast';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 
@@ -16,11 +25,15 @@ import ErrorDetailModal from '../components/ErrorDetailModal';
 const importPeopleManagerModal = () => import('../components/PeopleManagerModal');
 const importAddErrorModal = () => import('../components/AddErrorModal');
 const importEditErrorModal = () => import('../components/EditErrorModal');
+const importAddGuideModal = () => import('../components/AddGuideModal');
+const importEditGuideModal = () => import('../components/EditGuideModal');
 
 // Lazy Load Modals
 const PeopleManagerModal = React.lazy(importPeopleManagerModal);
 const AddErrorModal = React.lazy(importAddErrorModal);
 const EditErrorModal = React.lazy(importEditErrorModal);
+const AddGuideModal = React.lazy(importAddGuideModal);
+const EditGuideModal = React.lazy(importEditGuideModal);
 
 // Ah, looking at the truncated file view, I didn't see LoginModal imported. 
 // Let's check if there is a LoginModal file. 
@@ -39,18 +52,36 @@ const HomePage = () => {
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
 
-    // Custom Hook
-    const { errors, loading, filters, setFilters, addLocalError, updateLocalError, setLocalErrors, removeLocalError, refreshErrors } = useErrors();
+    // Custom Hook for Errors
+    const { errors, loading: errorsLoading, filters: errorFilters, setFilters: setErrorFilters, addLocalError, updateLocalError, setLocalErrors, removeLocalError } = useErrors();
+
+    // Custom Hook for Guides
+    const { guides, loading: guidesLoading, filters: guideFilters, setFilters: setGuideFilters, addLocalGuide, updateLocalGuide, removeLocalGuide } = useGuides();
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState('errors'); // 'errors' | 'guides'
+
+    // Derived state based on active tab
+    const errorsActive = activeTab === 'errors';
+    const filters = errorsActive ? errorFilters : guideFilters;
+    const setFilters = errorsActive ? setErrorFilters : setGuideFilters;
+    const loading = errorsActive ? errorsLoading : guidesLoading;
 
     // Derived state for UI consistency
     const searchTerm = filters.query;
     const selectedCategory = filters.category;
-    const selectedDate = filters.date;
+    // Guides don't strictly use date filter in the same way, but we can support it if needed. For now, let's keep it shared.
+    // However, useGuides doesn't have date filter in my implementation.
+    // I should check useGuides.js. I only put query and category.
+    // So if activeTab is guides, selectedDate should probably be ignored or handled differently.
+    // I'll update the setters to handle this safely.
 
-    // Filter Setters with navigation sync
-    const setSearchTerm = (term) => setFilters(prev => ({ ...prev, query: term }));
     const setSelectedCategory = (cat) => setFilters(prev => ({ ...prev, category: cat }));
-    const setSelectedDate = (date) => setFilters(prev => ({ ...prev, date: date }));
+    const setSearchTerm = (term) => setFilters(prev => ({ ...prev, query: term }));
+    const selectedDate = errorsActive ? filters.date : null;
+    const setSelectedDate = (date) => errorsActive ? setFilters(prev => ({ ...prev, date: date })) : null;
+
+
 
     const [viewMode, setViewMode] = useState('grid');
     const [selectedError, setSelectedError] = useState(null); // For Modal
@@ -89,10 +120,67 @@ const HomePage = () => {
     // Admin State
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isAddGuideModalOpen, setIsAddGuideModalOpen] = useState(false);
 
     // Edit Modal State
     const [editingError, setEditingError] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isEditGuideModalOpen, setIsEditGuideModalOpen] = useState(false);
+
+    // Reset selected category when switching tabs
+    useEffect(() => {
+        setSelectedCategory(null);
+    }, [activeTab]);
+
+    const handleAddCategory = async (name, color, icon) => {
+        try {
+            const newCat = await addCategory({
+                name,
+                color,
+                icon,
+                type: activeTab
+            });
+            setCategories(prev => [...prev, newCat]);
+            showToast('Kategori başarıyla eklendi', 'success');
+            return true;
+        } catch (error) {
+            console.error(error);
+            showToast('Kategori eklenemedi', 'error');
+            return false;
+        }
+    };
+
+    const handleUpdateCategory = async (id, name, color, icon) => {
+        try {
+            const updatedCat = await updateCategory(id, { name, color, icon, type: activeTab }); // Preserving type or allowing update? Usually types don't change, but send activeTab just in case or fetch existing. The backend update overwrites. Ideally we should keep original type or not send it if we don't want to change it. 
+            // My backend `updateCategory` implementation expects `type` in body or it might set it to null/default if I'm not careful? 
+            // The backend Code: `const { name, color, icon, type } = req.body; await supabase...update({ name, color, icon, type })`
+            // If I send `type: activeTab`, and the category was actually created in the OTHER tab (unlikely if filtered), it will move it to this tab. This is probably desired behavior if editing in this view?
+            // Yes, let's assume editing in 'Errors' tab makes it an 'Error' category.
+
+            setCategories(prev => prev.map(c => c.id === id ? updatedCat : c));
+            showToast('Kategori güncellendi', 'success');
+            return true;
+        } catch (error) {
+            console.error(error);
+            showToast('Kategori güncellenemedi', 'error');
+            return false;
+        }
+    };
+
+    const handleDeleteCategory = async (id) => {
+        try {
+            await deleteCategory(id);
+            setCategories(prev => prev.filter(c => c.id !== id));
+            if (selectedCategory === id) setSelectedCategory(null);
+            showToast('Kategori silindi', 'success');
+            return true;
+        } catch (error) {
+            console.error(error);
+            showToast('Kategori silinemedi', 'error');
+            return false;
+        }
+    };
 
     // Admin Credentials State
     const [adminCredentials, setAdminCredentials] = useState({ username: 'admin', password: 'admin' });
@@ -126,7 +214,7 @@ const HomePage = () => {
 
     // Prevent body scroll for all modals
     useEffect(() => {
-        if (isAddModalOpen || isLoginModalOpen || isEditModalOpen || selectedError || isCredentialsModalOpen || previewGallery) {
+        if (isAddModalOpen || isLoginModalOpen || isEditModalOpen || isEditGuideModalOpen || selectedError || isCredentialsModalOpen || previewGallery) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
@@ -134,7 +222,7 @@ const HomePage = () => {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isAddModalOpen, isLoginModalOpen, isEditModalOpen, selectedError, isCredentialsModalOpen, previewGallery]);
+    }, [isAddModalOpen, isLoginModalOpen, isEditModalOpen, isEditGuideModalOpen, selectedError, isCredentialsModalOpen, previewGallery]);
 
     useEffect(() => {
         const adminAuth = localStorage.getItem('isAdminAuthenticated');
@@ -241,16 +329,32 @@ const HomePage = () => {
         addLocalError(newError);
     };
 
+    const handleAddGuideSuccess = (newGuide) => {
+        addLocalGuide(newGuide);
+        showToast('Kılavuz başarıyla eklendi', 'success');
+    };
+
     const handleEditSuccess = (updatedError) => {
         updateLocalError(updatedError);
         setEditingError(null);
     };
 
-    const handleDeleteClick = async (e, errorId) => {
+    const handleEditGuideSuccess = (updatedGuide) => {
+        updateLocalGuide(updatedGuide);
+        setEditingError(null);
+        setIsEditGuideModalOpen(false);
+    };
+
+    const handleDeleteClick = async (e, id) => {
         if (e) e.stopPropagation();
         if (window.confirm('Bu kaydı silmek istediğinize emin misiniz?')) {
-            await deleteError(errorId);
-            removeLocalError(errorId);
+            if (activeTab === 'errors') {
+                await deleteError(id);
+                removeLocalError(id);
+            } else {
+                await deleteGuide(id);
+                removeLocalGuide(id);
+            }
             setSelectedError(null);
         }
     };
@@ -259,6 +363,12 @@ const HomePage = () => {
         if (e) e.stopPropagation();
         setEditingError(error);
         setIsEditModalOpen(true);
+    };
+
+    const handleEditGuideClick = (e, guide) => {
+        if (e) e.stopPropagation();
+        setEditingError(guide); // Reusing editingError state to hold the object
+        setIsEditGuideModalOpen(true);
     };
 
     const handleCardClick = (error) => {
@@ -300,6 +410,9 @@ const HomePage = () => {
         }
     };
 
+    const errorCategories = categories.filter(c => c.type === 'errors' || !c.type);
+    const guideCategories = categories.filter(c => c.type === 'guides');
+
     return (
         <React.Suspense fallback={<div className="fixed inset-0 bg-white/50 dark:bg-slate-900/50 z-[200]" />}>
             <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -310,56 +423,232 @@ const HomePage = () => {
                     isAdmin={isAdmin}
                     onLoginClick={() => setIsLoginModalOpen(true)}
                     onLogoutClick={handleLogout}
-                    onAddClick={() => setIsAddModalOpen(true)}
+                    onAddClick={() => activeTab === 'errors' ? setIsAddModalOpen(true) : setIsAddGuideModalOpen(true)}
                     onPeopleClick={() => setIsPeopleManagerOpen(true)}
                     onCredentialsClick={() => setIsCredentialsModalOpen(true)}
                     onLogoClick={() => {
                         setFilters({ query: '', category: null, date: null });
                         navigate('/');
                     }}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    searchProps={{
+                        searchTerm,
+                        setSearchTerm,
+                        placeholder: activeTab === 'errors' ? "Hata kodu, başlık veya anahtar kelime..." : "Kılavuz başlığı veya içeriğinde ara..."
+                    }}
                 />
 
-                <main className="max-w-[1600px] mx-auto px-6 py-10">
-                    <SearchBar
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
+                <div className="max-w-[1920px] mx-auto flex flex-col lg:flex-row items-start gap-8 px-6 py-8">
+                    {/* Left Sidebar (Desktop Only) */}
+                    <Sidebar
+                        categories={categories} // Sidebar does its own filtering based on activeTab
                         selectedCategory={selectedCategory}
-                        setSelectedCategory={setSelectedCategory}
-                        selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
-                        categories={categories}
-                        viewMode={viewMode}
-                        setViewMode={setViewMode}
+                        onSelectCategory={handleCategoryClick}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
                     />
 
-                    <ErrorGrid
-                        errors={errors}
-                        viewMode={viewMode}
-                        categories={categories}
-                        selectedDate={selectedDate}
-                        onCardClick={handleCardClick}
-                        onCategoryClick={handleCategoryClick}
-                        onDateClick={handleDateClick}
-                        onCodeClick={handleCodeClick}
-                        onEditClick={handleEditClick}
-                        onDeleteClick={handleDeleteClick}
-                        onResetViewClick={async (e, error) => {
-                            if (e) e.stopPropagation();
-                            if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
-                                await resetViewCount(error.id);
-                                const updatedError = { ...error, viewCount: 0 };
-                                updateLocalError(updatedError);
-                                showToast('Görüntülenme sayısı sıfırlandı.', 'success');
-                            }
-                        }}
-                        onImageClick={(error) => {
-                            const images = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
-                            setPreviewGallery({ images, index: 0 });
-                        }}
-                        isAdmin={isAdmin}
-                        onDragEnd={handleDragEnd}
-                    />
-                </main>
+                    {/* Main Content */}
+                    <main className="flex-1 w-full min-w-0 py-8 px-6 lg:px-8">
+                        {/* ... Mobile Search & Filter ... */}
+
+                        {/* Re-using existing content which I shouldn't overwrite if I can avoid massive replace, but I need to inject variables. 
+                           Actually, standard practice: Put the variables before return.
+                           Then update the Modals.
+                           I will split this into two replaces or one big one if I target the return.
+                           Targeting lines 340-645 is huge.
+                           I will just insert the variables before return and update modals separately.
+                        */}
+
+                        {/* Mobile Module Switcher & Search (Search is in Header for desktop, but for mobile Header search might be hidden? 
+                           User said "Arama çubuğunu Header'ın ortasına yerleştir". 
+                           Usually Header search is visible on all screens or toggled. 
+                           If Header search is visible on mobile too, I don't need it here.
+                           But user said "Mobilde Sidebar gizlendiği için, bu 'Hata/Kılavuz' seçimini mobilde arama çubuğunun altına... eklemen gerekebilir."
+                           So I need Mobile Module Switcher here.
+                        */}
+
+                        <div className="lg:hidden mb-6 space-y-4">
+                            {/* Mobile Search Input (If Header Search is hidden on mobile, which standard responsive headers often do, OR simply replicate it here for easier access if Header search is small/icon only. 
+                                User's Header update used 'hidden md:flex' for the centered search bar. So on mobile it is HIDDEN in Header. 
+                                So I MUST put SearchBar here for mobile.
+                             */}
+                            <div className="md:hidden">
+                                <SearchBar
+                                    searchTerm={searchTerm}
+                                    setSearchTerm={setSearchTerm}
+                                    placeholder={activeTab === 'errors' ? "Ara..." : "Kılavuz ara..."}
+                                />
+                            </div>
+
+                            {/* Mobile Tab Switcher */}
+                            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex shadow-sm">
+                                <button
+                                    onClick={() => setActiveTab('errors')}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'errors'
+                                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    Hata Çözümleri
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('guides')}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'guides'
+                                        ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    Kılavuzlar
+                                </button>
+                            </div>
+                        </div>
+
+
+                        {/* Toolbar Area (View Mode & Date & Categories) */}
+                        {/* Mobile Categories (Horizontal Scroll) */}
+                        <div className="lg:hidden mb-8 -mx-6 px-6 overflow-x-auto pb-2 custom-scrollbar flex gap-3">
+                            <button
+                                onClick={() => setSelectedCategory(null)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${!selectedCategory
+                                    ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-500/20 dark:bg-white dark:text-slate-900'
+                                    : 'bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                                    }`}
+                            >
+                                <LayoutGrid className="w-4 h-4" />
+                                <span>Tümü</span>
+                            </button>
+                            {categories.map(c => {
+                                const style = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
+                                const isSelected = selectedCategory === c.id;
+                                return (
+                                    <button
+                                        key={c.id}
+                                        onClick={() => setSelectedCategory(isSelected ? null : c.id)}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${isSelected
+                                            ? `${style.buttonSelected}`
+                                            : `bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700`
+                                            }`}
+                                    >
+                                        <span>{c.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Right Side Actions (View Mode & Date Filter) - Desktop aligned right, Mobile full width/flex */}
+                        <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
+                            {/* Active Date Badge */}
+                            {selectedDate && (
+                                <button
+                                    onClick={() => setSelectedDate(null)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                                >
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="hidden sm:inline">{new Date(selectedDate).toLocaleDateString('tr-TR')}</span>
+                                    <X className="w-3 h-3 ml-1" />
+                                </button>
+                            )}
+
+                            {/* View Mode Toggle */}
+                            <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-sm ml-auto lg:ml-0">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                    title="Kart Görünümü"
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                    title="Liste Görünümü"
+                                >
+                                    <List className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {activeTab === 'errors' ? (
+                            <ErrorGrid
+                                errors={errors}
+                                viewMode={viewMode}
+                                categories={categories}
+                                selectedDate={selectedDate}
+                                onCardClick={handleCardClick}
+                                onCategoryClick={handleCategoryClick}
+                                onDateClick={handleDateClick}
+                                onCodeClick={handleCodeClick}
+                                onEditClick={handleEditClick}
+                                onDeleteClick={handleDeleteClick}
+                                onResetViewClick={async (e, error) => {
+                                    if (e) e.stopPropagation();
+                                    if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
+                                        await resetViewCount(error.id);
+                                        const updatedError = { ...error, viewCount: 0 };
+                                        updateLocalError(updatedError);
+                                        showToast('Görüntülenme sayısı sıfırlandı.', 'success');
+                                    }
+                                }}
+                                onImageClick={(error) => {
+                                    const items = [];
+                                    if (error.videoUrl || error.video_url) items.push({ type: 'video', url: error.videoUrl || error.video_url });
+                                    const imgs = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                    imgs.forEach(url => items.push({ type: 'image', url }));
+
+                                    if (items.length > 0) {
+                                        setPreviewGallery({ items, index: 0 });
+                                    }
+                                }}
+                                isAdmin={isAdmin}
+                                onDragEnd={handleDragEnd}
+                            />
+                        ) : (
+                            <GuideGrid
+                                guides={guides}
+                                categories={categories}
+                                onCardClick={(guide) => {
+                                    setSelectedError({
+                                        ...guide,
+                                        type: 'guide',
+                                        date: guide.created_at,
+                                        solutionSteps: guide.steps,
+                                        solutionType: 'steps'
+                                    });
+                                    // Increment view count
+                                    incrementGuideViewCount(guide.id).then(result => {
+                                        if (result) {
+                                            // Result likely contains { view_count: N }
+                                            const updatedGuide = { ...guide, view_count: result.view_count };
+                                            updateLocalGuide(updatedGuide);
+                                            // We don't verify if it's currently selected because selectedError for guides is a spread copy, 
+                                            // not a reference that React Query would auto-update inside the modal just by cache update.
+                                            // But if we want the modal to show live count, we might need to update selectedError too?
+                                            // The modal just reads from `selectedError` prop. 
+                                            // So yes, let's update selectedError if it matches.
+                                            setSelectedError(curr => (curr && curr.id === guide.id) ? { ...curr, view_count: result.view_count } : curr);
+                                        }
+                                    });
+                                }}
+                                onCategoryClick={handleCategoryClick}
+                                onEditClick={handleEditGuideClick}
+                                onDeleteClick={handleDeleteClick}
+                                onImageClick={(guide) => {
+                                    const items = [];
+                                    if (guide.videoUrl || guide.video_url) items.push({ type: 'video', url: guide.videoUrl || guide.video_url });
+                                    const imgs = guide.image_urls || (guide.image_url ? [guide.image_url] : []);
+                                    imgs.forEach(url => items.push({ type: 'image', url }));
+
+                                    if (items.length > 0) {
+                                        setPreviewGallery({ items, index: 0 });
+                                    }
+                                }}
+                                isAdmin={isAdmin}
+                            />
+                        )}
+                    </main>
+                </div>
 
                 {/* Modals */}
                 {/* Error Detail Modal */}
@@ -368,7 +657,13 @@ const HomePage = () => {
                         error={selectedError}
                         onClose={() => setSelectedError(null)}
                         isAdmin={isAdmin}
-                        onEdit={(e) => handleEditClick(e, selectedError)}
+                        onEdit={(e) => {
+                            if (selectedError.type === 'guide' || activeTab === 'guides') {
+                                handleEditGuideClick(e, selectedError);
+                            } else {
+                                handleEditClick(e, selectedError);
+                            }
+                        }}
                         onDelete={(e) => handleDeleteClick(e, selectedError.id)}
                         categories={categories}
                         onCategoryClick={handleCategoryClick}
@@ -383,7 +678,24 @@ const HomePage = () => {
                         isOpen={true}
                         onClose={() => setIsAddModalOpen(false)}
                         onSuccess={handleAddSuccess}
-                        categories={categories}
+                        categories={errorCategories}
+                        onAddCategory={handleAddCategory}
+                        onUpdateCategory={handleUpdateCategory}
+                        onDeleteCategory={handleDeleteCategory}
+                        showToast={showToast}
+                    />
+                )}
+
+                {/* Add Guide Modal */}
+                {isAddGuideModalOpen && (
+                    <AddGuideModal
+                        isOpen={true}
+                        onClose={() => setIsAddGuideModalOpen(false)}
+                        onSuccess={handleAddGuideSuccess}
+                        categories={guideCategories}
+                        onAddCategory={handleAddCategory}
+                        onUpdateCategory={handleUpdateCategory}
+                        onDeleteCategory={handleDeleteCategory}
                         showToast={showToast}
                     />
                 )}
@@ -398,7 +710,28 @@ const HomePage = () => {
                             setEditingError(null);
                         }}
                         onSuccess={handleEditSuccess}
-                        categories={categories}
+                        categories={errorCategories}
+                        onAddCategory={handleAddCategory}
+                        onUpdateCategory={handleUpdateCategory}
+                        onDeleteCategory={handleDeleteCategory}
+                        showToast={showToast}
+                    />
+                )}
+
+                {/* Edit Guide Modal */}
+                {isEditGuideModalOpen && editingError && (
+                    <EditGuideModal
+                        isOpen={true}
+                        guideToEdit={editingError}
+                        onClose={() => {
+                            setIsEditGuideModalOpen(false);
+                            setEditingError(null);
+                        }}
+                        onSuccess={handleEditGuideSuccess}
+                        categories={guideCategories}
+                        onAddCategory={handleAddCategory}
+                        onUpdateCategory={handleUpdateCategory}
+                        onDeleteCategory={handleDeleteCategory}
                         showToast={showToast}
                     />
                 )}
@@ -538,70 +871,89 @@ const HomePage = () => {
                 )}
 
                 {/* Preview Gallery (Quick View) */}
-                {previewGallery && (
-                    <div className="fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
-                        <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center overflow-hidden">
-                            <button
-                                onClick={() => setPreviewGallery(null)}
-                                className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                            </button>
+                {previewGallery && (() => {
+                    const items = previewGallery.items || (previewGallery.images ? previewGallery.images.map(url => ({ type: 'image', url })) : []);
+                    const currentItem = items[previewGallery.index];
 
-                            <div className="w-full flex-1 relative flex items-center justify-center min-h-0">
-                                <img
-                                    src={previewGallery.images[previewGallery.index]}
-                                    alt="Preview"
-                                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
+                    return (
+                        <div className="fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
+                            <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center overflow-hidden">
+                                <button
+                                    onClick={() => setPreviewGallery(null)}
+                                    className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
 
-                                {previewGallery.images.length > 1 && (
-                                    <>
+                                <div className="w-full flex-1 relative flex items-center justify-center min-h-0">
+                                    {currentItem?.type === 'video' ? (
+                                        <video
+                                            src={currentItem.url}
+                                            className="max-w-full max-h-full rounded-lg shadow-2xl"
+                                            controls
+                                            autoPlay
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={currentItem?.url}
+                                            alt="Preview"
+                                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    )}
+
+                                    {items.length > 1 && (
+                                        <>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPreviewGallery(prev => ({
+                                                        ...prev,
+                                                        index: prev.index === 0 ? items.length - 1 : prev.index - 1
+                                                    }));
+                                                }}
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPreviewGallery(prev => ({
+                                                        ...prev,
+                                                        index: (prev.index + 1) % items.length
+                                                    }));
+                                                }}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="mt-4 flex gap-2 overflow-x-auto overflow-y-hidden max-w-full p-2">
+                                    {items.map((item, idx) => (
                                         <button
+                                            key={idx}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setPreviewGallery(prev => ({
-                                                    ...prev,
-                                                    index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1
-                                                }));
+                                                setPreviewGallery(prev => ({ ...prev, index: idx }));
                                             }}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
+                                            className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                            {item.type === 'video' ? (
+                                                <video src={item.url} className="w-full h-full object-cover" muted />
+                                            ) : (
+                                                <img src={item.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                                            )}
                                         </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPreviewGallery(prev => ({
-                                                    ...prev,
-                                                    index: (prev.index + 1) % prev.images.length
-                                                }));
-                                            }}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                            <div className="mt-4 flex gap-2 overflow-x-auto overflow-y-hidden max-w-full p-2">
-                                {previewGallery.images.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setPreviewGallery(prev => ({ ...prev, index: idx }));
-                                        }}
-                                        className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
-                                    >
-                                        <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
-                                    </button>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
             </div>
         </React.Suspense>
     );
