@@ -11,6 +11,6 @@
         }
     ],
     "env": {
-        "FORCE_REBUILD": "true_v2"
+        "FORCE_REBUILD": "true_v3"
     }
 }
