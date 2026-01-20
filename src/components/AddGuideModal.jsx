@@ -113,18 +113,8 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                        <div className="md:col-span-3">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Kodu</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 uppercase font-mono"
-                                placeholder="Otomatik"
-                                value={newGuideData.code || ''}
-                                onChange={e => setNewGuideData({ ...newGuideData, code: e.target.value.toUpperCase() })}
-                            />
-                        </div>
-                        <div className="md:col-span-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Başlığı</label>
                             <input
                                 type="text"
@@ -135,7 +125,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 onChange={e => setNewGuideData({ ...newGuideData, title: e.target.value })}
                             />
                         </div>
-                        <div className="md:col-span-4">
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
                             <CategorySelect
                                 value={newGuideData.category}

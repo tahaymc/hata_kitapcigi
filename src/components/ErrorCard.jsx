@@ -129,8 +129,25 @@ const ErrorCard = ({
 
                     {/* View Count & Assignee Pill (Right) */}
                     <div className="flex items-center justify-end gap-2">
-
-                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-2 whitespace-nowrap min-w-[3.5rem] justify-center ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                        {error.assignees && error.assignees.length > 0 ? (
+                            <div className="flex -space-x-2">
+                                {error.assignees.slice(0, 3).map(person => (
+                                    <div key={person.id} className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200 shadow-sm relative z-10`} title={person.name}>
+                                        {person.name.charAt(0).toUpperCase()}
+                                    </div>
+                                ))}
+                                {error.assignees.length > 3 && (
+                                    <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-slate-100 text-slate-500 border border-slate-200 shadow-sm relative z-0">
+                                        +{error.assignees.length - 3}
+                                    </div>
+                                )}
+                            </div>
+                        ) : error.assignee ? (
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${error.assignee.color || 'slate'}-100 text-${error.assignee.color || 'slate'}-700 border border-${error.assignee.color || 'slate'}-200 shadow-sm`} title={error.assignee.name}>
+                                {error.assignee.name.charAt(0).toUpperCase()}
+                            </div>
+                        ) : null}
+                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
                             <Eye className="w-4 h-4" />
                             <span>{error.viewCount || 0}</span>
                         </div>
@@ -182,148 +199,144 @@ const ErrorCard = ({
                                 <ImageIcon className="w-6 h-6 opacity-40" />
                                 <span className="text-[10px] font-medium opacity-60">Görsel Yok</span>
                             </div>
-
                         )}
-
-                        {/* Assignees Overlay (Bottom Left) */}
-
                     </div>
+                </div>
 
-
-                    {/* Admin Actions */}
-                    {
-                        isAdmin && (
-                            <div className="absolute top-2 right-6 flex gap-2 z-10">
-                                {dragHandleProps && (
-                                    <button
-                                        {...dragHandleProps}
-                                        className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
-                                        title="Sıralamak için sürükleyin"
-                                        onClick={e => e.stopPropagation()}
-                                    >
-                                        <GripVertical className="w-5 h-5" />
-                                    </button>
-                                )}
-                                <button
-                                    onClick={(e) => onResetViewClick(e, error)}
-                                    className="text-slate-300 hover:text-orange-500 transition-colors"
-                                    title="Görüntülenmeyi Sıfırla"
-                                >
-                                    <RotateCcw className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={(e) => onEditClick(e, error)}
-                                    className="text-slate-300 hover:text-blue-500 transition-colors"
-                                    title="Düzenle"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={(e) => onDeleteClick(e, error.id)}
-                                    className="text-slate-300 hover:text-red-500 transition-colors"
-                                    title="Sil"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        )
-                    }
-                </div >
+                {/* Admin Actions */}
+                {isAdmin && (
+                    <div className="absolute top-2 right-6 flex gap-2 z-10">
+                        {dragHandleProps && (
+                            <button
+                                {...dragHandleProps}
+                                className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+                                title="Sıralamak için sürükleyin"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <GripVertical className="w-5 h-5" />
+                            </button>
+                        )}
+                        <button
+                            onClick={(e) => onResetViewClick(e, error)}
+                            className="text-slate-300 hover:text-orange-500 transition-colors"
+                            title="Görüntülenmeyi Sıfırla"
+                        >
+                            <RotateCcw className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={(e) => onEditClick(e, error)}
+                            className="text-slate-300 hover:text-blue-500 transition-colors"
+                            title="Düzenle"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={(e) => onDeleteClick(e, error.id)}
+                            className="text-slate-300 hover:text-red-500 transition-colors"
+                            title="Sil"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
             </div>
-        );
+        
     }
 
-    // List View
-    return (
-        <div
-            className={`bg-white dark:bg-[#1e293b] py-5 px-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl border border-slate-100 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-1 hover:scale-[1.01] flex items-center gap-6 hover:z-50`}
-            onClick={() => onCardClick(error)}
-            onMouseEnter={handleMouseEnter}
-            onDoubleClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }}
-        >
-            {/* Left: Category Icon */}
-            <div className="flex-none">
-                <div
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onCategoryClick(error.category);
-                    }}
-                    className={`w-12 h-12 flex items-center justify-center rounded-2xl border shadow-sm transition-transform group-hover:scale-110 cursor-pointer hover:opacity-80 ${style.bgLight} ${style.text} ${style.borderLight}`}
-                    title={`Kategoriye git: ${cat?.name || 'Bilinmeyen'}`}
-                >
-                    {getCategoryIcon(error.category, "w-6 h-6 transition-transform group-hover:rotate-12", cat?.icon)}
-                </div>
-            </div>
 
-            <div className="flex-1 min-w-0 grid grid-cols-12 gap-6 items-center">
-                {/* Title & Date */}
-                <div className="col-span-12 sm:col-span-5">
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-1 truncate">
-                        {error.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Calendar className="w-3 h-3" />
-                        <span>{formatDate(error.date)}</span>
-                    </div>
-                </div>
 
-                {/* Summary */}
-                <div className="hidden sm:block sm:col-span-5">
-                    <div
-                        className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: error.summary }}
-                    />
-                </div>
 
-                {/* Code */}
-                <div className="hidden sm:block sm:col-span-2 text-right">
-                    <span className={`inline-block px-3 py-1 rounded-lg border font-mono font-bold text-xs tracking-tight ${style.bgLight} ${style.text} ${style.borderLight}`}>
-                        {error.code || 'SYS-000'}
-                    </span>
-                </div>
-            </div>
+    e = {`bg-white dark:bg-[#1e293b] py-5 px-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl border border-slate-100 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-1 hover:scale-[1.01] flex items-center gap-6 hover:z-50`
+}
+{ () => onCardClick(error) }
+nter = { handleMouseEnter }
+Click = {(e) => {
+    tDefault();
+    opagation();
+            
+        
+            : Category Icon */
+}
+ssName = "flex-none" >
 
-            {/* Admin Actions */}
-            {isAdmin && (
-                <div className="flex items-center gap-2 pl-4 border-l border-slate-100 dark:border-slate-800 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {dragHandleProps && (
-                        <button
-                            {...dragHandleProps}
-                            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-all cursor-grab active:cursor-grabbing"
-                            title="Sıralamak için sürükleyin"
-                            onClick={e => e.stopPropagation()}
+    {(e) => {
+    opagation();
+    ryClick(error.category);
+
+    e = {`w-12 h-12 flex items-center justify-center rounded-2xl border shadow-sm transition-transform group-hover:scale-110 cursor-pointer hover:opacity-80 ${style.bgLight} ${style.text} ${style.borderLight}`
+}
+                    Kategoriye git: ${ cat?.name || 'Bilinmeyen' } `}
+                
+                    goryIcon(error.category, "w-6 h-6 transition-transform group-hover:rotate-12", cat?.icon)}
+                
+            
+
+            ssName="flex-1 min-w-0 grid grid-cols-12 gap-6 items-center">
+                e & Date */}
+                ssName="col-span-12 sm:col-span-5">
+                    sName="font-bold text-lg text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-1 truncate">
+                        itle}
+                    
+                    ssName="flex items-center gap-2 text-xs text-slate-400">
+                        r className="w-3 h-3" />
+                        ormatDate(error.date)}</span>
+                    
+                
+
+                ary */}
+                ssName="hidden sm:block sm:col-span-5">
+                    
+                        e="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed"
+                        slySetInnerHTML={{ __html: error.summary }}
+                    
+                
+
+                 */}
+                ssName="hidden sm:block sm:col-span-2 text-right">
+                    assName={`inline - block px - 3 py - 1 rounded - lg border font - mono font - bold text - xs tracking - tight ${ style.bgLight } ${ style.text } ${ style.borderLight } `}>
+                        ode || 'SYS-000'}
+                    
+                
+            
+
+            n Actions */}
+             && (
+                ssName="flex items-center gap-2 pl-4 border-l border-slate-100 dark:border-slate-800 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    dleProps && (
+                        
+                            HandleProps}
+                            e="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-all cursor-grab active:cursor-grabbing"
+                            ıralamak için sürükleyin"
+                            {e => e.stopPropagation()}
+                        
+                            tical className="w-4 h-4" />
                         >
-                            <GripVertical className="w-4 h-4" />
-                        </button>
-                    )}
-                    <button
-                        onClick={(e) => onResetViewClick(e, error)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-orange-500 transition-all"
-                        title="Görüntülenmeyi Sıfırla"
+                    
+                    
+                        {(e) => onResetViewClick(e, error)}
+                        e="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-orange-500 transition-all"
+                        örüntülenmeyi Sıfırla"
+                    
+                        cw className="w-4 h-4" />
                     >
-                        <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => onEditClick(e, error)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-all"
-                        title="Düzenle"
+                    
+                        {(e) => onEditClick(e, error)}
+                        e="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-all"
+                        üzenle"
+                    
+                        lassName="w-4 h-4" />
                     >
-                        <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => onDeleteClick(e, error.id)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-red-500 transition-all"
-                        title="Sil"
+                    
+                        {(e) => onDeleteClick(e, error.id)}
+                        e="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-red-500 transition-all"
+                        il"
+                    
+                        className="w-4 h-4" />
                     >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
-        </div>
-    );
+                
+            
+        
+    
 };
 
-export default ErrorCard;
+rrorCard;

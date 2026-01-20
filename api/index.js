@@ -355,45 +355,6 @@ app.delete('/api/guides/:id', async (req, res) => {
     }
 });
 
-// Increment Guide View Count
-app.post('/api/guides/:id/view', async (req, res) => {
-    if (!checkDb(res)) return;
-    const id = parseInt(req.params.id);
-
-    try {
-        // RPC or direct update? Supabase doesn't have atomic increment in simple update unless using RPC or custom query.
-        // But for simplicity in this setup (and since we can't easily add RPCs from here), we will fetch and update.
-        // OR better: use rpc if available. Assuming no rpc 'increment_guide_view'.
-        // Concurrency issue: read-modify-write.
-        // For this app, RMW is probably acceptable.
-
-        const { data: guide, error: fetchError } = await supabase
-            .from('guides')
-            .select('view_count')
-            .eq('id', id)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        const newCount = (guide.view_count || 0) + 1;
-
-        const { data, error: updateError } = await supabase
-            .from('guides')
-            .update({ view_count: newCount })
-            .eq('id', id)
-            .select('view_count') // Only return what we need, or return full object?
-            // Returning the changed field is enough to update frontend optimistically or definitively.
-            // But frontend usually expects just success or the updated fields.
-            .single();
-
-        if (updateError) throw updateError;
-        res.json(data);
-    } catch (e) {
-        console.error('Supabase Error (POST /guides/:id/view):', e.message);
-        res.status(500).json({ error: e.message });
-    }
-});
-
 // GET All Errors
 app.get('/api/errors', async (req, res) => {
     if (!checkDb(res)) return;

@@ -103,15 +103,23 @@ const GuideCard = ({
                 </div>
 
                 {/* Date */}
-                <div className={`absolute left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full text-[10px] font-bold border flex items-center gap-1.5 whitespace-nowrap shadow-sm z-20 ${style.bgLight} ${style.text} ${style.borderLight}`}>
-                    <Calendar className="w-3 h-3" />
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold shadow-sm ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                    <Calendar className="w-3.5 h-3.5" />
                     <span>{new Date(guide.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
 
                 {/* View Count & Assignees */}
                 <div className="flex items-center justify-end gap-2">
-
-                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-2 whitespace-nowrap min-w-[3.5rem] justify-center ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                    {guide.assignees && guide.assignees.length > 0 && (
+                        <div className="flex -space-x-2">
+                            {guide.assignees.slice(0, 3).map(person => (
+                                <div key={person.id} className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200 shadow-sm relative z-10`} title={person.name}>
+                                    {person.name.charAt(0).toUpperCase()}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
                         <Eye className="w-4 h-4" />
                         <span>{guide.view_count || 0}</span>
                     </div>
@@ -185,37 +193,30 @@ const GuideCard = ({
                             <ImageIcon className="w-6 h-6 opacity-40" />
                             <span className="text-[10px] font-medium opacity-60">Görsel Yok</span>
                         </div>
-
                     )}
-
-                    {/* Assignees Overlay (Bottom Left) */}
-
                 </div>
             </div>
 
-
             {/* Admin Actions */}
-            {
-                isAdmin && (
-                    <div className="absolute top-2 right-6 flex gap-2 z-10">
-                        <button
-                            onClick={(e) => onEditClick(e, guide)}
-                            className="text-slate-300 hover:text-blue-500 transition-colors"
-                            title="Düzenle"
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={(e) => onDeleteClick(e, guide.id)}
-                            className="text-slate-300 hover:text-red-500 transition-colors"
-                            title="Sil"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
-                )
-            }
-        </div >
+            {isAdmin && (
+                <div className="absolute top-2 right-6 flex gap-2 z-10">
+                    <button
+                        onClick={(e) => onEditClick(e, guide)}
+                        className="text-slate-300 hover:text-blue-500 transition-colors"
+                        title="Düzenle"
+                    >
+                        <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={(e) => onDeleteClick(e, guide.id)}
+                        className="text-slate-300 hover:text-red-500 transition-colors"
+                        title="Sil"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+        </div>
     );
 };
 

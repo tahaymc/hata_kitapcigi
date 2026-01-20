@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
 import useGuides from '../hooks/useGuides';
-import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError, reorderErrors, deleteGuide, addGuide, updateGuide, addCategory, updateCategory, deleteCategory, incrementGuideViewCount } from '../services/api';
+import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError, reorderErrors, deleteGuide, addGuide, updateGuide, addCategory, updateCategory, deleteCategory } from '../services/api';
 
 
 
@@ -615,20 +615,6 @@ const HomePage = () => {
                                         date: guide.created_at,
                                         solutionSteps: guide.steps,
                                         solutionType: 'steps'
-                                    });
-                                    // Increment view count
-                                    incrementGuideViewCount(guide.id).then(result => {
-                                        if (result) {
-                                            // Result likely contains { view_count: N }
-                                            const updatedGuide = { ...guide, view_count: result.view_count };
-                                            updateLocalGuide(updatedGuide);
-                                            // We don't verify if it's currently selected because selectedError for guides is a spread copy, 
-                                            // not a reference that React Query would auto-update inside the modal just by cache update.
-                                            // But if we want the modal to show live count, we might need to update selectedError too?
-                                            // The modal just reads from `selectedError` prop. 
-                                            // So yes, let's update selectedError if it matches.
-                                            setSelectedError(curr => (curr && curr.id === guide.id) ? { ...curr, view_count: result.view_count } : curr);
-                                        }
                                     });
                                 }}
                                 onCategoryClick={handleCategoryClick}

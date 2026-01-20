@@ -254,21 +254,6 @@ export const deleteGuide = async (id) => {
     return response.ok;
 };
 
-export const incrementGuideViewCount = async (id) => {
-    try {
-        const response = await fetch(`${API_URL}/guides/${id}/view`, {
-            method: 'POST'
-        });
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        }
-    } catch (e) {
-        console.error("Failed to increment guide view count", e);
-    }
-    return null;
-};
-
 // --- Categories ---
 
 export const addCategory = async (newCategory) => {
