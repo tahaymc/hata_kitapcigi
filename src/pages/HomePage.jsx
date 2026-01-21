@@ -1,8 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
 import useGuides from '../hooks/useGuides';
-import { getCategories, getAllErrors, incrementViewCount, resetViewCount, addError, updateError, deleteError, reorderErrors, deleteGuide, addGuide, updateGuide, addCategory, updateCategory, deleteCategory } from '../services/api';
+import {
+    getCategories,
+    getAllErrors,
+    incrementViewCount,
+    resetViewCount,
+    addError,
+    updateError,
+    deleteError,
+    reorderErrors,
+    deleteGuide,
+    addGuide,
+    updateGuide,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    incrementGuideViewCount,
+    resetGuideViewCount,
+    reorderGuides
+} from '../services/api';
 
 
 
@@ -43,7 +62,7 @@ const EditGuideModal = React.lazy(importEditGuideModal);
 // unless I see a specific LoginModal component.
 // I'll check the file list or assume I need to keep the inline modal JSX if it was inline.
 // Actually, looking at imports in original file: 
-// `const importErrorDetailModal = () => import('../components/ErrorDetailModal');`
+// `const importErrorDetailModal = () => import('../components/ErrorDetailModal'); `
 // It seems LoginModal wasn't imported. It might be inline. 
 // I will keep the inline Modals (Login, Credentials) in the HomePage JSX for now to be safe, or check if I need to extract them.
 // The user request was specific about Header, SearchBar, ErrorGrid.
@@ -56,7 +75,7 @@ const HomePage = () => {
     const { errors, loading: errorsLoading, filters: errorFilters, setFilters: setErrorFilters, addLocalError, updateLocalError, setLocalErrors, removeLocalError } = useErrors();
 
     // Custom Hook for Guides
-    const { guides, loading: guidesLoading, filters: guideFilters, setFilters: setGuideFilters, addLocalGuide, updateLocalGuide, removeLocalGuide } = useGuides();
+    const { guides, loading: guidesLoading, filters: guideFilters, setFilters: setGuideFilters, addLocalGuide, updateLocalGuide, removeLocalGuide, setLocalGuides } = useGuides();
 
     // Tab State
     const [activeTab, setActiveTab] = useState('errors'); // 'errors' | 'guides'
@@ -78,8 +97,9 @@ const HomePage = () => {
 
     const setSelectedCategory = (cat) => setFilters(prev => ({ ...prev, category: cat }));
     const setSearchTerm = (term) => setFilters(prev => ({ ...prev, query: term }));
-    const selectedDate = errorsActive ? filters.date : null;
-    const setSelectedDate = (date) => errorsActive ? setFilters(prev => ({ ...prev, date: date })) : null;
+    // Shared date filter logic - Works if both hooks support 'date' in filters
+    const selectedDate = filters.date;
+    const setSelectedDate = (date) => setFilters(prev => ({ ...prev, date: date }));
 
 
 
@@ -413,6 +433,73 @@ const HomePage = () => {
     const errorCategories = categories.filter(c => c.type === 'errors' || !c.type);
     const guideCategories = categories.filter(c => c.type === 'guides');
 
+    const handleGuideDragEnd = (event) => {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            const oldIndex = guides.findIndex((g) => g.id === active.id);
+            const newIndex = guides.findIndex((g) => g.id === over.id);
+
+            const newGuides = arrayMove(guides, oldIndex, newIndex);
+
+            // Optimistically update local state (if using setLocalGuides exposed from hook or direct setGuides)
+            // The useGuides hook returns: { guides, ..., setLocalGuides, ... } (Need to verify if setLocalGuides is returned)
+            // Looking at useGuides usage in HomePage:
+            // const { guides, ..., updateLocalGuide, removeLocalGuide } = useGuides();
+            // It doesn't seem to expose setLocalGuides in the destructuring at line 61.
+            // I need to check useGuides hook or assume I can modify it or use setGuides if it was exposed?
+            // Actually, in HomePage line 61: `const { guides ... } = useGuides()`
+            // I should check `useGuides.js` first to see if I can set the whole list.
+            // If not, I can't do optimistic DnD easily without refactoring useGuides.
+            // IMPORTANT: ErrorGrid DnD works because `useErrors` exposes `setLocalErrors`.
+            // Optimistic update
+            setLocalGuides(newGuides);
+
+            // Persist order
+            const orderedIds = newGuides.map(g => g.id);
+            reorderGuides(orderedIds)
+                .then(() => {
+                    // Optional: showToast('Sıralama kaydedildi', 'success');
+                })
+                .catch(err => {
+                    console.error('Reorder persistence failed:', err);
+                    showToast('Sıralama kaydedilirken hata oluştu', 'error');
+                });
+        }
+    };
+
+    const handleResetGuideView = async (e, guide) => {
+        if (e) e.stopPropagation();
+        if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
+            await resetGuideViewCount(guide.id);
+            const updatedGuide = { ...guide, viewCount: 0, view_count: 0 };
+            updateLocalGuide(updatedGuide);
+            showToast('Görüntülenme sayısı sıfırlandı.', 'success');
+        }
+    };
+
+    const handleDeleteGuideClick = async (e, id) => {
+        if (e) e.stopPropagation();
+        if (window.confirm('Bu kılavuzu silmek istediğinize emin misiniz?')) {
+            await deleteGuide(id);
+            removeLocalGuide(id);
+            showToast('Kılavuz başarıyla silindi', 'success');
+            setSelectedError(null);
+        }
+    };
+
+    const handleImageClick = (guide) => {
+        if (!guide) return;
+        const items = [];
+        if (guide.videoUrl || guide.video_url) items.push({ type: 'video', url: guide.videoUrl || guide.video_url });
+        const imgs = guide.image_urls || (guide.image_url ? [guide.image_url] : []);
+        imgs.forEach(url => items.push({ type: 'image', url }));
+
+        if (items.length > 0) {
+            setPreviewGallery({ items, index: 0 });
+        }
+    };
+
     return (
         <React.Suspense fallback={<div className="fixed inset-0 bg-white/50 dark:bg-slate-900/50 z-[200]" />}>
             <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -486,19 +573,19 @@ const HomePage = () => {
                             <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex shadow-sm">
                                 <button
                                     onClick={() => setActiveTab('errors')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'errors'
+                                    className={`flex - 1 py - 2 rounded - lg text - sm font - bold transition - all ${activeTab === 'errors'
                                         ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400'
-                                        }`}
+                                        } `}
                                 >
                                     Hata Çözümleri
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('guides')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'guides'
+                                    className={`flex - 1 py - 2 rounded - lg text - sm font - bold transition - all ${activeTab === 'guides'
                                         ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400'
-                                        }`}
+                                        } `}
                                 >
                                     Kılavuzlar
                                 </button>
@@ -511,10 +598,10 @@ const HomePage = () => {
                         <div className="lg:hidden mb-8 -mx-6 px-6 overflow-x-auto pb-2 custom-scrollbar flex gap-3">
                             <button
                                 onClick={() => setSelectedCategory(null)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${!selectedCategory
+                                className={`flex items - center gap - 2 px - 4 py - 2 rounded - xl text - sm font - bold whitespace - nowrap transition - all border ${!selectedCategory
                                     ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-500/20 dark:bg-white dark:text-slate-900'
                                     : 'bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                                    }`}
+                                    } `}
                             >
                                 <LayoutGrid className="w-4 h-4" />
                                 <span>Tümü</span>
@@ -526,10 +613,10 @@ const HomePage = () => {
                                     <button
                                         key={c.id}
                                         onClick={() => setSelectedCategory(isSelected ? null : c.id)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${isSelected
+                                        className={`flex items - center gap - 2 px - 4 py - 2 rounded - xl text - sm font - bold whitespace - nowrap transition - all border ${isSelected
                                             ? `${style.buttonSelected}`
                                             : `bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700`
-                                            }`}
+                                            } `}
                                     >
                                         <span>{c.name}</span>
                                     </button>
@@ -555,14 +642,14 @@ const HomePage = () => {
                             <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-sm ml-auto lg:ml-0">
                                 <button
                                     onClick={() => setViewMode('grid')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                    className={`p - 2 rounded - md transition - all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'} `}
                                     title="Kart Görünümü"
                                 >
                                     <LayoutGrid className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('list')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                    className={`p - 2 rounded - md transition - all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'} `}
                                     title="Liste Görünümü"
                                 >
                                     <List className="w-4 h-4" />
@@ -608,30 +695,38 @@ const HomePage = () => {
                             <GuideGrid
                                 guides={guides}
                                 categories={categories}
+                                selectedDate={selectedDate} // Pass selectedDate
                                 onCardClick={(guide) => {
-                                    setSelectedError({
+                                    const guideWithProps = {
                                         ...guide,
                                         type: 'guide',
                                         date: guide.created_at,
                                         solutionSteps: guide.steps,
                                         solutionType: 'steps'
+                                    };
+                                    setSelectedError(guideWithProps);
+
+                                    // Increment view count
+                                    incrementGuideViewCount(guide.id).then(updatedGuide => {
+                                        if (updatedGuide) {
+                                            updateLocalGuide(updatedGuide);
+                                            // Update selected modal if still open
+                                            setSelectedError(curr => curr?.id === guide.id ? { ...curr, ...updatedGuide } : curr);
+                                        }
                                     });
                                 }}
                                 onCategoryClick={handleCategoryClick}
-                                onEditClick={handleEditGuideClick}
-                                onDeleteClick={handleDeleteClick}
-                                onImageClick={(guide) => {
-                                    const items = [];
-                                    if (guide.videoUrl || guide.video_url) items.push({ type: 'video', url: guide.videoUrl || guide.video_url });
-                                    const imgs = guide.image_urls || (guide.image_url ? [guide.image_url] : []);
-                                    imgs.forEach(url => items.push({ type: 'image', url }));
+                                onDateClick={handleDateClick}
+                                onCodeClick={handleCodeClick}
 
-                                    if (items.length > 0) {
-                                        setPreviewGallery({ items, index: 0 });
-                                    }
-                                }}
+                                onResetViewClick={handleResetGuideView}
+                                onEditClick={handleEditGuideClick}
+                                onDeleteClick={handleDeleteGuideClick}
+                                onImageClick={handleImageClick}
                                 isAdmin={isAdmin}
+                                onDragEnd={handleGuideDragEnd}
                             />
+
                         )}
                     </main>
                 </div>
@@ -926,12 +1021,12 @@ const HomePage = () => {
                                                 e.stopPropagation();
                                                 setPreviewGallery(prev => ({ ...prev, index: idx }));
                                             }}
-                                            className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                            className={`w - 16 h - 16 rounded - lg overflow - hidden border - 2 transition - all flex - shrink - 0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'} `}
                                         >
                                             {item.type === 'video' ? (
                                                 <video src={item.url} className="w-full h-full object-cover" muted />
                                             ) : (
-                                                <img src={item.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                                                <img src={item.url} alt={`Thumb ${idx} `} className="w-full h-full object-cover" />
                                             )}
                                         </button>
                                     ))}

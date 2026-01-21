@@ -8,111 +8,7 @@ import CategorySelect from './CategorySelect';
 import TextEditorToolbar from './TextEditorToolbar';
 import RichTextEditor from './RichTextEditor';
 
-const DraggableStepItem = ({ step, index, solutionSteps, setSolutionSteps }) => {
-    const controls = useDragControls();
-    const editorRef = React.useRef(null);
-
-    const handleFormat = (type, value) => {
-        if (editorRef.current) {
-            editorRef.current.format(type, value);
-        }
-    };
-
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const compressed = await compressImage(file);
-            const newSteps = [...solutionSteps];
-            newSteps[index] = { ...newSteps[index], imageUrl: compressed };
-            setSolutionSteps(newSteps);
-        }
-    };
-
-    return (
-        <Reorder.Item
-            value={step}
-            className="group flex flex-col gap-2 relative pl-8"
-            dragListener={false}
-            dragControls={controls}
-            key={step.id}
-        >
-            <div
-                className="absolute left-0 top-3 p-1.5 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded-md transition-colors touch-none"
-                onPointerDown={(e) => controls.start(e)}
-            >
-                <GripVertical className="w-5 h-5" />
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
-                <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                    <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-                        {index + 1}
-                    </span>
-                    <div className="flex-grow text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        Adım Detayı
-                    </div>
-                    {(solutionSteps.length > 1) && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const newSteps = solutionSteps.filter((_, i) => i !== index);
-                                setSolutionSteps(newSteps);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Adımı Sil"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    )}
-                </div>
-
-                <div className="relative">
-                    <TextEditorToolbar onFormat={handleFormat} />
-                    <div className="relative p-1">
-                        <RichTextEditor
-                            ref={editorRef}
-                            className="w-full px-4 py-3 bg-transparent text-sm text-slate-900 dark:text-slate-100 min-h-[5rem]"
-                            placeholder="Adım açıklamasını buraya girin..."
-                            value={step.text}
-                            onChange={(val) => {
-                                const newSteps = [...solutionSteps];
-                                newSteps[index] = { ...newSteps[index], text: val };
-                                setSolutionSteps(newSteps);
-                            }}
-                        />
-                        <div className="absolute top-2 right-2">
-                            <label className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md cursor-pointer transition-colors block" title="Görsel Ekle">
-                                <ImageIcon className="w-4 h-4" />
-                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                {step.imageUrl && (
-                    <div className="px-4 pb-4">
-                        <div className="relative inline-block group/img">
-                            <img src={step.imageUrl} alt="" className="h-32 w-auto rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm object-cover" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const newSteps = [...solutionSteps];
-                                        newSteps[index] = { ...newSteps[index], imageUrl: null };
-                                        setSolutionSteps(newSteps);
-                                    }}
-                                    className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </Reorder.Item>
-    );
-};
+import { DraggableStepItem } from './StepBuilder';
 
 const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, onAddCategory, onUpdateCategory, onDeleteCategory, showToast }) => {
     const summaryEditorRef = React.useRef(null);
@@ -128,12 +24,19 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
 
     useEffect(() => {
         if (guideToEdit) {
+            console.log("EditGuideModal received guide:", guideToEdit);
             setEditingGuide({
                 ...guideToEdit,
                 code: guideToEdit.code || '',
+                // Map snake_case from DB to camelCase for component state if needed, or stick to one.
+                // The component uses camelCase like `newGuideData`.
                 assignee_ids: guideToEdit.assignees ? guideToEdit.assignees.map(a => a.id) : (guideToEdit.assignee_ids || []),
                 steps: guideToEdit.steps || [{ id: 'init-1', text: '', imageUrl: null, subSteps: [] }],
-                videoUrl: guideToEdit.video_url || guideToEdit.videoUrl || null
+                videoUrl: guideToEdit.video_url || guideToEdit.videoUrl || null,
+                imageUrls: guideToEdit.image_urls || guideToEdit.imageUrls || (guideToEdit.imageUrl ? [guideToEdit.imageUrl] : []) || [],
+                title: guideToEdit.title || '',
+                summary: guideToEdit.summary || '',
+                category: guideToEdit.category || 'genel'
             });
         }
     }, [guideToEdit]);

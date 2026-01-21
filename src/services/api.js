@@ -275,6 +275,54 @@ export const deleteGuide = async (id) => {
     return response.ok;
 };
 
+export const incrementGuideViewCount = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/guides/${id}/view`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+    } catch (e) {
+        console.error("Failed to increment guide view count", e);
+    }
+    return null;
+};
+
+export const resetGuideViewCount = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/guides/${id}/reset-view`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+    } catch (e) {
+        console.error("Failed to reset guide view count", e);
+    }
+    return null;
+};
+
+export const reorderGuides = async (orderedIds) => {
+    try {
+        const response = await fetch(`${API_URL}/guides/reorder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds })
+        });
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Reorder failed');
+        }
+        return await response.json();
+    } catch (e) {
+        console.error('Failed to reorder guides', e);
+        throw e;
+    }
+};
+
 // --- Categories ---
 
 export const addCategory = async (newCategory) => {

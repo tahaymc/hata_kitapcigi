@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2, BookOpen } from 'lucide-react';
+import { Calendar, Edit2, Eye, Trash2, Video, Image as ImageIcon, RotateCcw, GripVertical } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
 import { getCategoryIcon, formatDate } from '../utils/helpers';
@@ -10,11 +10,16 @@ const GuideCard = ({
     categories = [],
     onCardClick,
     onCategoryClick,
+    onDateClick,
+    onCodeClick,
+    onResetViewClick,
     onEditClick,
     onDeleteClick,
     onImageClick,
     isAdmin,
-    defaultStyle = COLOR_STYLES['emerald']
+    selectedDate, // Add selectedDate prop
+    defaultStyle = COLOR_STYLES['emerald'],
+    dragHandleProps
 }) => {
     const queryClient = useQueryClient();
     const cat = categories.find(c => c.id === guide.category);
@@ -47,7 +52,7 @@ const GuideCard = ({
             onMouseLeave={handleMouseLeave}
         >
             {/* Top Accent Line */}
-            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1.5 ${style.bar.split(' ')[0]} rounded-b-full shadow-sm`} />
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1.5 ${style.bar?.split(' ')[0]} rounded-b-full shadow-sm`} />
 
             {/* Header */}
             <div className="flex items-start gap-4 mb-4 mt-2">
@@ -76,7 +81,13 @@ const GuideCard = ({
 
                 {/* Guide Code Badge */}
                 <div className="flex-none">
-                    <span className={`px-3 py-1 rounded-lg border font-bold text-[10px] sm:text-xs tracking-tight whitespace-nowrap shadow-sm transition-all ${style.bgLight} ${style.text} ${style.borderLight} flex items-center gap-1 uppercase`}>
+                    <span
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onCodeClick && onCodeClick(guide.code);
+                        }}
+                        className={`px-3 py-1 rounded-lg border font-bold text-[10px] sm:text-xs tracking-tight whitespace-nowrap shadow-sm transition-all cursor-pointer hover:opacity-80 ${style.bgLight} ${style.text} ${style.borderLight} flex items-center gap-1 uppercase`}
+                    >
                         {guide.code || `#${guide.id}`}
                     </span>
                 </div>
@@ -102,23 +113,24 @@ const GuideCard = ({
                     {categories.find(c => c.id === guide.category)?.name || 'Genel'}
                 </div>
 
-                {/* Date */}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold shadow-sm ${style.bgLight} ${style.text} ${style.borderLight}`}>
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{new Date(guide.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                {/* Date Pill (Absolute Center) */}
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDateClick && onDateClick(selectedDate === guide.created_at ? null : guide.created_at);
+                    }}
+                    className={`absolute left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full text-[10px] font-bold border flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all hover:scale-105 active:scale-95 z-20 ${selectedDate === guide.created_at
+                        ? style.buttonSelected
+                        : `bg-white dark:bg-slate-900 ${style.text} ${style.borderLight} hover:${style.bgLight}`
+                        }`}
+                    title={`Tarihe göre filtrele: ${formatDate(guide.created_at)}`}
+                >
+                    <Calendar className={`w-3 h-3 ${selectedDate === guide.created_at ? 'text-white' : 'currentColor'}`} />
+                    <span>{formatDate(guide.created_at)}</span>
                 </div>
 
                 {/* View Count & Assignees */}
                 <div className="flex items-center justify-end gap-2">
-                    {guide.assignees && guide.assignees.length > 0 && (
-                        <div className="flex -space-x-2">
-                            {guide.assignees.slice(0, 3).map(person => (
-                                <div key={person.id} className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] bg-${person.color || 'slate'}-100 text-${person.color || 'slate'}-700 border border-${person.color || 'slate'}-200 shadow-sm relative z-10`} title={person.name}>
-                                    {person.name.charAt(0).toUpperCase()}
-                                </div>
-                            ))}
-                        </div>
-                    )}
                     <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
                         <Eye className="w-4 h-4" />
                         <span>{guide.view_count || 0}</span>
@@ -197,18 +209,44 @@ const GuideCard = ({
                 </div>
             </div>
 
-            {/* Admin Actions */}
+            {/* Admin Actions (Only visible on hover) */}
             {isAdmin && (
                 <div className="absolute top-2 right-6 flex gap-2 z-10">
+                    {dragHandleProps && (
+                        <button
+                            {...dragHandleProps}
+                            className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+                            title="Sıralamak için sürükleyin"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <GripVertical className="w-5 h-5" />
+                        </button>
+                    )}
                     <button
-                        onClick={(e) => onEditClick(e, guide)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onResetViewClick && onResetViewClick(e, guide);
+                        }}
+                        className="text-slate-300 hover:text-orange-500 transition-colors"
+                        title="Görüntülenmeyi Sıfırla"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEditClick(e, guide);
+                        }}
                         className="text-slate-300 hover:text-blue-500 transition-colors"
                         title="Düzenle"
                     >
                         <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                        onClick={(e) => onDeleteClick(e, guide.id)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteClick(e, guide.id);
+                        }}
                         className="text-slate-300 hover:text-red-500 transition-colors"
                         title="Sil"
                     >

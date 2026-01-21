@@ -136,7 +136,8 @@ app.get('/api/guides', async (req, res) => {
                     person:people (*)
                 )
             `)
-            .order('created_at', { ascending: false });
+            .order('sort_order', { ascending: true, nullsFirst: false })
+            .order('id', { ascending: false });
 
         if (guidesError) throw guidesError;
 
@@ -365,6 +366,87 @@ app.delete('/api/guides/:id', async (req, res) => {
         res.json({ success: true });
     } catch (e) {
         console.error('Supabase Error (DELETE /guides):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Increment Guide View Count
+app.post('/api/guides/:id/view', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        const { data: current, error: fetchError } = await supabase
+            .from('guides')
+            .select('view_count')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newCount = (current.view_count || 0) + 1;
+
+        const { data, error } = await supabase
+            .from('guides')
+            .update({ view_count: newCount })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST guide view):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Reset Guide View Count
+app.post('/api/guides/:id/reset-view', async (req, res) => {
+    if (!checkDb(res)) return;
+    const id = parseInt(req.params.id);
+
+    try {
+        const { data, error } = await supabase
+            .from('guides')
+            .update({ view_count: 0 })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST guide reset-view):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Reorder Guides
+app.post('/api/guides/reorder', async (req, res) => {
+    if (!checkDb(res)) return;
+    const { orderedIds } = req.body;
+
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+        return res.status(400).json({ error: 'Invalid data' });
+    }
+
+    try {
+        // Create an array of update promises
+        // Note: Supabase JS client doesn't support bulk update with different values easily in one query without RPC.
+        // Doing loop is acceptable for small number of items (guides ~50-100).
+        const updates = orderedIds.map((id, index) =>
+            supabase
+                .from('guides')
+                .update({ sort_order: index })
+                .eq('id', id)
+        );
+
+        await Promise.all(updates);
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (Reorder Guides):', e.message);
         res.status(500).json({ error: e.message });
     }
 });

@@ -124,7 +124,10 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                         {isAdmin && (
                             <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700/50">
                                 <button
-                                    onClick={onEdit}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit(e);
+                                    }}
                                     className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 transition-colors"
                                     title="Düzenle"
                                 >

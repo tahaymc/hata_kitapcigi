@@ -7,6 +7,7 @@ const useGuides = () => {
     const [filters, setFilters] = useState({
         query: '',
         category: null,
+        date: null,
     });
 
     // Fetch guides
@@ -28,11 +29,22 @@ const useGuides = () => {
             filtered = filtered.filter(g => g.category === filters.category);
         }
 
+        if (filters.date) {
+            // Compare YYYY-MM-DD
+            const filterDate = new Date(filters.date).toISOString().split('T')[0];
+            filtered = filtered.filter(g => {
+                if (!g.created_at) return false;
+                const guideDate = new Date(g.created_at).toISOString().split('T')[0];
+                return guideDate === filterDate;
+            });
+        }
+
         if (filters.query) {
             const q = filters.query.toLowerCase();
             filtered = filtered.filter(g =>
                 g.title.toLowerCase().includes(q) ||
-                (g.summary && g.summary.toLowerCase().includes(q))
+                (g.summary && g.summary.toLowerCase().includes(q)) ||
+                (g.code && g.code.toLowerCase().includes(q))
             );
         }
 
@@ -58,6 +70,10 @@ const useGuides = () => {
         });
     };
 
+    const setLocalGuides = (newGuides) => {
+        queryClient.setQueryData(['guides'], newGuides);
+    };
+
     return {
         guides,
         loading,
@@ -66,7 +82,8 @@ const useGuides = () => {
         refreshGuides,
         addLocalGuide,
         updateLocalGuide,
-        removeLocalGuide
+        removeLocalGuide,
+        setLocalGuides
     };
 };
 
