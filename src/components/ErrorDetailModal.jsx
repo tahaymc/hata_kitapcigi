@@ -206,7 +206,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
-                                            {isGuide ? 'İşlem Adımları' : 'Çözüm Adımları'}
+                                            {isGuide ? 'Kılavuz Adımları' : 'Çözüm Adımları'}
                                         </h3>
                                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                                             {isGuide ? 'Adımları sırasıyla takip edin' : 'Bu adımları sırasıyla uygulayın'}
