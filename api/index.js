@@ -133,7 +133,7 @@ app.get('/api/guides', async (req, res) => {
             .select(`
                 *,
                 guide_assignees (
-                    person:people (*)
+                    person:people (*, department:departments(*))
                 )
             `)
             .order('sort_order', { ascending: true, nullsFirst: false })
@@ -172,7 +172,7 @@ app.get('/api/guides/:id', async (req, res) => {
             .select(`
                 *,
                 guide_assignees (
-                    person:people (*)
+                    person:people (*, department:departments(*))
                 )
             `)
             .eq('id', id)
@@ -257,7 +257,7 @@ app.post('/api/guides', async (req, res) => {
             .select(`
                 *,
                 guide_assignees (
-                    person:people (*)
+                    person:people (*, department:departments(*))
                 )
             `)
             .eq('id', guideData.id)
@@ -329,9 +329,9 @@ app.put('/api/guides/:id', async (req, res) => {
                 .from('guides')
                 .select(`
                     *,
-                    guide_assignees (
-                        person:people (*)
-                    )
+                guide_assignees (
+                    person:people (*, department:departments(*))
+                )
                 `)
                 .eq('id', id)
                 .single();
@@ -461,7 +461,7 @@ app.get('/api/errors', async (req, res) => {
             .select(`
                 *,
                 error_assignees (
-                    person:people (*)
+                    person:people (*, department:departments(*))
                 )
             `)
             // Sort by sort_order first (if exists/populated), then by ID desc
@@ -588,7 +588,7 @@ app.get('/api/errors/:id', async (req, res) => {
             .select(`
                 *,
                 error_assignees (
-                    person:people (*)
+                    person:people (*, department:departments(*))
                 )
             `)
             .eq('id', id)

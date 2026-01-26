@@ -499,7 +499,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                                         return colors[c] || colors.slate;
                                                     };
 
-                                                    const colorClass = typeof person === 'object' && person.color ? getColorClasses(person.color) : 'bg-slate-200 text-slate-600';
+                                                    const colorClass = typeof person === 'object' && (person.color || person.department?.color) ? getColorClasses(person.color || person.department?.color) : 'bg-slate-200 text-slate-600';
 
                                                     return (
                                                         <div key={idx} className="flex items-center gap-1.5 pl-1.5 pr-3 py-1 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-semibold border border-slate-200 dark:border-slate-700">
