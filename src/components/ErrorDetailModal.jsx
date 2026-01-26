@@ -48,7 +48,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
 
     const hasImages = displayImages.length > 0;
     const hasVideo = !!(error.videoUrl || error.video_url);
-    const isGuide = error.code === 'KILAVUZ';
+    const isGuide = error.code === 'KILAVUZ' || error.type === 'guide';
 
     // Gösterim senaryoları
     const showVideoOnRight = hasVideo && !hasImages; // Resim yoksa video sağa geçer
