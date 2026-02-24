@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Edit2, Trash2, Info, Users, Tag, Video } from 'lucide-react';
+import { X, Calendar, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Edit2, Trash2, Info, Users, Tag, Video, Eye } from 'lucide-react';
 import { getCategoryIcon, formatDate } from '../utils/helpers';
 import { COLOR_STYLES } from '../utils/constants';
 
@@ -142,6 +142,11 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                 </button>
                             </div>
                         )}
+
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 shadow-sm text-xs font-bold border border-slate-200 dark:border-slate-700 mr-2">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{error.view_count || error.viewCount || 0}</span>
+                        </div>
 
                         <button
                             onClick={onClose}

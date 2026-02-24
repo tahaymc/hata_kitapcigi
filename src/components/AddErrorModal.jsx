@@ -7,6 +7,8 @@ import PersonSelect from './PersonSelect';
 import CategorySelect from './CategorySelect';
 import TextEditorToolbar from './TextEditorToolbar';
 import RichTextEditor from './RichTextEditor';
+import { useAuth } from '../context/AuthContext';
+import { getDepartments } from '../services/api';
 
 
 const SubStepItem = ({ subStep, subIndex, index, onUpdate, onDelete }) => {
@@ -287,6 +289,20 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
 
     const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
+    // Departments Logic
+    const { profile, isAdmin, isSuperAdmin } = useAuth();
+    const [departments, setDepartments] = useState([]);
+
+    useEffect(() => {
+        getDepartments().then(setDepartments);
+    }, []);
+
+    useEffect(() => {
+        if (profile?.department_id && !isSuperAdmin) {
+            setNewErrorData(prev => ({ ...prev, department_id: profile.department_id }));
+        }
+    }, [profile, isSuperAdmin]);
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -443,6 +459,21 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 multiple={true}
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Departman</label>
+                        <select
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-slate-100 disabled:opacity-60"
+                            value={newErrorData.department_id || ''}
+                            onChange={e => setNewErrorData({ ...newErrorData, department_id: e.target.value })}
+                            disabled={!isSuperAdmin && profile?.department_id}
+                        >
+                            <option value="">Seçiniz</option>
+                            {departments.map(d => (
+                                <option key={d.id} value={d.id}>{d.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

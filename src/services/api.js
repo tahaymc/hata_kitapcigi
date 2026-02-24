@@ -1,9 +1,72 @@
 const API_URL = '/api';
 
+let authToken = null;
+
+export const setAuthToken = (token) => {
+    authToken = token;
+};
+
+const customFetch = async (url, options = {}) => {
+    const headers = {
+        ...options.headers,
+    };
+
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    return response;
+};
+
+export const createUser = async (userData) => {
+    const response = await customFetch(`${API_URL}/admin/create-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'User creation failed');
+    }
+    return await response.json();
+};
+
+export const getDepartments = async () => {
+    try {
+        const response = await customFetch(`${API_URL}/departments`);
+        if (!response.ok) throw new Error('Failed to fetch departments');
+        return await response.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return [];
+    }
+};
+
+export const getPeople = async () => {
+    try {
+        const response = await customFetch(`${API_URL}/people`);
+        if (!response.ok) throw new Error('Failed to fetch people');
+        return await response.json();
+    } catch (e) {
+        console.error('API Error:', e);
+        return [];
+    }
+};
+
+
+
+
+
 // Read Functions
 export const getCategories = async () => {
     try {
-        const response = await fetch(`${API_URL}/categories`);
+        const response = await customFetch(`${API_URL}/categories`);
         if (!response.ok) throw new Error('Network response was not ok');
         return await response.json();
     } catch (e) {
@@ -14,8 +77,8 @@ export const getCategories = async () => {
 
 export const getAllErrors = async () => {
     try {
-        const response = await fetch(`${API_URL}/errors`);
-        if (!response.ok) throw new Error('Failed to fetch errors');
+        const response = await customFetch(`${API_URL}/errors`);
+        if (!response.ok) throw new Error('Failed to customFetch errors');
         return await response.json();
     } catch (e) {
         console.error('API Error:', e);
@@ -55,8 +118,8 @@ export const searchErrors = async (query, categoryId, date) => {
 
 export const getErrorById = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/errors/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch error');
+        const response = await customFetch(`${API_URL}/errors/${id}`);
+        if (!response.ok) throw new Error('Failed to customFetch error');
         return await response.json();
     } catch (e) {
         console.error('API Error:', e);
@@ -69,7 +132,7 @@ export const getErrorById = async (id) => {
 export const uploadVideo = async (file) => {
     try {
         // 1. Get Signed URL
-        const genResponse = await fetch(`${API_URL}/generate-upload-url`, {
+        const genResponse = await customFetch(`${API_URL}/generate-upload-url`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -86,7 +149,7 @@ export const uploadVideo = async (file) => {
         const { signedUrl, publicUrl } = await genResponse.json();
 
         // 2. Upload directly to storage via Signed URL
-        const uploadResponse = await fetch(signedUrl, {
+        const uploadResponse = await customFetch(signedUrl, {
             method: 'PUT',
             headers: {
                 'Content-Type': file.type
@@ -113,7 +176,7 @@ export const addError = async (newError) => {
     delete payload.error_assignees;
     delete payload.id; // ensure ID is not sent for creation
 
-    const response = await fetch(`${API_URL}/errors`, {
+    const response = await customFetch(`${API_URL}/errors`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -136,7 +199,7 @@ export const updateError = async (id, updatedData) => {
     delete payload.error_assignees;
     // assignee_ids should be kept as it's processed by backend for relation
 
-    const response = await fetch(`${API_URL}/errors/${id}`, {
+    const response = await customFetch(`${API_URL}/errors/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -151,7 +214,7 @@ export const updateError = async (id, updatedData) => {
 };
 
 export const deleteError = async (id) => {
-    const response = await fetch(`${API_URL}/errors/${id}`, {
+    const response = await customFetch(`${API_URL}/errors/${id}`, {
         method: 'DELETE'
     });
     return response.ok;
@@ -159,7 +222,7 @@ export const deleteError = async (id) => {
 
 export const incrementViewCount = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/errors/${id}/view`, {
+        const response = await customFetch(`${API_URL}/errors/${id}/view`, {
             method: 'POST'
         });
         if (response.ok) {
@@ -174,7 +237,7 @@ export const incrementViewCount = async (id) => {
 
 export const resetViewCount = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/errors/${id}/reset-view`, {
+        const response = await customFetch(`${API_URL}/errors/${id}/reset-view`, {
             method: 'POST'
         });
         if (response.ok) {
@@ -189,7 +252,7 @@ export const resetViewCount = async (id) => {
 
 export const reorderErrors = async (orderedIds) => {
     try {
-        const response = await fetch(`${API_URL}/errors/reorder`, {
+        const response = await customFetch(`${API_URL}/errors/reorder`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderedIds })
@@ -209,8 +272,8 @@ export const reorderErrors = async (orderedIds) => {
 
 export const getAllGuides = async () => {
     try {
-        const response = await fetch(`${API_URL}/guides`);
-        if (!response.ok) throw new Error('Failed to fetch guides');
+        const response = await customFetch(`${API_URL}/guides`);
+        if (!response.ok) throw new Error('Failed to customFetch guides');
         return await response.json();
     } catch (e) {
         console.error('API Error:', e);
@@ -220,8 +283,8 @@ export const getAllGuides = async () => {
 
 export const getGuideById = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/guides/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch guide');
+        const response = await customFetch(`${API_URL}/guides/${id}`);
+        if (!response.ok) throw new Error('Failed to customFetch guide');
         return await response.json();
     } catch (e) {
         console.error('API Error:', e);
@@ -236,7 +299,7 @@ export const addGuide = async (newGuide) => {
     delete payload.guide_assignees;
     delete payload.id;
 
-    const response = await fetch(`${API_URL}/guides`, {
+    const response = await customFetch(`${API_URL}/guides`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -255,7 +318,7 @@ export const updateGuide = async (id, updatedData) => {
     delete payload.assignees;
     delete payload.guide_assignees;
 
-    const response = await fetch(`${API_URL}/guides/${id}`, {
+    const response = await customFetch(`${API_URL}/guides/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -269,7 +332,7 @@ export const updateGuide = async (id, updatedData) => {
 };
 
 export const deleteGuide = async (id) => {
-    const response = await fetch(`${API_URL}/guides/${id}`, {
+    const response = await customFetch(`${API_URL}/guides/${id}`, {
         method: 'DELETE'
     });
     return response.ok;
@@ -277,7 +340,7 @@ export const deleteGuide = async (id) => {
 
 export const incrementGuideViewCount = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/guides/${id}/view`, {
+        const response = await customFetch(`${API_URL}/guides/${id}/view`, {
             method: 'POST'
         });
         if (response.ok) {
@@ -292,7 +355,7 @@ export const incrementGuideViewCount = async (id) => {
 
 export const resetGuideViewCount = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/guides/${id}/reset-view`, {
+        const response = await customFetch(`${API_URL}/guides/${id}/reset-view`, {
             method: 'POST'
         });
         if (response.ok) {
@@ -307,7 +370,7 @@ export const resetGuideViewCount = async (id) => {
 
 export const reorderGuides = async (orderedIds) => {
     try {
-        const response = await fetch(`${API_URL}/guides/reorder`, {
+        const response = await customFetch(`${API_URL}/guides/reorder`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderedIds })
@@ -326,7 +389,7 @@ export const reorderGuides = async (orderedIds) => {
 // --- Categories ---
 
 export const addCategory = async (newCategory) => {
-    const response = await fetch(`${API_URL}/categories`, {
+    const response = await customFetch(`${API_URL}/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCategory)
@@ -340,7 +403,7 @@ export const addCategory = async (newCategory) => {
 };
 
 export const updateCategory = async (id, updatedData) => {
-    const response = await fetch(`${API_URL}/categories/${id}`, {
+    const response = await customFetch(`${API_URL}/categories/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
@@ -354,7 +417,7 @@ export const updateCategory = async (id, updatedData) => {
 };
 
 export const deleteCategory = async (id) => {
-    const response = await fetch(`${API_URL}/categories/${id}`, {
+    const response = await customFetch(`${API_URL}/categories/${id}`, {
         method: 'DELETE'
     });
     return response.ok;

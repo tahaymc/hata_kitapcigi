@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { X, Image as ImageIcon, Plus, Save, Video } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { compressImage } from '../utils/helpers';
-import { addGuide, uploadVideo } from '../services/api';
+import { addGuide, uploadVideo, getDepartments } from '../services/api';
 import PersonSelect from './PersonSelect';
 import CategorySelect from './CategorySelect';
 import TextEditorToolbar from './TextEditorToolbar';
 import RichTextEditor from './RichTextEditor';
 import { DraggableStepItem } from './StepBuilder';
+import { useAuth } from '../context/AuthContext';
 
 const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, onUpdateCategory, onDeleteCategory, showToast }) => {
     const summaryEditorRef = React.useRef(null);
@@ -31,7 +32,22 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
         videoUrl: null
     });
 
+
     const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+
+    // Departments Logic
+    const { profile, isAdmin, isSuperAdmin } = useAuth();
+    const [departments, setDepartments] = useState([]);
+
+    useEffect(() => {
+        getDepartments().then(setDepartments);
+    }, []);
+
+    useEffect(() => {
+        if (profile?.department_id && !isSuperAdmin) {
+            setNewGuideData(prev => ({ ...prev, department_id: profile.department_id }));
+        }
+    }, [profile, isSuperAdmin]);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -124,7 +140,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 onChange={e => setNewGuideData({ ...newGuideData, code: e.target.value.toUpperCase() })}
                             />
                         </div>
-                        <div className="md:col-span-5">
+                        <div className="md:col-span-9">
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Başlığı</label>
                             <input
                                 type="text"
@@ -135,7 +151,10 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 onChange={e => setNewGuideData({ ...newGuideData, title: e.target.value })}
                             />
                         </div>
-                        <div className="md:col-span-4">
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
                             <CategorySelect
                                 value={newGuideData.category}
@@ -145,6 +164,20 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 onUpdateCategory={onUpdateCategory}
                                 onDeleteCategory={onDeleteCategory}
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Departman</label>
+                            <select
+                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-slate-100 disabled:opacity-60"
+                                value={newGuideData.department_id || ''}
+                                onChange={e => setNewGuideData({ ...newGuideData, department_id: e.target.value })}
+                                disabled={!isSuperAdmin && profile?.department_id}
+                            >
+                                <option value="">Seçiniz</option>
+                                {departments.map(d => (
+                                    <option key={d.id} value={d.id}>{d.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

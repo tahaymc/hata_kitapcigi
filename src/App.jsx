@@ -2,7 +2,11 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import NProgress from 'nprogress';
 
+import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'sonner';
+
 const HomePage = React.lazy(() => import('./pages/HomePage'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 
 // Component to handle NProgress and ScrollToTop
 const NavigationHandler = () => {
@@ -35,12 +39,17 @@ const LoadingSpinner = () => (
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <NavigationHandler />
-      <Suspense fallback={<LoadingSpinner />}>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-        </Routes>
-      </Suspense>
+
+      <AuthProvider>
+        <Toaster position="top-right" richColors />
+        <NavigationHandler />
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Routes>
+        </Suspense>
+      </AuthProvider>
     </Router>
   );
 }

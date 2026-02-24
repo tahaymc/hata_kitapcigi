@@ -106,7 +106,6 @@ const PersonSelect = ({ value, onChange, placeholder = "Personel Seçin", multip
                     {selectedPerson.name.split(' ').map((n, i, arr) => (i === 0 || i === arr.length - 1) ? n.charAt(0) : '').join('').toUpperCase()}
                 </div>
                 <span className="text-slate-900 dark:text-slate-100 font-medium text-sm">{selectedPerson.name}</span>
-                {selectedPerson.role && <span className="text-xs text-slate-400">({selectedPerson.role})</span>}
             </div>
         );
     };
@@ -175,7 +174,6 @@ const PersonSelect = ({ value, onChange, placeholder = "Personel Seçin", multip
                                     <span className={`font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                         {p.name}
                                     </span>
-                                    {p.role && <span className="text-[10px] text-slate-400">{p.role}</span>}
                                 </div>
                                 {isSelected && <Check className="ml-auto w-4 h-4 text-blue-500" />}
                             </button>

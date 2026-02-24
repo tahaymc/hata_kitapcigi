@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 
 // Supabase Connection
@@ -19,6 +19,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 let supabase;
+let supabaseAdmin;
 let initError = null;
 
 try {
@@ -27,6 +28,18 @@ try {
         initError = 'Missing environment variables';
     } else {
         supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Initialize Admin Client (Service Role)
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (serviceRoleKey) {
+            supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+                auth: { errorcode: 'error_description' }
+            });
+            console.log('Supabase Admin client initialized');
+        } else {
+            console.warn('SUPABASE_SERVICE_ROLE_KEY missing. Admin functions will be disabled.');
+        }
+
         console.log('Supabase client initialized');
     }
 } catch (e) {
@@ -106,6 +119,123 @@ app.post('/api/generate-upload-url', async (req, res) => {
         });
     } catch (e) {
         console.error('Generate Upload URL Failed:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- AUTH MIDDLEWARE ---
+
+const verifyAdmin = async (req, res, next) => {
+    if (!checkDb(res)) return;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ error: 'Authorization header missing' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Bearer token missing' });
+    }
+
+    try {
+        // 1. Verify Token with Supabase
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        // 2. Fetch user's profile from 'people' table to get their role
+        const { data: person, error: personError } = await supabase
+            .from('people')
+            .select('access_role')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (personError || !person) {
+            console.warn(`User ${user.id} found in auth but no profile in 'people' table.`);
+            return res.status(403).json({ error: 'User profile not found or unauthorized' });
+        }
+
+        // 3. Check if the user has 'admin' access_role
+        if (person.access_role !== 'admin') {
+            return res.status(403).json({ error: 'Access denied: Not an administrator' });
+        }
+
+        // Attach user and person data to the request
+        req.user = user;
+        req.person = person;
+
+        // Define Super Admin: Admin role + NO department
+        req.isSuperAdmin = !person.department_id;
+        req.userDepartmentId = person.department_id;
+
+        next();
+
+    } catch (e) {
+        console.error('Admin verification failed:', e.message);
+        return res.status(500).json({ error: 'Internal server error during authentication' });
+    }
+};
+
+// --- ADMIN ENDPOINTS ---
+
+app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Access denied: Only Super Admins can create users' });
+    }
+
+    if (!supabaseAdmin) {
+        return res.status(503).json({ error: 'Admin service not configured (Missing Key)' });
+    }
+
+    const { email, password, name, role, department_id } = req.body;
+
+    if (!email || !password || !name) {
+        return res.status(400).json({ error: 'Missing required fields: email, password, name' });
+    }
+
+    try {
+        // 1. Create User in Supabase Auth
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { name }
+        });
+
+        if (authError) throw authError;
+
+        // 2. Create Profile in 'people' table
+        const { data: personData, error: personError } = await supabase
+            .from('people')
+            .insert([{
+                auth_id: authData.user.id,
+                name,
+                role: role || 'user', // legacy or display role
+                access_role: role || 'user', // security role
+                department_id,
+                color: 'blue' // default
+            }])
+            .select()
+            .single();
+
+        if (personError) {
+            // Rollback Auth User if profile creation fails? 
+            // Ideally yes, but complex. Only delete auth user if immediate fail.
+            await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+            throw personError;
+        }
+
+        res.status(201).json({
+            message: 'User created successfully',
+            user: authData.user,
+            person: personData
+        });
+
+    } catch (e) {
+        console.error('Create User Failed:', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -199,8 +329,19 @@ app.get('/api/guides/:id', async (req, res) => {
 });
 
 // POST New Guide
-app.post('/api/guides', async (req, res) => {
+app.post('/api/guides', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
+
+    // Department Permission Check
+    if (!req.isSuperAdmin) {
+        // Force department_id for Dept Admins
+        req.body.department_id = req.userDepartmentId;
+    } else {
+        // Super Admin must provide department_id
+        if (!req.body.department_id) {
+            return res.status(400).json({ error: 'Department ID is required for Super Admins' });
+        }
+    }
 
     let finalImageUrls = req.body.imageUrls || [];
     let finalImageUrl = req.body.imageUrl;
@@ -224,6 +365,7 @@ app.post('/api/guides', async (req, res) => {
         image_url: finalImageUrl,
         image_urls: finalImageUrls,
         video_url: req.body.videoUrl,
+        department_id: req.body.department_id,
         view_count: 0
     };
 
@@ -279,9 +421,27 @@ app.post('/api/guides', async (req, res) => {
 });
 
 // PUT Update Guide
-app.put('/api/guides/:id', async (req, res) => {
+app.put('/api/guides/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
+
+    // Permission Check: Fetch existing guide to check department
+    try {
+        const { data: existingGuide, error: checkError } = await supabase
+            .from('guides')
+            .select('department_id')
+            .eq('id', id)
+            .single();
+
+        if (checkError) throw checkError;
+
+        if (!req.isSuperAdmin && existingGuide.department_id !== req.userDepartmentId) {
+            return res.status(403).json({ error: 'Access denied: You can only edit guides in your department' });
+        }
+    } catch (e) {
+        console.error('Permission Check Failed:', e.message);
+        return res.status(500).json({ error: 'Failed to verify permissions' });
+    }
 
     let finalImageUrls = req.body.imageUrls || [];
     let finalImageUrl = req.body.imageUrl;
@@ -301,7 +461,9 @@ app.put('/api/guides/:id', async (req, res) => {
         category: req.body.category,
         image_url: finalImageUrl,
         image_urls: finalImageUrls,
-        video_url: req.body.videoUrl
+        image_urls: finalImageUrls,
+        video_url: req.body.videoUrl,
+        department_id: req.body.department_id
     };
 
     try {
@@ -355,9 +517,27 @@ app.put('/api/guides/:id', async (req, res) => {
 });
 
 // DELETE Guide
-app.delete('/api/guides/:id', async (req, res) => {
+app.delete('/api/guides/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
+
+    // Permission Check
+    try {
+        const { data: existingGuide, error: checkError } = await supabase
+            .from('guides')
+            .select('department_id')
+            .eq('id', id)
+            .single();
+
+        if (checkError) throw checkError;
+
+        if (!req.isSuperAdmin && existingGuide.department_id !== req.userDepartmentId) {
+            return res.status(403).json({ error: 'Access denied: You can only delete guides in your department' });
+        }
+    } catch (e) {
+        console.error('Permission Check Failed:', e.message);
+        return res.status(500).json({ error: 'Failed to verify permissions' });
+    }
 
     try {
         await supabase.from('guide_assignees').delete().eq('guide_id', id);
@@ -386,7 +566,7 @@ app.post('/api/guides/:id/view', async (req, res) => {
 
         const newCount = (current.view_count || 0) + 1;
 
-        const { data, error } = await supabase
+        const { data, error } = await (supabaseAdmin || supabase)
             .from('guides')
             .update({ view_count: newCount })
             .eq('id', id)
@@ -407,7 +587,7 @@ app.post('/api/guides/:id/reset-view', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabaseAdmin || supabase)
             .from('guides')
             .update({ view_count: 0 })
             .eq('id', id)
@@ -866,9 +1046,17 @@ app.delete('/api/people/:id', async (req, res) => {
 });
 
 // POST New Error
-app.post('/api/errors', async (req, res) => {
-
+app.post('/api/errors', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
+
+    // Department Permission Check
+    if (!req.isSuperAdmin) {
+        req.body.department_id = req.userDepartmentId;
+    } else {
+        if (!req.body.department_id) {
+            return res.status(400).json({ error: 'Department ID is required for Super Admins' });
+        }
+    }
     // Process images
     let finalImageUrls = req.body.imageUrls || [];
     let finalImageUrl = req.body.imageUrl;
@@ -903,6 +1091,7 @@ app.post('/api/errors', async (req, res) => {
         image_url: finalImageUrl,
         image_urls: finalImageUrls,
         video_url: req.body.videoUrl,
+        department_id: req.body.department_id,
         date: dateStr, // specific to creation
         view_count: 0
     };
@@ -978,9 +1167,27 @@ app.post('/api/errors', async (req, res) => {
 });
 
 // PUT Update Error
-app.put('/api/errors/:id', async (req, res) => {
+app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
+
+    // Permission Check
+    try {
+        const { data: existingError, error: checkError } = await supabase
+            .from('errors')
+            .select('department_id')
+            .eq('id', id)
+            .single();
+
+        if (checkError) throw checkError;
+
+        if (!req.isSuperAdmin && existingError.department_id !== req.userDepartmentId) {
+            return res.status(403).json({ error: 'Access denied: You can only edit errors in your department' });
+        }
+    } catch (e) {
+        console.error('Permission Check Failed:', e.message);
+        return res.status(500).json({ error: 'Failed to verify permissions' });
+    }
 
     let finalImageUrls = req.body.imageUrls || [];
     let finalImageUrl = req.body.imageUrl;
@@ -1078,9 +1285,27 @@ app.put('/api/errors/:id', async (req, res) => {
 });
 
 // DELETE Error
-app.delete('/api/errors/:id', async (req, res) => {
+app.delete('/api/errors/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
+
+    // Permission Check
+    try {
+        const { data: existingError, error: checkError } = await supabase
+            .from('errors')
+            .select('department_id')
+            .eq('id', id)
+            .single();
+
+        if (checkError) throw checkError;
+
+        if (!req.isSuperAdmin && existingError.department_id !== req.userDepartmentId) {
+            return res.status(403).json({ error: 'Access denied: You can only delete errors in your department' });
+        }
+    } catch (e) {
+        console.error('Permission Check Failed:', e.message);
+        return res.status(500).json({ error: 'Failed to verify permissions' });
+    }
 
     try {
         // Delete assignees first (cascade might handle this, but explicit is safer)
@@ -1115,7 +1340,7 @@ app.post('/api/errors/:id/view', async (req, res) => {
 
         const newCount = (current.viewCount || 0) + 1;
 
-        const { data, error } = await supabase
+        const { data, error } = await (supabaseAdmin || supabase)
             .from('errors')
             .update({ viewCount: newCount })
             .eq('id', id)
@@ -1136,7 +1361,7 @@ app.post('/api/errors/:id/reset-view', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabaseAdmin || supabase)
             .from('errors')
             .update({ viewCount: 0 })
             .eq('id', id)

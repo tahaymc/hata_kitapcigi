@@ -37,8 +37,10 @@ import ErrorGrid from '../components/ErrorGrid';
 import GuideGrid from '../components/GuideGrid';
 import Sidebar from '../components/Sidebar';
 import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
-import Toast from '../components/Toast';
+// import Toast from '../components/Toast'; // Removed in favor of sonner
 import ErrorDetailModal from '../components/ErrorDetailModal';
+import PageTransition from '../components/ui/PageTransition';
+import { toast } from 'sonner';
 
 // Define imports for prefetching
 const importPeopleManagerModal = () => import('../components/PeopleManagerModal');
@@ -212,11 +214,13 @@ const HomePage = () => {
         confirmPassword: ''
     });
 
-    // Toast State
-    const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
+    // Toast State (Removed local state in favor of sonner)
+    // const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
 
+    // Helper wrapper for legacy calls (optional, or replace direct calls)
     const showToast = (message, type = 'success') => {
-        setToast({ message, type, visible: true });
+        if (type === 'error') toast.error(message);
+        else toast.success(message);
     };
 
     useEffect(() => {
@@ -304,8 +308,9 @@ const HomePage = () => {
             setIsAdmin(true);
             setIsLoginModalOpen(false);
             setLoginData({ username: '', password: '' });
+            toast.success("Giriş başarılı!");
         } else {
-            alert("Hatalı kullanıcı adı veya şifre!");
+            toast.error("Hatalı kullanıcı adı veya şifre!");
         }
     };
 
@@ -314,17 +319,17 @@ const HomePage = () => {
         e.preventDefault();
 
         if (credentialsForm.currentPassword !== adminCredentials.password) {
-            alert("Mevcut şifre hatalı!");
+            toast.error("Mevcut şifre hatalı!");
             return;
         }
 
         if (credentialsForm.newPassword !== credentialsForm.confirmPassword) {
-            alert("Yeni şifreler eşleşmiyor!");
+            toast.error("Yeni şifreler eşleşmiyor!");
             return;
         }
 
         if (credentialsForm.newPassword.length < 4) {
-            alert("Yeni şifre en az 4 karakter olmalıdır!");
+            toast.error("Yeni şifre en az 4 karakter olmalıdır!");
             return;
         }
 
@@ -337,7 +342,7 @@ const HomePage = () => {
         localStorage.setItem('adminCredentials', JSON.stringify(newCreds));
         setIsCredentialsModalOpen(false);
         setCredentialsForm({ newUsername: '', currentPassword: '', newPassword: '', confirmPassword: '' });
-        alert("Giriş bilgileri başarıyla güncellendi!");
+        toast.success("Giriş bilgileri başarıyla güncellendi!");
     };
 
     const handleLogout = () => {
@@ -503,44 +508,44 @@ const HomePage = () => {
     return (
         <React.Suspense fallback={<div className="fixed inset-0 bg-white/50 dark:bg-slate-900/50 z-[200]" />}>
             <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
-
-                <Header
-                    isDarkMode={isDarkMode}
-                    setIsDarkMode={setIsDarkMode}
-                    isAdmin={isAdmin}
-                    onLoginClick={() => setIsLoginModalOpen(true)}
-                    onLogoutClick={handleLogout}
-                    onAddClick={() => activeTab === 'errors' ? setIsAddModalOpen(true) : setIsAddGuideModalOpen(true)}
-                    onPeopleClick={() => setIsPeopleManagerOpen(true)}
-                    onCredentialsClick={() => setIsCredentialsModalOpen(true)}
-                    onLogoClick={() => {
-                        setFilters({ query: '', category: null, date: null });
-                        navigate('/');
-                    }}
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    searchProps={{
-                        searchTerm,
-                        setSearchTerm,
-                        placeholder: activeTab === 'errors' ? "Hata kodu, başlık veya anahtar kelime..." : "Kılavuz başlığı veya içeriğinde ara..."
-                    }}
-                />
-
-                <div className="max-w-[1920px] mx-auto flex flex-col lg:flex-row items-start gap-8 px-6 py-8">
-                    {/* Left Sidebar (Desktop Only) */}
-                    <Sidebar
-                        categories={categories} // Sidebar does its own filtering based on activeTab
-                        selectedCategory={selectedCategory}
-                        onSelectCategory={handleCategoryClick}
+                <PageTransition>
+                    <Header
+                        isDarkMode={isDarkMode}
+                        setIsDarkMode={setIsDarkMode}
+                        isAdmin={isAdmin}
+                        onLoginClick={() => setIsLoginModalOpen(true)}
+                        onLogoutClick={handleLogout}
+                        onAddClick={() => activeTab === 'errors' ? setIsAddModalOpen(true) : setIsAddGuideModalOpen(true)}
+                        onPeopleClick={() => setIsPeopleManagerOpen(true)}
+                        onCredentialsClick={() => setIsCredentialsModalOpen(true)}
+                        onLogoClick={() => {
+                            setFilters({ query: '', category: null, date: null });
+                            navigate('/');
+                        }}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
+                        searchProps={{
+                            searchTerm,
+                            setSearchTerm,
+                            placeholder: activeTab === 'errors' ? "Hata kodu, başlık veya anahtar kelime..." : "Kılavuz başlığı veya içeriğinde ara..."
+                        }}
                     />
 
-                    {/* Main Content */}
-                    <main className="flex-1 w-full min-w-0 py-8 px-6 lg:px-8">
-                        {/* ... Mobile Search & Filter ... */}
+                    <div className="max-w-[1920px] mx-auto flex flex-col lg:flex-row items-start gap-8 px-6 py-8">
+                        {/* Left Sidebar (Desktop Only) */}
+                        <Sidebar
+                            categories={categories} // Sidebar does its own filtering based on activeTab
+                            selectedCategory={selectedCategory}
+                            onSelectCategory={handleCategoryClick}
+                            activeTab={activeTab}
+                            setActiveTab={setActiveTab}
+                        />
 
-                        {/* Re-using existing content which I shouldn't overwrite if I can avoid massive replace, but I need to inject variables. 
+                        {/* Main Content */}
+                        <main className="flex-1 w-full min-w-0 py-8 px-6 lg:px-8">
+                            {/* ... Mobile Search & Filter ... */}
+
+                            {/* Re-using existing content which I shouldn't overwrite if I can avoid massive replace, but I need to inject variables. 
                            Actually, standard practice: Put the variables before return.
                            Then update the Modals.
                            I will split this into two replaces or one big one if I target the return.
@@ -548,7 +553,7 @@ const HomePage = () => {
                            I will just insert the variables before return and update modals separately.
                         */}
 
-                        {/* Mobile Module Switcher & Search (Search is in Header for desktop, but for mobile Header search might be hidden? 
+                            {/* Mobile Module Switcher & Search (Search is in Header for desktop, but for mobile Header search might be hidden? 
                            User said "Arama çubuğunu Header'ın ortasına yerleştir". 
                            Usually Header search is visible on all screens or toggled. 
                            If Header search is visible on mobile too, I don't need it here.
@@ -556,485 +561,489 @@ const HomePage = () => {
                            So I need Mobile Module Switcher here.
                         */}
 
-                        <div className="lg:hidden mb-6 space-y-4">
-                            {/* Mobile Search Input (If Header Search is hidden on mobile, which standard responsive headers often do, OR simply replicate it here for easier access if Header search is small/icon only. 
-                                User's Header update used 'hidden md:flex' for the centered search bar. So on mobile it is HIDDEN in Header. 
-                                So I MUST put SearchBar here for mobile.
-                             */}
-                            <div className="md:hidden">
-                                <SearchBar
-                                    searchTerm={searchTerm}
-                                    setSearchTerm={setSearchTerm}
-                                    placeholder={activeTab === 'errors' ? "Ara..." : "Kılavuz ara..."}
-                                />
-                            </div>
+                            <div className="lg:hidden mb-6 space-y-4">
+                                <div className="md:hidden">
+                                    <SearchBar
+                                        searchTerm={searchTerm}
+                                        setSearchTerm={setSearchTerm}
+                                        placeholder={activeTab === 'errors' ? "Hata çözümü veya anahtar kelime..." : "Kılavuzlarda ara..."}
+                                        className="shadow-sm"
+                                    />
+                                </div>
 
-                            {/* Mobile Tab Switcher */}
-                            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex shadow-sm">
-                                <button
-                                    onClick={() => setActiveTab('errors')}
-                                    className={`flex - 1 py - 2 rounded - lg text - sm font - bold transition - all ${activeTab === 'errors'
-                                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                                        : 'text-slate-500 dark:text-slate-400'
-                                        } `}
-                                >
-                                    Hata Çözümleri
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('guides')}
-                                    className={`flex - 1 py - 2 rounded - lg text - sm font - bold transition - all ${activeTab === 'guides'
-                                        ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                                        : 'text-slate-500 dark:text-slate-400'
-                                        } `}
-                                >
-                                    Kılavuzlar
-                                </button>
-                            </div>
-                        </div>
-
-
-                        {/* Toolbar Area (View Mode & Date & Categories) */}
-                        {/* Mobile Categories (Horizontal Scroll) */}
-                        <div className="lg:hidden mb-8 -mx-6 px-6 overflow-x-auto pb-2 custom-scrollbar flex gap-3">
-                            <button
-                                onClick={() => setSelectedCategory(null)}
-                                className={`flex items - center gap - 2 px - 4 py - 2 rounded - xl text - sm font - bold whitespace - nowrap transition - all border ${!selectedCategory
-                                    ? 'bg-slate-800 text-white border-slate-800 shadow-lg shadow-slate-500/20 dark:bg-white dark:text-slate-900'
-                                    : 'bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                                    } `}
-                            >
-                                <LayoutGrid className="w-4 h-4" />
-                                <span>Tümü</span>
-                            </button>
-                            {categories.map(c => {
-                                const style = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
-                                const isSelected = selectedCategory === c.id;
-                                return (
+                                {/* Mobile Tab Switcher */}
+                                <div className="bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm p-1.5 rounded-2xl flex shadow-inner">
                                     <button
-                                        key={c.id}
-                                        onClick={() => setSelectedCategory(isSelected ? null : c.id)}
-                                        className={`flex items - center gap - 2 px - 4 py - 2 rounded - xl text - sm font - bold whitespace - nowrap transition - all border ${isSelected
-                                            ? `${style.buttonSelected}`
-                                            : `bg-white dark:bg-[#1e293b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700`
-                                            } `}
+                                        onClick={() => setActiveTab('errors')}
+                                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'errors'
+                                            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                            }`}
                                     >
-                                        <span>{c.name}</span>
+                                        <span className={`w-2 h-2 rounded-full ${activeTab === 'errors' ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
+                                        Hata Çözümleri
                                     </button>
-                                );
-                            })}
-                        </div>
+                                    <button
+                                        onClick={() => setActiveTab('guides')}
+                                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'guides'
+                                            ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                            }`}
+                                    >
+                                        <span className={`w-2 h-2 rounded-full ${activeTab === 'guides' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
+                                        Kılavuzlar
+                                    </button>
+                                </div>
+                            </div>
 
-                        {/* Right Side Actions (View Mode & Date Filter) - Desktop aligned right, Mobile full width/flex */}
-                        <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
-                            {/* Active Date Badge */}
-                            {selectedDate && (
-                                <button
-                                    onClick={() => setSelectedDate(null)}
-                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                                >
-                                    <Calendar className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{new Date(selectedDate).toLocaleDateString('tr-TR')}</span>
-                                    <X className="w-3 h-3 ml-1" />
-                                </button>
-                            )}
 
-                            {/* View Mode Toggle */}
-                            <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-sm ml-auto lg:ml-0">
+                            {/* Toolbar Area (View Mode & Date & Categories) */}
+                            {/* Mobile Categories (Horizontal Scroll) */}
+                            <div className="lg:hidden mb-8 -mx-6 px-6 overflow-x-auto pb-4 custom-scrollbar flex gap-3 snap-x">
                                 <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`p - 2 rounded - md transition - all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'} `}
-                                    title="Kart Görünümü"
+                                    onClick={() => setSelectedCategory(null)}
+                                    className={`snap-start flex-none flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 border shadow-sm ${!selectedCategory
+                                        ? 'bg-slate-900 text-white border-slate-900 shadow-slate-900/20 dark:bg-white dark:text-slate-900'
+                                        : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                        }`}
                                 >
                                     <LayoutGrid className="w-4 h-4" />
+                                    <span>Tümü</span>
                                 </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`p - 2 rounded - md transition - all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'} `}
-                                    title="Liste Görünümü"
-                                >
-                                    <List className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {activeTab === 'errors' ? (
-                            <ErrorGrid
-                                errors={errors}
-                                viewMode={viewMode}
-                                categories={categories}
-                                selectedDate={selectedDate}
-                                onCardClick={handleCardClick}
-                                onCategoryClick={handleCategoryClick}
-                                onDateClick={handleDateClick}
-                                onCodeClick={handleCodeClick}
-                                onEditClick={handleEditClick}
-                                onDeleteClick={handleDeleteClick}
-                                onResetViewClick={async (e, error) => {
-                                    if (e) e.stopPropagation();
-                                    if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
-                                        await resetViewCount(error.id);
-                                        const updatedError = { ...error, viewCount: 0 };
-                                        updateLocalError(updatedError);
-                                        showToast('Görüntülenme sayısı sıfırlandı.', 'success');
-                                    }
-                                }}
-                                onImageClick={(error) => {
-                                    const items = [];
-                                    if (error.videoUrl || error.video_url) items.push({ type: 'video', url: error.videoUrl || error.video_url });
-                                    const imgs = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
-                                    imgs.forEach(url => items.push({ type: 'image', url }));
-
-                                    if (items.length > 0) {
-                                        setPreviewGallery({ items, index: 0 });
-                                    }
-                                }}
-                                isAdmin={isAdmin}
-                                onDragEnd={handleDragEnd}
-                            />
-                        ) : (
-                            <GuideGrid
-                                guides={guides}
-                                categories={categories}
-                                selectedDate={selectedDate} // Pass selectedDate
-                                onCardClick={(guide) => {
-                                    const guideWithProps = {
-                                        ...guide,
-                                        type: 'guide',
-                                        date: guide.created_at,
-                                        solutionSteps: guide.steps,
-                                        solutionType: 'steps'
-                                    };
-                                    setSelectedError(guideWithProps);
-
-                                    // Increment view count
-                                    incrementGuideViewCount(guide.id).then(updatedGuide => {
-                                        if (updatedGuide) {
-                                            updateLocalGuide(updatedGuide);
-                                            // Update selected modal if still open
-                                            setSelectedError(curr => curr?.id === guide.id ? { ...curr, ...updatedGuide } : curr);
-                                        }
-                                    });
-                                }}
-                                onCategoryClick={handleCategoryClick}
-                                onDateClick={handleDateClick}
-                                onCodeClick={handleCodeClick}
-
-                                onResetViewClick={handleResetGuideView}
-                                onEditClick={handleEditGuideClick}
-                                onDeleteClick={handleDeleteGuideClick}
-                                onImageClick={handleImageClick}
-                                isAdmin={isAdmin}
-                                onDragEnd={handleGuideDragEnd}
-                            />
-
-                        )}
-                    </main>
-                </div>
-
-                {/* Modals */}
-                {/* Error Detail Modal */}
-                {selectedError && (
-                    <ErrorDetailModal
-                        error={selectedError}
-                        onClose={() => setSelectedError(null)}
-                        isAdmin={isAdmin}
-                        onEdit={(e) => {
-                            if (selectedError.type === 'guide' || activeTab === 'guides') {
-                                handleEditGuideClick(e, selectedError);
-                            } else {
-                                handleEditClick(e, selectedError);
-                            }
-                        }}
-                        onDelete={(e) => handleDeleteClick(e, selectedError.id)}
-                        categories={categories}
-                        onCategoryClick={handleCategoryClick}
-                        onDateClick={handleDateClick}
-                        onCodeClick={handleCodeClick}
-                    />
-                )}
-
-                {/* Add Error Modal */}
-                {isAddModalOpen && (
-                    <AddErrorModal
-                        isOpen={true}
-                        onClose={() => setIsAddModalOpen(false)}
-                        onSuccess={handleAddSuccess}
-                        categories={errorCategories}
-                        onAddCategory={handleAddCategory}
-                        onUpdateCategory={handleUpdateCategory}
-                        onDeleteCategory={handleDeleteCategory}
-                        showToast={showToast}
-                    />
-                )}
-
-                {/* Add Guide Modal */}
-                {isAddGuideModalOpen && (
-                    <AddGuideModal
-                        isOpen={true}
-                        onClose={() => setIsAddGuideModalOpen(false)}
-                        onSuccess={handleAddGuideSuccess}
-                        categories={guideCategories}
-                        onAddCategory={handleAddCategory}
-                        onUpdateCategory={handleUpdateCategory}
-                        onDeleteCategory={handleDeleteCategory}
-                        showToast={showToast}
-                    />
-                )}
-
-                {/* Edit Error Modal */}
-                {isEditModalOpen && editingError && (
-                    <EditErrorModal
-                        isOpen={true}
-                        errorToEdit={editingError}
-                        onClose={() => {
-                            setIsEditModalOpen(false);
-                            setEditingError(null);
-                        }}
-                        onSuccess={handleEditSuccess}
-                        categories={errorCategories}
-                        onAddCategory={handleAddCategory}
-                        onUpdateCategory={handleUpdateCategory}
-                        onDeleteCategory={handleDeleteCategory}
-                        showToast={showToast}
-                    />
-                )}
-
-                {/* Edit Guide Modal */}
-                {isEditGuideModalOpen && editingError && (
-                    <EditGuideModal
-                        isOpen={true}
-                        guideToEdit={editingError}
-                        onClose={() => {
-                            setIsEditGuideModalOpen(false);
-                            setEditingError(null);
-                        }}
-                        onSuccess={handleEditGuideSuccess}
-                        categories={guideCategories}
-                        onAddCategory={handleAddCategory}
-                        onUpdateCategory={handleUpdateCategory}
-                        onDeleteCategory={handleDeleteCategory}
-                        showToast={showToast}
-                    />
-                )}
-
-                <Toast
-                    message={toast.visible ? toast.message : null}
-                    type={toast.type}
-                    onClose={() => setToast(prev => ({ ...prev, visible: false }))}
-                />
-
-                {/* People Manager Modal */}
-                {isPeopleManagerOpen && (
-                    <PeopleManagerModal
-                        onClose={() => setIsPeopleManagerOpen(false)}
-                    />
-                )}
-
-                {/* Login Modal (Inline Implementation for now) */}
-                {isLoginModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
-                            <div className="p-8">
-                                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">Yönetici Girişi</h3>
-                                <form onSubmit={handleLogin} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kullanıcı Adı</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={loginData.username}
-                                            onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Şifre</label>
-                                        <input
-                                            type="password"
-                                            required
-                                            className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={loginData.password}
-                                            onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="pt-2">
+                                {categories.map(c => {
+                                    const style = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
+                                    const isSelected = selectedCategory === c.id;
+                                    return (
                                         <button
-                                            type="submit"
-                                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
+                                            key={c.id}
+                                            onClick={() => setSelectedCategory(isSelected ? null : c.id)}
+                                            className={`snap-start flex-none flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 border shadow-sm ${isSelected
+                                                ? `${style.buttonSelected} ring-1 ring-inset ring-current`
+                                                : `bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600`
+                                                }`}
                                         >
-                                            Giriş Yap
+                                            <span>{c.name}</span>
                                         </button>
-                                    </div>
-                                </form>
+                                    );
+                                })}
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
-                                <button
-                                    onClick={() => setIsLoginModalOpen(false)}
-                                    className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
-                                >
-                                    Vazgeç
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {/* Credentials Modal (Inline Implementation) */}
-                {isCredentialsModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
-                            <div className="p-8">
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 text-center">Giriş Bilgilerini Değiştir</h3>
-                                <form onSubmit={handleUpdateCredentials} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Kullanıcı Adı (İsteğe bağlı)</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={credentialsForm.newUsername}
-                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, newUsername: e.target.value })}
-                                            placeholder={adminCredentials.username}
-                                        />
-                                    </div>
-                                    <div className="border-t border-slate-200 dark:border-slate-700 my-4 pt-4">
+                            {/* Right Side Actions (View Mode & Date Filter) - Desktop aligned right, Mobile full width/flex */}
+                            <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
+                                {/* Active Date Badge */}
+                                {selectedDate && (
+                                    <button
+                                        onClick={() => setSelectedDate(null)}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-600 dark:text-blue-400 text-sm font-bold border border-blue-100 dark:border-blue-800 hover:shadow-md transition-all group"
+                                    >
+                                        <Calendar className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                        <span className="hidden sm:inline">{new Date(selectedDate).toLocaleDateString('tr-TR')}</span>
+                                        <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center ml-1 group-hover:bg-red-100 dark:group-hover:bg-red-900/50 group-hover:text-red-500 transition-colors">
+                                            <X className="w-3 h-3" />
+                                        </div>
+                                    </button>
+                                )}
+
+                                {/* View Mode Toggle */}
+                                <div className="flex bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm ml-auto lg:ml-0">
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={`p-2.5 rounded-lg transition-all duration-300 flex items-center justify-center ${viewMode === 'grid'
+                                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm ring-1 ring-blue-500/20'
+                                            : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-300'
+                                            }`}
+                                        title="Kart Görünümü"
+                                    >
+                                        <LayoutGrid className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`p-2.5 rounded-lg transition-all duration-300 flex items-center justify-center ${viewMode === 'list'
+                                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm ring-1 ring-blue-500/20'
+                                            : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-300'
+                                            }`}
+                                        title="Liste Görünümü"
+                                    >
+                                        <List className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {activeTab === 'errors' ? (
+                                <ErrorGrid
+                                    errors={errors}
+                                    viewMode={viewMode}
+                                    categories={categories}
+                                    selectedDate={selectedDate}
+                                    onCardClick={handleCardClick}
+                                    onCategoryClick={handleCategoryClick}
+                                    onDateClick={handleDateClick}
+                                    onCodeClick={handleCodeClick}
+                                    onEditClick={handleEditClick}
+                                    onDeleteClick={handleDeleteClick}
+                                    onResetViewClick={async (e, error) => {
+                                        if (e) e.stopPropagation();
+                                        if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
+                                            await resetViewCount(error.id);
+                                            const updatedError = { ...error, viewCount: 0 };
+                                            updateLocalError(updatedError);
+                                            showToast('Görüntülenme sayısı sıfırlandı.', 'success');
+                                        }
+                                    }}
+                                    onImageClick={(error) => {
+                                        const items = [];
+                                        if (error.videoUrl || error.video_url) items.push({ type: 'video', url: error.videoUrl || error.video_url });
+                                        const imgs = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                        imgs.forEach(url => items.push({ type: 'image', url }));
+
+                                        if (items.length > 0) {
+                                            setPreviewGallery({ items, index: 0 });
+                                        }
+                                    }}
+                                    isAdmin={isAdmin}
+                                    onDragEnd={handleDragEnd}
+                                />
+                            ) : (
+                                <GuideGrid
+                                    guides={guides}
+                                    categories={categories}
+                                    selectedDate={selectedDate} // Pass selectedDate
+                                    onCardClick={(guide) => {
+                                        const guideWithProps = {
+                                            ...guide,
+                                            type: 'guide',
+                                            date: guide.created_at,
+                                            solutionSteps: guide.steps,
+                                            solutionType: 'steps'
+                                        };
+                                        setSelectedError(guideWithProps);
+
+                                        // Increment view count
+                                        incrementGuideViewCount(guide.id).then(updatedGuide => {
+                                            if (updatedGuide) {
+                                                updateLocalGuide(updatedGuide);
+                                                // Update selected modal if still open
+                                                setSelectedError(curr => curr?.id === guide.id ? { ...curr, ...updatedGuide } : curr);
+                                            }
+                                        });
+                                    }}
+                                    onCategoryClick={handleCategoryClick}
+                                    onDateClick={handleDateClick}
+                                    onCodeClick={handleCodeClick}
+
+                                    onResetViewClick={handleResetGuideView}
+                                    onEditClick={handleEditGuideClick}
+                                    onDeleteClick={handleDeleteGuideClick}
+                                    onImageClick={handleImageClick}
+                                    isAdmin={isAdmin}
+                                    onDragEnd={handleGuideDragEnd}
+                                />
+
+                            )}
+                        </main>
+                    </div>
+
+                    {/* Modals */}
+                    {/* Error Detail Modal */}
+                    {selectedError && (
+                        <ErrorDetailModal
+                            error={selectedError}
+                            onClose={() => setSelectedError(null)}
+                            isAdmin={isAdmin}
+                            onEdit={(e) => {
+                                if (selectedError.type === 'guide' || activeTab === 'guides') {
+                                    handleEditGuideClick(e, selectedError);
+                                } else {
+                                    handleEditClick(e, selectedError);
+                                }
+                            }}
+                            onDelete={(e) => handleDeleteClick(e, selectedError.id)}
+                            categories={categories}
+                            onCategoryClick={handleCategoryClick}
+                            onDateClick={handleDateClick}
+                            onCodeClick={handleCodeClick}
+                        />
+                    )}
+
+                    {/* Add Error Modal */}
+                    {isAddModalOpen && (
+                        <AddErrorModal
+                            isOpen={true}
+                            onClose={() => setIsAddModalOpen(false)}
+                            onSuccess={handleAddSuccess}
+                            categories={errorCategories}
+                            onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory}
+                            showToast={showToast}
+                        />
+                    )}
+
+                    {/* Add Guide Modal */}
+                    {isAddGuideModalOpen && (
+                        <AddGuideModal
+                            isOpen={true}
+                            onClose={() => setIsAddGuideModalOpen(false)}
+                            onSuccess={handleAddGuideSuccess}
+                            categories={guideCategories}
+                            onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory}
+                            showToast={showToast}
+                        />
+                    )}
+
+                    {/* Edit Error Modal */}
+                    {isEditModalOpen && editingError && (
+                        <EditErrorModal
+                            isOpen={true}
+                            errorToEdit={editingError}
+                            onClose={() => {
+                                setIsEditModalOpen(false);
+                                setEditingError(null);
+                            }}
+                            onSuccess={handleEditSuccess}
+                            categories={errorCategories}
+                            onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory}
+                            showToast={showToast}
+                        />
+                    )}
+
+                    {/* Edit Guide Modal */}
+                    {isEditGuideModalOpen && editingError && (
+                        <EditGuideModal
+                            isOpen={true}
+                            guideToEdit={editingError}
+                            onClose={() => {
+                                setIsEditGuideModalOpen(false);
+                                setEditingError(null);
+                            }}
+                            onSuccess={handleEditGuideSuccess}
+                            categories={guideCategories}
+                            onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory}
+                            showToast={showToast}
+                        />
+                    )}
+
+
+
+                    {/* People Manager Modal */}
+                    {isPeopleManagerOpen && (
+                        <PeopleManagerModal
+                            onClose={() => setIsPeopleManagerOpen(false)}
+                        />
+                    )}
+
+                    {/* Login Modal (Inline Implementation for now) */}
+                    {isLoginModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
+                                <div className="p-8">
+                                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">Yönetici Girişi</h3>
+                                    <form onSubmit={handleLogin} className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mevcut Şifre</label>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kullanıcı Adı</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                value={loginData.username}
+                                                onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Şifre</label>
                                             <input
                                                 type="password"
                                                 required
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={credentialsForm.currentPassword}
-                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, currentPassword: e.target.value })}
+                                                value={loginData.password}
+                                                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                                             />
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre</label>
-                                        <input
-                                            type="password"
-                                            required
-                                            className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={credentialsForm.newPassword}
-                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, newPassword: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre (Tekrar)</label>
-                                        <input
-                                            type="password"
-                                            required
-                                            className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            value={credentialsForm.confirmPassword}
-                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, confirmPassword: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="pt-2">
-                                        <button
-                                            type="submit"
-                                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
-                                        >
-                                            Güncelle
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
-                                <button
-                                    onClick={() => setIsCredentialsModalOpen(false)}
-                                    className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
-                                >
-                                    Vazgeç
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Preview Gallery (Quick View) */}
-                {previewGallery && (() => {
-                    const items = previewGallery.items || (previewGallery.images ? previewGallery.images.map(url => ({ type: 'image', url })) : []);
-                    const currentItem = items[previewGallery.index];
-
-                    return (
-                        <div className="fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
-                            <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center overflow-hidden">
-                                <button
-                                    onClick={() => setPreviewGallery(null)}
-                                    className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
-                                >
-                                    <X className="w-6 h-6" />
-                                </button>
-
-                                <div className="w-full flex-1 relative flex items-center justify-center min-h-0">
-                                    {currentItem?.type === 'video' ? (
-                                        <video
-                                            src={currentItem.url}
-                                            className="max-w-full max-h-full rounded-lg shadow-2xl"
-                                            controls
-                                            autoPlay
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                    ) : (
-                                        <img
-                                            src={currentItem?.url}
-                                            alt="Preview"
-                                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                    )}
-
-                                    {items.length > 1 && (
-                                        <>
+                                        <div className="pt-2">
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setPreviewGallery(prev => ({
-                                                        ...prev,
-                                                        index: prev.index === 0 ? items.length - 1 : prev.index - 1
-                                                    }));
-                                                }}
-                                                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
+                                                type="submit"
+                                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                                Giriş Yap
                                             </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setPreviewGallery(prev => ({
-                                                        ...prev,
-                                                        index: (prev.index + 1) % items.length
-                                                    }));
-                                                }}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                            </button>
-                                        </>
-                                    )}
+                                        </div>
+                                    </form>
                                 </div>
-                                <div className="mt-4 flex gap-2 overflow-x-auto overflow-y-hidden max-w-full p-2">
-                                    {items.map((item, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPreviewGallery(prev => ({ ...prev, index: idx }));
-                                            }}
-                                            className={`w - 16 h - 16 rounded - lg overflow - hidden border - 2 transition - all flex - shrink - 0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'} `}
-                                        >
-                                            {item.type === 'video' ? (
-                                                <video src={item.url} className="w-full h-full object-cover" muted />
-                                            ) : (
-                                                <img src={item.url} alt={`Thumb ${idx} `} className="w-full h-full object-cover" />
-                                            )}
-                                        </button>
-                                    ))}
+                                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => setIsLoginModalOpen(false)}
+                                        className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                                    >
+                                        Vazgeç
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    );
-                })()}
+                    )}
+
+                    {/* Credentials Modal (Inline Implementation) */}
+                    {isCredentialsModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
+                                <div className="p-8">
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 text-center">Giriş Bilgilerini Değiştir</h3>
+                                    <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Kullanıcı Adı (İsteğe bağlı)</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                value={credentialsForm.newUsername}
+                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, newUsername: e.target.value })}
+                                                placeholder={adminCredentials.username}
+                                            />
+                                        </div>
+                                        <div className="border-t border-slate-200 dark:border-slate-700 my-4 pt-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mevcut Şifre</label>
+                                                <input
+                                                    type="password"
+                                                    required
+                                                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    value={credentialsForm.currentPassword}
+                                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, currentPassword: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre</label>
+                                            <input
+                                                type="password"
+                                                required
+                                                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                value={credentialsForm.newPassword}
+                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, newPassword: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre (Tekrar)</label>
+                                            <input
+                                                type="password"
+                                                required
+                                                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                value={credentialsForm.confirmPassword}
+                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, confirmPassword: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <button
+                                                type="submit"
+                                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
+                                            >
+                                                Güncelle
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => setIsCredentialsModalOpen(false)}
+                                        className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                                    >
+                                        Vazgeç
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Preview Gallery (Quick View) */}
+                    {previewGallery && (() => {
+                        const items = previewGallery.items || (previewGallery.images ? previewGallery.images.map(url => ({ type: 'image', url })) : []);
+                        const currentItem = items[previewGallery.index];
+
+                        return (
+                            <div className="fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
+                                <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center overflow-hidden">
+                                    <button
+                                        onClick={() => setPreviewGallery(null)}
+                                        className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
+                                    >
+                                        <X className="w-6 h-6" />
+                                    </button>
+
+                                    <div className="w-full flex-1 relative flex items-center justify-center min-h-0">
+                                        {currentItem?.type === 'video' ? (
+                                            <video
+                                                src={currentItem.url}
+                                                className="max-w-full max-h-full rounded-lg shadow-2xl"
+                                                controls
+                                                autoPlay
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            <img
+                                                src={currentItem?.url}
+                                                alt="Preview"
+                                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        )}
+
+                                        {items.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPreviewGallery(prev => ({
+                                                            ...prev,
+                                                            index: prev.index === 0 ? items.length - 1 : prev.index - 1
+                                                        }));
+                                                    }}
+                                                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPreviewGallery(prev => ({
+                                                            ...prev,
+                                                            index: (prev.index + 1) % items.length
+                                                        }));
+                                                    }}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="mt-4 flex gap-2 overflow-x-auto overflow-y-hidden max-w-full p-2">
+                                        {items.map((item, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPreviewGallery(prev => ({ ...prev, index: idx }));
+                                                }}
+                                                className={`w - 16 h - 16 rounded - lg overflow - hidden border - 2 transition - all flex - shrink - 0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'} `}
+                                            >
+                                                {item.type === 'video' ? (
+                                                    <video src={item.url} className="w-full h-full object-cover" muted />
+                                                ) : (
+                                                    <img src={item.url} alt={`Thumb ${idx} `} className="w-full h-full object-cover" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </PageTransition>
             </div>
         </React.Suspense>
     );

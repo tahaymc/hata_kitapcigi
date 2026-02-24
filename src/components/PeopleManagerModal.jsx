@@ -470,7 +470,6 @@ const PeopleManagerModal = ({ onClose }) => {
                                                     <div>
                                                         <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">{person.name}</h4>
                                                         <div className="flex flex-wrap items-center gap-y-1 gap-x-2 mt-0.5">
-                                                            <span className="text-xs text-slate-500 dark:text-slate-400">{person.role || 'Personel'}</span>
                                                             {person.department && (() => {
                                                                 const deptStyle = COLOR_STYLES[person.department.color] || COLOR_STYLES.slate;
                                                                 const DeptIcon = ICON_OPTIONS[person.department.icon] || Briefcase;

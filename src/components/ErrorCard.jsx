@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
 import { getCategoryIcon, formatDate } from '../utils/helpers';
 import { getErrorById } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const ErrorCard = ({
     error,
@@ -23,6 +24,7 @@ const ErrorCard = ({
     dragHandleProps
 }) => {
     const queryClient = useQueryClient();
+    const { isSuperAdmin, userDepartmentId } = useAuth();
     const cat = categories.find(c => c.id === error.category);
     const colorKey = cat ? cat.color : 'slate';
     const style = COLOR_STYLES[colorKey] || defaultStyle;
@@ -131,7 +133,7 @@ const ErrorCard = ({
                     <div className="flex items-center justify-end gap-2">
                         <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
                             <Eye className="w-4 h-4" />
-                            <span>{error.viewCount || 0}</span>
+                            <span>{error.view_count || error.viewCount || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -186,7 +188,7 @@ const ErrorCard = ({
                 </div>
 
                 {/* Admin Actions */}
-                {isAdmin && (
+                {(isAdmin && (isSuperAdmin || error.department_id === userDepartmentId)) && (
                     <div className="absolute top-2 right-6 flex gap-2 z-10">
                         {dragHandleProps && (
                             <button

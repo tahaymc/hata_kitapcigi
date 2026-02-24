@@ -1,9 +1,11 @@
 import React from 'react';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Shield } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { COLOR_STYLES } from '../utils/constants';
 import { getCategoryIcon } from '../utils/helpers';
 
 const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeTab, setActiveTab }) => {
+    const { isAdmin } = useAuth();
     return (
         <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 h-[calc(100vh-8rem)] overflow-y-auto pr-4 custom-scrollbar">
             <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-3xl border border-slate-200 dark:border-slate-700/50 p-4 space-y-2">
@@ -76,6 +78,20 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeTab, se
                         );
                     })}
             </div>
+
+            {isAdmin && (
+                <div className="mt-4 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-3xl border border-slate-200 dark:border-slate-700/50 p-4">
+                    <a
+                        href="/admin"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-200"
+                    >
+                        <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
+                            <Shield className="w-5 h-5" />
+                        </div>
+                        <span>Yönetici Paneli</span>
+                    </a>
+                </div>
+            )}
         </aside>
     );
 };
