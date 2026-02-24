@@ -133,7 +133,10 @@ const GuideCard = ({
 
                 {/* View Count & Assignees */}
                 <div className="flex items-center justify-end gap-2">
-                    <span>{guide.view_count || guide.viewCount || 0}</span>
+                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${style.bgLight} ${style.text} ${style.borderLight}`}>
+                        <Eye className="w-4 h-4" />
+                        <span>{guide.view_count || guide.viewCount || 0}</span>
+                    </div>
                 </div>
             </div>
 
