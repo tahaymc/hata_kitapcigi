@@ -551,7 +551,6 @@ app.delete('/api/guides/:id', verifyAdmin, async (req, res) => {
     }
 });
 
-// Increment Guide View Count
 app.post('/api/guides/:id/view', async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
@@ -560,22 +559,24 @@ app.post('/api/guides/:id/view', async (req, res) => {
         const { data: current, error: fetchError } = await supabase
             .from('guides')
             .select('view_count')
-            .eq('id', id)
-            .single();
+            .eq('id', id);
 
         if (fetchError) throw fetchError;
+        
+        if (!current || current.length === 0) {
+            return res.status(404).json({ error: 'Guide record not found' });
+        }
 
-        const newCount = (current.view_count || 0) + 1;
+        const newCount = (current[0].view_count || 0) + 1;
 
-        const { data, error } = await (supabaseAdmin || supabase)
+        const { data, error: updateError } = await (supabaseAdmin || supabase)
             .from('guides')
             .update({ view_count: newCount })
             .eq('id', id)
-            .select()
-            .single();
+            .select();
 
-        if (error) throw error;
-        res.json(data);
+        if (updateError) throw updateError;
+        res.json(Array.isArray(data) ? data[0] : data);
     } catch (e) {
         console.error('Supabase Error (POST guide view):', e.message);
         res.status(500).json({ error: e.message });
@@ -1325,31 +1326,36 @@ app.delete('/api/errors/:id', verifyAdmin, async (req, res) => {
     }
 });
 
-// Increment View Count
 app.post('/api/errors/:id/view', async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
     try {
+        // 1. First check if the error exists and get current count
         const { data: current, error: fetchError } = await supabase
             .from('errors')
             .select('viewCount')
-            .eq('id', id)
-            .single();
+            .eq('id', id);
 
         if (fetchError) throw fetchError;
 
-        const newCount = (current.viewCount || 0) + 1;
+        if (!current || current.length === 0) {
+            return res.status(404).json({ error: 'Error record not found' });
+        }
 
-        const { data, error } = await (supabaseAdmin || supabase)
+        const newCount = (current[0].viewCount || 0) + 1;
+
+        // 2. Perform update
+        const { data, error: updateError } = await (supabaseAdmin || supabase)
             .from('errors')
             .update({ viewCount: newCount })
             .eq('id', id)
-            .select()
-            .single();
+            .select();
 
-        if (error) throw error;
-        res.json(data);
+        if (updateError) throw updateError;
+        
+        // Return first element if array returned, otherwise return data
+        res.json(Array.isArray(data) ? data[0] : data);
     } catch (e) {
         console.error('Supabase Error (POST view):', e.message);
         res.status(500).json({ error: e.message });
