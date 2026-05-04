@@ -1381,55 +1381,32 @@ app.post('/api/errors/:id/reset-view', async (req, res) => {
 app.get('/api/diagnose-db', async (req, res) => {
     if (!checkDb(res)) return;
 
-    const results = {
-        connection: 'ok',
-        schema: {},
-        permissions: {}
-    };
-
     try {
-        // 1. Check if columns exist by selecting them
-        const { data: selectData, error: selectError } = await supabase
+        // 1. Get sample data and column names
+        const { data: errorSample, error: sampleError } = await supabase
             .from('errors')
-            .select('id, title, solutionSteps, imageUrls, videoUrl, view_count')
+            .select('*')
             .limit(1);
 
-        if (selectError) {
-            results.schema.status = 'error';
-            results.schema.message = selectError.message;
-        } else {
-            results.schema.status = 'ok';
-            results.schema.columns_present = true;
-        }
+        if (sampleError) throw sampleError;
 
-        // 2. Check Write Permissions (Insert Dummy)
-        const dummy = {
-            title: 'Test Write',
-            summary: 'Temp',
-            // We intentionally don't send ID to see if auto-increment works
-        };
-
-        const { data: insertData, error: insertError } = await supabase
-            .from('errors')
-            .insert([dummy])
-            .select()
-            .single();
-
-        if (insertError) {
-            results.permissions.write = 'failed';
-            results.permissions.message = insertError.message;
-        } else {
-            results.permissions.write = 'ok';
-            // Cleanup
-            await supabase.from('errors').delete().eq('id', insertData.id);
-        }
-
-        res.json(results);
-
-    } catch (e) {
+        const columns = errorSample && errorSample.length > 0 ? Object.keys(errorSample[0]) : [];
+        
+        res.json({
+            status: 'success',
+            database: 'connected',
+            errors_table_columns: columns,
+            sample_data: errorSample && errorSample.length > 0 ? errorSample[0] : null,
+            env: {
+                has_url: !!process.env.SUPABASE_URL,
+                has_key: !!process.env.SUPABASE_KEY,
+                has_admin_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+            }
+        });
+    } catch (error) {
         res.status(500).json({
-            error: 'Diagnostic Crash',
-            message: e.message
+            status: 'error',
+            message: error.message
         });
     }
 });
