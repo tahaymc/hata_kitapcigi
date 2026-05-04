@@ -1382,21 +1382,29 @@ app.get('/api/diagnose-db', async (req, res) => {
     if (!checkDb(res)) return;
 
     try {
-        // 1. Get sample data and column names
+        // 1. Check errors table
         const { data: errorSample, error: sampleError } = await supabase
             .from('errors')
             .select('*')
             .limit(1);
 
-        if (sampleError) throw sampleError;
+        // 2. Check guides table
+        const { data: guideSample, error: guideError } = await supabase
+            .from('guides')
+            .select('*')
+            .limit(1);
 
-        const columns = errorSample && errorSample.length > 0 ? Object.keys(errorSample[0]) : [];
-        
         res.json({
             status: 'success',
             database: 'connected',
-            errors_table_columns: columns,
-            sample_data: errorSample && errorSample.length > 0 ? errorSample[0] : null,
+            errors_schema: {
+                columns: errorSample && errorSample.length > 0 ? Object.keys(errorSample[0]) : [],
+                error: sampleError ? sampleError.message : null
+            },
+            guides_schema: {
+                columns: guideSample && guideSample.length > 0 ? Object.keys(guideSample[0]) : [],
+                error: guideError ? guideError.message : null
+            },
             env: {
                 has_url: !!process.env.SUPABASE_URL,
                 has_key: !!process.env.SUPABASE_KEY,
