@@ -281,8 +281,6 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
         severity: 'low',
         assignee_ids: [],
         solutionType: 'steps',
-        assignee_ids: [],
-        solutionType: 'steps',
         solutionSteps: [{ id: 'init-1', text: '', imageUrl: null, subSteps: [] }],
         videoUrl: null
     });
@@ -387,8 +385,6 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                 setNewErrorData({
                     title: '', code: '', category: 'sistem', summary: '', solution: '', imageUrl: null, imageUrls: [],
                     severity: 'low',
-                    assignee_ids: [],
-                    solutionType: 'steps',
                     assignee_ids: [],
                     solutionType: 'steps',
                     solutionSteps: [{ id: Math.random().toString(36).substr(2, 9), text: '', imageUrl: null, subSteps: [] }],

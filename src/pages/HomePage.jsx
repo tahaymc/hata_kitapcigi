@@ -717,7 +717,7 @@ const HomePage = () => {
                                         if (e) e.stopPropagation();
                                         if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
                                             await resetViewCount(error.id);
-                                            const updatedError = { ...error, viewCount: 0 };
+                                            const updatedError = { ...error, viewCount: 0, view_count: 0 };
                                             updateLocalError(updatedError);
                                             showToast('Görüntülenme sayısı sıfırlandı.', 'success');
                                         }
