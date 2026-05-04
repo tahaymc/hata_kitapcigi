@@ -1331,7 +1331,7 @@ app.post('/api/errors/:id/view', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
-        // 1. First check if the error exists and get current count
+        // 1. Get current count
         const { data: current, error: fetchError } = await supabase
             .from('errors')
             .select('viewCount')
@@ -1346,7 +1346,8 @@ app.post('/api/errors/:id/view', async (req, res) => {
         const newCount = (current[0].viewCount || 0) + 1;
 
         // 2. Perform update
-        const { data, error: updateError } = await (supabaseAdmin || supabase)
+        const updateClient = supabaseAdmin || supabase;
+        const { data, error: updateError } = await updateClient
             .from('errors')
             .update({ viewCount: newCount })
             .eq('id', id)
@@ -1354,8 +1355,13 @@ app.post('/api/errors/:id/view', async (req, res) => {
 
         if (updateError) throw updateError;
         
-        // Return first element if array returned, otherwise return data
-        res.json(Array.isArray(data) ? data[0] : data);
+        if (!data || data.length === 0) {
+            // This is likely an RLS issue if supabaseAdmin is missing
+            const reason = !supabaseAdmin ? 'Permission denied (RLS). Please add SUPABASE_SERVICE_ROLE_KEY to Vercel.' : 'No rows updated.';
+            return res.status(403).json({ error: reason });
+        }
+
+        res.json(data[0]);
     } catch (e) {
         console.error('Supabase Error (POST view):', e.message);
         res.status(500).json({ error: e.message });
