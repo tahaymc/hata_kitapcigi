@@ -11,16 +11,32 @@ const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 // Component to handle NProgress and ScrollToTop
 const NavigationHandler = () => {
   const location = useLocation();
+  const prevPathRef = React.useRef(location.pathname);
 
   useEffect(() => {
-    NProgress.start();
-    const timer = setTimeout(() => {
-      NProgress.done();
-      window.scrollTo(0, 0);
-    }, 100); // Small delay to show progress on quick transitions
+    const currentPath = location.pathname;
+    const prevPath = prevPathRef.current;
+    
+    // Determine if this is a "modal-only" transition
+    const isToModal = currentPath.startsWith('/error/') || currentPath.startsWith('/guide/');
+    const isFromModal = prevPath.startsWith('/error/') || prevPath.startsWith('/guide/');
+    
+    // If we are transitioning between home and a modal, or modal to modal, skip the scroll/progress
+    const isModalTransition = (currentPath === '/' && isFromModal) || (isToModal);
 
-    return () => clearTimeout(timer);
-  }, [location]);
+    if (!isModalTransition) {
+      NProgress.start();
+      const timer = setTimeout(() => {
+        NProgress.done();
+        window.scrollTo(0, 0);
+      }, 100);
+      
+      prevPathRef.current = currentPath;
+      return () => clearTimeout(timer);
+    }
+
+    prevPathRef.current = currentPath;
+  }, [location.pathname]);
 
   return null;
 };
