@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
 import useGuides from '../hooks/useGuides';
 import {
@@ -71,6 +71,7 @@ const EditGuideModal = React.lazy(importEditGuideModal);
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [categories, setCategories] = useState([]);
 
     // Custom Hook for Errors
@@ -153,6 +154,37 @@ const HomePage = () => {
     useEffect(() => {
         setSelectedCategory(null);
     }, [activeTab]);
+
+    // Handle Deep Linking (URL -> State)
+    useEffect(() => {
+        if (!id) {
+            setSelectedError(null);
+            return;
+        }
+
+        // Determine type from URL (or we could pass it as a param if we used different routes)
+        // Since we have /error/:id and /guide/:id, we can check window.location.pathname
+        const isGuidePath = window.location.pathname.startsWith('/guide');
+        const targetList = isGuidePath ? guides : errors;
+
+        if (targetList.length > 0) {
+            const item = targetList.find(i => String(i.id) === String(id));
+            if (item) {
+                if (isGuidePath) {
+                    const guideWithProps = {
+                        ...item,
+                        type: 'guide',
+                        date: item.created_at,
+                        solutionSteps: item.steps,
+                        solutionType: 'steps'
+                    };
+                    setSelectedError(guideWithProps);
+                } else {
+                    setSelectedError(item);
+                }
+            }
+        }
+    }, [id, errors, guides]);
 
     const handleAddCategory = async (name, color, icon) => {
         try {
@@ -397,8 +429,8 @@ const HomePage = () => {
     };
 
     const handleCardClick = (error) => {
-        // Optimistic UI: Open modal immediately
-        setSelectedError(error);
+        // Navigate to URL instead of just setting state
+        navigate(`/error/${error.id}`);
 
         // Update view count in background
         incrementViewCount(error.id).then(updatedError => {
@@ -709,21 +741,13 @@ const HomePage = () => {
                                     categories={categories}
                                     selectedDate={selectedDate} // Pass selectedDate
                                     onCardClick={(guide) => {
-                                        const guideWithProps = {
-                                            ...guide,
-                                            type: 'guide',
-                                            date: guide.created_at,
-                                            solutionSteps: guide.steps,
-                                            solutionType: 'steps'
-                                        };
-                                        setSelectedError(guideWithProps);
-
-                                        // Increment view count
+                                        navigate(`/guide/${guide.id}`);
+                                        // View count increment logic is handled by the useEffect above indirectly if we want, 
+                                        // or we keep it here for immediate effect? 
+                                        // Let's keep the view count increment here for immediate action on click.
                                         incrementGuideViewCount(guide.id).then(updatedGuide => {
                                             if (updatedGuide) {
                                                 updateLocalGuide(updatedGuide);
-                                                // Update selected modal if still open
-                                                setSelectedError(curr => curr?.id === guide.id ? { ...curr, ...updatedGuide } : curr);
                                             }
                                         });
                                     }}
@@ -748,7 +772,7 @@ const HomePage = () => {
                     {selectedError && (
                         <ErrorDetailModal
                             error={selectedError}
-                            onClose={() => setSelectedError(null)}
+                            onClose={() => navigate('/')}
                             isAdmin={isAdmin}
                             onEdit={(e) => {
                                 if (selectedError.type === 'guide' || activeTab === 'guides') {

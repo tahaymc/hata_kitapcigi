@@ -46,6 +46,8 @@ function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/error/:id" element={<HomePage />} />
+            <Route path="/guide/:id" element={<HomePage />} />
             <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </Suspense>

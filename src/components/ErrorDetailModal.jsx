@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Calendar, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Edit2, Trash2, Info, Users, Tag, Video, Eye } from 'lucide-react';
+import { X, Calendar, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Edit2, Trash2, Info, Users, Tag, Video, Eye, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { getCategoryIcon, formatDate } from '../utils/helpers';
 import { COLOR_STYLES } from '../utils/constants';
 
@@ -10,6 +11,15 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
     const [zoomedStepImage, setZoomedStepImage] = React.useState(null);
     const [isLandscape, setIsLandscape] = React.useState(false);
+
+    const handleShare = () => {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url);
+        toast.success('Bağlantı kopyalandı!', {
+            description: 'Mağaza personeline gönderebilirsiniz.',
+            duration: 3000
+        });
+    };
 
     // Prevent body scroll when modal is open
     // Handle Escape key to close modal or zoomed images
@@ -147,6 +157,15 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                             <Eye className="w-3.5 h-3.5" />
                             <span>{error.view_count || error.viewCount || 0}</span>
                         </div>
+
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all border border-blue-100 dark:border-blue-800 shadow-sm mr-1 group"
+                            title="Bağlantıyı Paylaş"
+                        >
+                            <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-xs font-bold hidden sm:inline">Paylaş</span>
+                        </button>
 
                         <button
                             onClick={onClose}

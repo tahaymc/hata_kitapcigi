@@ -1332,17 +1332,17 @@ app.post('/api/errors/:id/view', async (req, res) => {
     try {
         const { data: current, error: fetchError } = await supabase
             .from('errors')
-            .select('viewCount')
+            .select('view_count')
             .eq('id', id)
             .single();
 
         if (fetchError) throw fetchError;
 
-        const newCount = (current.viewCount || 0) + 1;
+        const newCount = (current.view_count || 0) + 1;
 
         const { data, error } = await (supabaseAdmin || supabase)
             .from('errors')
-            .update({ viewCount: newCount })
+            .update({ view_count: newCount })
             .eq('id', id)
             .select()
             .single();
@@ -1363,7 +1363,7 @@ app.post('/api/errors/:id/reset-view', async (req, res) => {
     try {
         const { data, error } = await (supabaseAdmin || supabase)
             .from('errors')
-            .update({ viewCount: 0 })
+            .update({ view_count: 0 })
             .eq('id', id)
             .select()
             .single();
@@ -1391,7 +1391,7 @@ app.get('/api/diagnose-db', async (req, res) => {
         // 1. Check if columns exist by selecting them
         const { data: selectData, error: selectError } = await supabase
             .from('errors')
-            .select('id, title, solutionSteps, imageUrls, videoUrl, viewCount')
+            .select('id, title, solutionSteps, imageUrls, videoUrl, view_count')
             .limit(1);
 
         if (selectError) {
