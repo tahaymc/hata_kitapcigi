@@ -1389,48 +1389,6 @@ app.post('/api/errors/:id/reset-view', async (req, res) => {
     }
 });
 
-
-// Diagnostic Endpoint to check DB schema and permissions
-app.get('/api/diagnose-db', async (req, res) => {
-    if (!checkDb(res)) return;
-
-    try {
-        // 1. Check errors table
-        const { data: errorSample, error: sampleError } = await supabase
-            .from('errors')
-            .select('*')
-            .limit(1);
-
-        // 2. Check guides table
-        const { data: guideSample, error: guideError } = await supabase
-            .from('guides')
-            .select('*')
-            .limit(1);
-
-        res.json({
-            status: 'success',
-            database: 'connected',
-            errors_schema: {
-                columns: errorSample && errorSample.length > 0 ? Object.keys(errorSample[0]) : [],
-                error: sampleError ? sampleError.message : null
-            },
-            guides_schema: {
-                columns: guideSample && guideSample.length > 0 ? Object.keys(guideSample[0]) : [],
-                error: guideError ? guideError.message : null
-            },
-            env: {
-                has_url: !!process.env.SUPABASE_URL,
-                has_key: !!process.env.SUPABASE_KEY,
-                has_admin_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: error.message
-        });
-    }
-});
 const PORT = 3001;
 
 // Serve Static Files (Frontend)
