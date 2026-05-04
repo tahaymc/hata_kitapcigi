@@ -1334,13 +1334,15 @@ app.post('/api/errors/:id/view', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
-        // 1. Get current count
         const { data: current, error: fetchError } = await supabase
             .from('errors')
             .select('viewCount')
             .eq('id', id);
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+            console.error('Fetch Error:', fetchError);
+            throw fetchError;
+        }
 
         if (!current || current.length === 0) {
             return res.status(404).json({ error: 'Error record not found' });
@@ -1348,7 +1350,6 @@ app.post('/api/errors/:id/view', async (req, res) => {
 
         const newCount = (current[0].viewCount || 0) + 1;
 
-        // 2. Perform update
         const updateClient = supabaseAdmin || supabase;
         const { data, error: updateError } = await updateClient
             .from('errors')
@@ -1356,17 +1357,26 @@ app.post('/api/errors/:id/view', async (req, res) => {
             .eq('id', id)
             .select();
 
-        if (updateError) throw updateError;
+        if (updateError) {
+            console.error('Update Error:', updateError);
+            return res.status(500).json({ 
+                error: updateError.message,
+                details: updateError.details,
+                hint: updateError.hint 
+            });
+        }
         
         if (!data || data.length === 0) {
-            // This is likely an RLS issue if supabaseAdmin is missing
-            const reason = !supabaseAdmin ? 'Permission denied (RLS). Please add SUPABASE_SERVICE_ROLE_KEY to Vercel.' : 'No rows updated.';
-            return res.status(403).json({ error: reason });
+            return res.status(403).json({ 
+                error: 'No rows updated. Possible RLS issue.',
+                admin_key_exists: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+                admin_key_prefix: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 5) : 'none'
+            });
         }
 
         res.json(data[0]);
     } catch (e) {
-        console.error('Supabase Error (POST view):', e.message);
+        console.error('General Error:', e.message);
         res.status(500).json({ error: e.message });
     }
 });
