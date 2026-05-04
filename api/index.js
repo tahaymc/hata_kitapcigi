@@ -366,7 +366,8 @@ app.post('/api/guides', verifyAdmin, async (req, res) => {
         image_urls: finalImageUrls,
         video_url: req.body.videoUrl,
         department_id: req.body.department_id,
-        view_count: 0
+        view_count: 0,
+        sort_order: 0
     };
 
     try {
@@ -1093,7 +1094,7 @@ app.post('/api/errors', verifyAdmin, async (req, res) => {
         video_url: req.body.videoUrl,
         department_id: req.body.department_id,
         date: dateStr, // specific to creation
-        view_count: 0
+        viewCount: 0
     };
 
 
@@ -1332,17 +1333,17 @@ app.post('/api/errors/:id/view', async (req, res) => {
     try {
         const { data: current, error: fetchError } = await supabase
             .from('errors')
-            .select('view_count')
+            .select('viewCount')
             .eq('id', id)
             .single();
 
         if (fetchError) throw fetchError;
 
-        const newCount = (current.view_count || 0) + 1;
+        const newCount = (current.viewCount || 0) + 1;
 
         const { data, error } = await (supabaseAdmin || supabase)
             .from('errors')
-            .update({ view_count: newCount })
+            .update({ viewCount: newCount })
             .eq('id', id)
             .select()
             .single();
@@ -1363,7 +1364,7 @@ app.post('/api/errors/:id/reset-view', async (req, res) => {
     try {
         const { data, error } = await (supabaseAdmin || supabase)
             .from('errors')
-            .update({ view_count: 0 })
+            .update({ viewCount: 0 })
             .eq('id', id)
             .select()
             .single();
