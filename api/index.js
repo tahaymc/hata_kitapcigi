@@ -33,7 +33,10 @@ try {
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         if (serviceRoleKey) {
             supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-                auth: { errorcode: 'error_description' }
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
             });
             console.log('Supabase Admin client initialized');
         } else {
