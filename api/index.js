@@ -30,7 +30,7 @@ try {
         supabase = createClient(supabaseUrl, supabaseKey);
 
         // Initialize Admin Client (Service Role)
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY;
         if (serviceRoleKey) {
             supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
                 auth: {
@@ -1367,10 +1367,12 @@ app.post('/api/errors/:id/view', async (req, res) => {
         }
         
         if (!data || data.length === 0) {
+            const keyToUse = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY || process.env.SUPABASE_ADMIN_KEY;
             return res.status(403).json({ 
                 error: 'No rows updated. Possible RLS issue.',
-                admin_key_exists: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-                admin_key_prefix: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 5) : 'none'
+                admin_key_exists: !!keyToUse,
+                admin_key_prefix: keyToUse ? keyToUse.substring(0, 5) : 'none',
+                key_name_used: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SUPABASE_SERVICE_ROLE_KEY' : (process.env.SERVICE_ROLE_KEY ? 'SERVICE_ROLE_KEY' : (process.env.SUPABASE_ADMIN_KEY ? 'SUPABASE_ADMIN_KEY' : 'none'))
             });
         }
 
