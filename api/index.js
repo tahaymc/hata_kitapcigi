@@ -1089,9 +1089,9 @@ app.post('/api/errors', verifyAdmin, async (req, res) => {
         solutionType: req.body.solutionType,
         solutionSteps: req.body.solutionSteps,
         category: req.body.category,
-        image_url: finalImageUrl,
-        image_urls: finalImageUrls,
-        video_url: req.body.videoUrl,
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls,
+        videoUrl: req.body.videoUrl,
         department_id: req.body.department_id,
         date: dateStr, // specific to creation
         viewCount: 0
@@ -1212,7 +1212,7 @@ app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
         category: req.body.category,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls,
-        video_url: req.body.videoUrl,
+        videoUrl: req.body.videoUrl,
         date: req.body.date,
         // Do not include created_at, id, or viewCount
     };
