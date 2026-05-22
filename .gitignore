@@ -27,3 +27,19 @@ dist-ssr
 .vercel
 
 .env
+
+# Bot — sunucuda regenerate edilen runtime dosyaları
+bot/auth_info_baileys
+bot/qr.png
+bot/tmp
+bot/logs
+bot/dist
+bot/node_modules
+bot/*.traineddata
+bot/dump.rdb
+bot/redis
+bot/redis5
+bot/*.zip
+
+# Eski packed bot kaynağı (artık bot/ kullanılıyor)
+documents_it

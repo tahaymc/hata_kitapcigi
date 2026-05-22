@@ -41,6 +41,7 @@ import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
 import ErrorDetailModal from '../components/ErrorDetailModal';
 import PageTransition from '../components/ui/PageTransition';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 
 // Define imports for prefetching
 const importPeopleManagerModal = () => import('../components/PeopleManagerModal');
@@ -138,10 +139,10 @@ const HomePage = () => {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isPeopleManagerOpen, setIsPeopleManagerOpen] = useState(false);
 
-    const [loginData, setLoginData] = useState({ username: '', password: '' });
+    const [loginData, setLoginData] = useState({ email: '', password: '' });
 
-    // Admin State
-    const [isAdmin, setIsAdmin] = useState(false);
+    // Admin State — gerçek Supabase oturumundan gelir (backend verifyAdmin ile uyumlu)
+    const { isAdmin, signIn, signOut } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddGuideModalOpen, setIsAddGuideModalOpen] = useState(false);
 
@@ -280,12 +281,6 @@ const HomePage = () => {
         };
     }, [isAddModalOpen, isLoginModalOpen, isEditModalOpen, isEditGuideModalOpen, selectedError, isCredentialsModalOpen, previewGallery]);
 
-    useEffect(() => {
-        const adminAuth = localStorage.getItem('isAdminAuthenticated');
-        if (adminAuth === 'true') {
-            setIsAdmin(true);
-        }
-    }, []);
 
     // Theme State
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -330,19 +325,21 @@ const HomePage = () => {
         setSelectedError(null);
     };
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        const inputUsername = loginData.username.trim();
+        const inputEmail = loginData.email.trim();
         const inputPassword = loginData.password.trim();
 
-        if (inputUsername === adminCredentials.username && inputPassword === adminCredentials.password) {
-            localStorage.setItem('isAdminAuthenticated', 'true');
-            setIsAdmin(true);
+        try {
+            // Gerçek Supabase oturumu açar; AuthContext oturumu/profili günceller,
+            // böylece isAdmin context'ten gelir ve API çağrıları token taşır.
+            await signIn(inputEmail, inputPassword);
             setIsLoginModalOpen(false);
-            setLoginData({ username: '', password: '' });
+            setLoginData({ email: '', password: '' });
             toast.success("Giriş başarılı!");
-        } else {
-            toast.error("Hatalı kullanıcı adı veya şifre!");
+        } catch (error) {
+            console.error("Login failed:", error);
+            toast.error(error?.message || "Hatalı e-posta veya şifre!");
         }
     };
 
@@ -377,9 +374,12 @@ const HomePage = () => {
         toast.success("Giriş bilgileri başarıyla güncellendi!");
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('isAdminAuthenticated');
-        setIsAdmin(false);
+    const handleLogout = async () => {
+        try {
+            await signOut();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     };
 
     const handleAddSuccess = (newError) => {
@@ -870,13 +870,14 @@ const HomePage = () => {
                                     <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">Yönetici Girişi</h3>
                                     <form onSubmit={handleLogin} className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kullanıcı Adı</label>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-posta</label>
                                             <input
-                                                type="text"
+                                                type="email"
                                                 required
+                                                autoComplete="email"
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={loginData.username}
-                                                onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
+                                                value={loginData.email}
+                                                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                                             />
                                         </div>
                                         <div>

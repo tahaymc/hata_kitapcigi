@@ -51,6 +51,12 @@ try {
     supabase = null;
 }
 
+// Yazma işlemleri (insert/update/delete) için tercihen service-role client.
+// Bu uçlar zaten verifyAdmin ile yetkilendirilir; service-role kullanmak,
+// guides/errors tablolarındaki RLS politikalarını (ör. olmayan bir auth_id
+// kolonuna atıf yapan bozuk politika) baypas eder. Service key yoksa anon'a düşer.
+const writeDb = () => supabaseAdmin || supabase;
+
 // Endpoint to debug environment variables (Safe: shows only presence)
 app.get('/api/debug-env', (req, res) => {
     res.json({
@@ -149,15 +155,15 @@ const verifyAdmin = async (req, res, next) => {
             return res.status(403).json({ error: 'Invalid token' });
         }
 
-        // 2. Fetch user's profile from 'people' table to get their role
+        // 2. Fetch user's profile from 'admins' table to get their role
         const { data: person, error: personError } = await supabase
-            .from('people')
+            .from('admins')
             .select('access_role')
             .eq('auth_id', user.id)
             .single();
 
         if (personError || !person) {
-            console.warn(`User ${user.id} found in auth but no profile in 'people' table.`);
+            console.warn(`User ${user.id} found in auth but no profile in 'admins' table.`);
             return res.status(403).json({ error: 'User profile not found or unauthorized' });
         }
 
@@ -170,9 +176,8 @@ const verifyAdmin = async (req, res, next) => {
         req.user = user;
         req.person = person;
 
-        // Define Super Admin: Admin role + NO department
-        req.isSuperAdmin = !person.department_id;
-        req.userDepartmentId = person.department_id;
+        req.isSuperAdmin = true;
+        req.userDepartmentId = null;
 
         next();
 
@@ -193,7 +198,7 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
         return res.status(503).json({ error: 'Admin service not configured (Missing Key)' });
     }
 
-    const { email, password, name, role, department_id } = req.body;
+    const { email, password, name, role } = req.body;
 
     if (!email || !password || !name) {
         return res.status(400).json({ error: 'Missing required fields: email, password, name' });
@@ -210,16 +215,15 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
 
         if (authError) throw authError;
 
-        // 2. Create Profile in 'people' table
+        // 2. Create Profile in 'admins' table
         const { data: personData, error: personError } = await supabase
-            .from('people')
+            .from('admins')
             .insert([{
                 auth_id: authData.user.id,
                 name,
-                role: role || 'user', // legacy or display role
-                access_role: role || 'user', // security role
-                department_id,
-                color: 'blue' // default
+                email,
+                role: role || 'admin',
+                access_role: role || 'admin'
             }])
             .select()
             .single();
@@ -375,7 +379,7 @@ app.post('/api/guides', verifyAdmin, async (req, res) => {
 
     try {
         // 1. Insert Guide
-        const { data: guideData, error: insertError } = await supabase
+        const { data: guideData, error: insertError } = await writeDb()
             .from('guides')
             .insert([payload])
             .select()
@@ -390,7 +394,7 @@ app.post('/api/guides', verifyAdmin, async (req, res) => {
                 person_id: personId
             }));
 
-            const { error: assignError } = await supabase
+            const { error: assignError } = await writeDb()
                 .from('guide_assignees')
                 .insert(assigneeRows);
 
@@ -471,7 +475,7 @@ app.put('/api/guides/:id', verifyAdmin, async (req, res) => {
     };
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('guides')
             .update(payload)
             .eq('id', id)
@@ -483,10 +487,10 @@ app.put('/api/guides/:id', verifyAdmin, async (req, res) => {
         if (data) {
             // Update assignees
             if (Array.isArray(assigneeIds)) {
-                await supabase.from('guide_assignees').delete().eq('guide_id', id);
+                await writeDb().from('guide_assignees').delete().eq('guide_id', id);
                 if (assigneeIds.length > 0) {
                     const assigneeRows = assigneeIds.map(pid => ({ guide_id: id, person_id: pid }));
-                    await supabase.from('guide_assignees').insert(assigneeRows);
+                    await writeDb().from('guide_assignees').insert(assigneeRows);
                 }
             }
 
@@ -544,8 +548,8 @@ app.delete('/api/guides/:id', verifyAdmin, async (req, res) => {
     }
 
     try {
-        await supabase.from('guide_assignees').delete().eq('guide_id', id);
-        const { error } = await supabase.from('guides').delete().eq('id', id);
+        await writeDb().from('guide_assignees').delete().eq('guide_id', id);
+        const { error } = await writeDb().from('guides').delete().eq('id', id);
         if (error) throw error;
         res.json({ success: true });
     } catch (e) {
@@ -621,7 +625,7 @@ app.post('/api/guides/reorder', async (req, res) => {
         // Note: Supabase JS client doesn't support bulk update with different values easily in one query without RPC.
         // Doing loop is acceptable for small number of items (guides ~50-100).
         const updates = orderedIds.map((id, index) =>
-            supabase
+            writeDb()
                 .from('guides')
                 .update({ sort_order: index })
                 .eq('id', id)
@@ -748,7 +752,7 @@ app.post('/api/errors/reorder', async (req, res) => {
         // Note: For upsert to work effectively for updates, usage of 'id' as conflict key is correct.
         // We only send id and sort_order, preventing overwrite of other fields if not specified? 
         // Supabase upsert updates columns present in the payload.
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('errors')
             .upsert(updates, { onConflict: 'id' })
             .select('id, sort_order');
@@ -1113,7 +1117,7 @@ app.post('/api/errors', verifyAdmin, async (req, res) => {
 
     try {
         // 1. Insert Error
-        const { data: errorData, error: insertError } = await supabase
+        const { data: errorData, error: insertError } = await writeDb()
             .from('errors')
             .insert([payload])
             .select()
@@ -1128,7 +1132,7 @@ app.post('/api/errors', verifyAdmin, async (req, res) => {
                 person_id: personId
             }));
 
-            const { error: assignError } = await supabase
+            const { error: assignError } = await writeDb()
                 .from('error_assignees')
                 .insert(assigneeRows);
 
@@ -1227,7 +1231,7 @@ app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
 
     try {
         // 1. Update Error
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('errors')
             .update(payload)
             .eq('id', id)
@@ -1241,7 +1245,7 @@ app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
             // Verify assigneeIds is an array
             if (Array.isArray(assigneeIds)) {
                 // Delete existing
-                await supabase.from('error_assignees').delete().eq('error_id', id);
+                await writeDb().from('error_assignees').delete().eq('error_id', id);
 
                 // Insert new
                 if (assigneeIds.length > 0) {
@@ -1249,7 +1253,7 @@ app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
                         error_id: id,
                         person_id: personId
                     }));
-                    await supabase.from('error_assignees').insert(assigneeRows);
+                    await writeDb().from('error_assignees').insert(assigneeRows);
                 }
             }
 
@@ -1314,9 +1318,9 @@ app.delete('/api/errors/:id', verifyAdmin, async (req, res) => {
 
     try {
         // Delete assignees first (cascade might handle this, but explicit is safer)
-        await supabase.from('error_assignees').delete().eq('error_id', id);
+        await writeDb().from('error_assignees').delete().eq('error_id', id);
 
-        const { error } = await supabase
+        const { error } = await writeDb()
             .from('errors')
             .delete()
             .eq('id', id);
@@ -1401,6 +1405,271 @@ app.post('/api/errors/:id/reset-view', async (req, res) => {
     } catch (e) {
         console.error('Supabase Error (POST reset-view):', e.message);
         res.status(500).json({ error: e.message });
+    }
+});
+
+// =====================================================================
+// BOT ENDPOINTS
+// =====================================================================
+//
+// /api/bot/* endpoint'leri WhatsApp botuyla konuşur.
+// - Settings ve heartbeat: Supabase'de bot_settings / bot_status tabloları
+// - Status / restart / logout / qr / logs: bot'un kendi HTTP sunucusuna proxy
+//
+// Bot bağlantı bilgileri için iki env değişkeni gerekli:
+//   BOT_INTERNAL_URL  -> bot'un admin HTTP'si (örn. http://bot-host:3002)
+//   BOT_SHARED_TOKEN  -> bot ile paylaşılan token
+// =====================================================================
+
+const BOT_INTERNAL_URL = (process.env.BOT_INTERNAL_URL || '').replace(/\/$/, '');
+const BOT_SHARED_TOKEN = process.env.BOT_SHARED_TOKEN || '';
+
+const requireBotConfig = (res) => {
+    if (!BOT_INTERNAL_URL || !BOT_SHARED_TOKEN) {
+        res.status(503).json({
+            error: 'Bot is not configured on the server (missing BOT_INTERNAL_URL or BOT_SHARED_TOKEN).'
+        });
+        return false;
+    }
+    return true;
+};
+
+const requireBotAuth = (req, res, next) => {
+    const provided = req.header('x-bot-token') || (req.header('authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!BOT_SHARED_TOKEN || provided !== BOT_SHARED_TOKEN) {
+        return res.status(401).json({ error: 'Invalid bot token' });
+    }
+    next();
+};
+
+const proxyToBot = async (path, { method = 'GET', body } = {}) => {
+    const url = `${BOT_INTERNAL_URL}${path}`;
+    const init = {
+        method,
+        headers: {
+            'x-bot-token': BOT_SHARED_TOKEN,
+            ...(body ? { 'Content-Type': 'application/json' } : {})
+        },
+        ...(body ? { body: JSON.stringify(body) } : {})
+    };
+    const response = await fetch(url, init);
+    const text = await response.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+    return { ok: response.ok, status: response.status, data };
+};
+
+// --- Bot Settings (CRUD) ---
+
+// Bot kendi ayarlarını çekerken token doğrulaması yapıyor; admin paneli ise verifyAdmin kullanıyor.
+// Yardımcı: ayarları her iki kaynaktan da okuyabilen handler
+const fetchBotSettings = async () => {
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
+        .from('bot_settings')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+
+    if (error) throw error;
+
+    // Tablo henüz oluşturulmadıysa, frontend için boş şablon dön
+    if (!data) {
+        return {
+            id: 1,
+            enabled: true,
+            listen_groups: false,
+            ocr_languages: 'eng+tur',
+            confidence_threshold: 40,
+            match_score_threshold: 30,
+            reply_with_steps: true,
+            reply_with_images: true,
+            reply_with_video: true,
+            fallback_message: '❓ Gönderdiğiniz ekran görüntüsündeki hatayı veritabanımda bulamadım.\n\nDaha net bir fotoğraf göndermeyi deneyin veya ilgili departmana başvurun.',
+            error_message: '⚠️ Görselinizi işlerken teknik bir sorun oluştu. Lütfen daha sonra tekrar deneyin.',
+            disabled_message: '🤖 Bot şu anda devre dışı.',
+            allowlist: [],
+            blocklist: [],
+            _missing: true
+        };
+    }
+    return data;
+};
+
+// Bot kendi token'ı ile ayar çekiyor
+app.get('/api/bot/settings', async (req, res) => {
+    const provided = req.header('x-bot-token') || (req.header('authorization') || '').replace(/^Bearer\s+/i, '');
+    const isBot = BOT_SHARED_TOKEN && provided === BOT_SHARED_TOKEN;
+
+    // Bot değilse, admin doğrulamasından geçmeli
+    if (!isBot) {
+        return verifyAdmin(req, res, async () => {
+            try {
+                const settings = await fetchBotSettings();
+                res.json(settings);
+            } catch (e) {
+                res.status(500).json({ error: e.message });
+            }
+        });
+    }
+
+    try {
+        if (!checkDb(res)) return;
+        const settings = await fetchBotSettings();
+        res.json(settings);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/bot/settings', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    if (!req.isSuperAdmin) {
+        return res.status(403).json({ error: 'Only Super Admins can change bot settings' });
+    }
+
+    const allowedKeys = [
+        'enabled', 'listen_groups', 'ocr_languages',
+        'confidence_threshold', 'match_score_threshold',
+        'reply_with_steps', 'reply_with_images', 'reply_with_video',
+        'fallback_message', 'error_message', 'disabled_message',
+        'allowlist', 'blocklist'
+    ];
+
+    const payload = { id: 1, updated_at: new Date().toISOString() };
+    for (const key of allowedKeys) {
+        if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+            payload[key] = req.body[key];
+        }
+    }
+
+    try {
+        const client = supabaseAdmin || supabase;
+        const { data, error } = await client
+            .from('bot_settings')
+            .upsert(payload, { onConflict: 'id' })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Bot'a "ayarları yeniden yükle" sinyali gönder (best effort)
+        if (BOT_INTERNAL_URL && BOT_SHARED_TOKEN) {
+            proxyToBot('/settings/reload', { method: 'POST' }).catch(() => {});
+        }
+
+        res.json(data);
+    } catch (e) {
+        console.error('PUT /api/bot/settings:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- Bot heartbeat (bot -> site) ---
+app.post('/api/bot/heartbeat', requireBotAuth, async (req, res) => {
+    if (!checkDb(res)) return;
+
+    const { status, startedAt, connectedAt, jid, disconnectReason, lastError, stats } = req.body || {};
+    const payload = {
+        id: 1,
+        status: status || 'unknown',
+        started_at: startedAt || null,
+        connected_at: connectedAt || null,
+        jid: jid || null,
+        disconnect_reason: typeof disconnectReason === 'number' ? disconnectReason : null,
+        last_error: lastError || null,
+        stats: stats || {},
+        last_heartbeat_at: new Date().toISOString()
+    };
+
+    try {
+        const client = supabaseAdmin || supabase;
+        const { error } = await client
+            .from('bot_status')
+            .upsert(payload, { onConflict: 'id' });
+        if (error) throw error;
+        res.json({ ok: true });
+    } catch (e) {
+        // Tablo yoksa silently OK döneriz (kayıt tutulmuyor ama bot çalışmaya devam etsin)
+        if (e.message && e.message.includes('bot_status')) {
+            return res.json({ ok: true, warning: 'bot_status table missing' });
+        }
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- Bot Status (admin panel okuyor: önce DB, sonra canlı bot) ---
+app.get('/api/bot/status', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+
+    let stored = null;
+    try {
+        const client = supabaseAdmin || supabase;
+        const { data } = await client.from('bot_status').select('*').eq('id', 1).maybeSingle();
+        stored = data || null;
+    } catch { /* ignore */ }
+
+    let live = null;
+    let liveError = null;
+    if (BOT_INTERNAL_URL && BOT_SHARED_TOKEN) {
+        try {
+            const r = await proxyToBot('/status');
+            if (r.ok) live = r.data;
+            else liveError = `bot returned ${r.status}`;
+        } catch (e) {
+            liveError = e.message;
+        }
+    } else {
+        liveError = 'BOT_INTERNAL_URL not configured';
+    }
+
+    res.json({ stored, live, liveError });
+});
+
+// --- Bot QR ---
+app.get('/api/bot/qr', verifyAdmin, async (_req, res) => {
+    if (!requireBotConfig(res)) return;
+    try {
+        const r = await proxyToBot('/qr');
+        res.status(r.status).json(r.data);
+    } catch (e) {
+        res.status(502).json({ error: e.message });
+    }
+});
+
+// --- Bot Logs ---
+app.get('/api/bot/logs', verifyAdmin, async (req, res) => {
+    if (!requireBotConfig(res)) return;
+    const limit = parseInt(req.query.limit || '200', 10);
+    try {
+        const r = await proxyToBot(`/logs?limit=${limit}`);
+        res.status(r.status).json(r.data);
+    } catch (e) {
+        res.status(502).json({ error: e.message });
+    }
+});
+
+// --- Bot Restart ---
+app.post('/api/bot/restart', verifyAdmin, async (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Super admin required' });
+    if (!requireBotConfig(res)) return;
+    try {
+        const r = await proxyToBot('/restart', { method: 'POST' });
+        res.status(r.status).json(r.data);
+    } catch (e) {
+        res.status(502).json({ error: e.message });
+    }
+});
+
+// --- Bot Logout (yeni QR için oturum sıfırlama) ---
+app.post('/api/bot/logout', verifyAdmin, async (req, res) => {
+    if (!req.isSuperAdmin) return res.status(403).json({ error: 'Super admin required' });
+    if (!requireBotConfig(res)) return;
+    try {
+        const r = await proxyToBot('/logout', { method: 'POST' });
+        res.status(r.status).json(r.data);
+    } catch (e) {
+        res.status(502).json({ error: e.message });
     }
 });
 

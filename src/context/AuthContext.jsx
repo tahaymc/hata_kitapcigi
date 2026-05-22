@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
         // Fetch Profile
         try {
             const { data, error } = await supabase
-                .from('people')
+                .from('admins')
                 .select('*')
                 .eq('auth_id', user.id)
                 .single();
@@ -80,8 +80,8 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signOut,
         isAdmin: (profile?.role === 'admin' || profile?.access_role === 'admin'),
-        isSuperAdmin: (profile?.role === 'admin' || profile?.access_role === 'admin') && !profile?.department_id,
-        userDepartmentId: profile?.department_id
+        isSuperAdmin: (profile?.role === 'admin' || profile?.access_role === 'admin'),
+        userDepartmentId: null
     };
 
     return (

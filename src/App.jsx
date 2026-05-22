@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const BotAdmin = React.lazy(() => import('./pages/BotAdmin'));
 
 // Component to handle NProgress and ScrollToTop
 const NavigationHandler = () => {
@@ -65,6 +66,7 @@ function App() {
             <Route path="/error/:id" element={<HomePage />} />
             <Route path="/guide/:id" element={<HomePage />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/bot" element={<BotAdmin />} />
           </Routes>
         </Suspense>
       </AuthProvider>

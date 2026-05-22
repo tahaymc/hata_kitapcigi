@@ -1,0 +1,25 @@
+node_modules
+dist
+logs
+*.log
+
+# WhatsApp oturum dosyaları (her sunucuda yeniden oluşur)
+auth_info_baileys
+qr.png
+
+# OCR çalışma alanı
+tmp
+
+# OCR dil dosyaları (otomatik indirilir)
+*.traineddata
+
+# Redis dump
+dump.rdb
+
+# Local Redis binary'leri (deploy sırasında kullanılmaz)
+redis
+redis5
+*.zip
+
+.env
+.env.local

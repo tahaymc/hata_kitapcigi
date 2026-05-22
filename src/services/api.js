@@ -1,3 +1,5 @@
+import { supabase } from '../utils/supabaseClient';
+
 const API_URL = '/api';
 
 let authToken = null;
@@ -6,13 +8,36 @@ export const setAuthToken = (token) => {
     authToken = token;
 };
 
+const getFreshToken = async () => {
+    try {
+        let { data } = await supabase.auth.getSession();
+        let session = data?.session;
+
+        // Uzun süren işlemlerde (ör. büyük video yükleme) access token süresi
+        // dolmuş ve otomatik yenileme tetiklenmemiş olabilir. Bu durumda
+        // token boş dönüp "Authorization header missing" 401'ine yol açar.
+        // Token yoksa açıkça yenilemeyi dene.
+        if (!session?.access_token) {
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            session = refreshed?.session;
+        }
+
+        const token = session?.access_token || null;
+        if (token) authToken = token;
+        return token || authToken;
+    } catch {
+        return authToken;
+    }
+};
+
 const customFetch = async (url, options = {}) => {
     const headers = {
         ...options.headers,
     };
 
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+    const token = await getFreshToken();
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
@@ -149,7 +174,10 @@ export const uploadVideo = async (file) => {
         const { signedUrl, publicUrl } = await genResponse.json();
 
         // 2. Upload directly to storage via Signed URL
-        const uploadResponse = await customFetch(signedUrl, {
+        // NOT: İmzalı URL kendi yetkilendirme token'ını query string'de taşır.
+        // customFetch kullanıp kullanıcının JWT'sini Authorization header'ı
+        // olarak eklemek hatalıdır; bu yüzden düz fetch kullanıyoruz.
+        const uploadResponse = await fetch(signedUrl, {
             method: 'PUT',
             headers: {
                 'Content-Type': file.type
@@ -421,4 +449,54 @@ export const deleteCategory = async (id) => {
         method: 'DELETE'
     });
     return response.ok;
+};
+
+// --- Bot ---
+
+const handleBotResponse = async (response) => {
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.error || `Bot API error (${response.status})`);
+    }
+    return data;
+};
+
+export const getBotSettings = async () => {
+    const r = await customFetch(`${API_URL}/bot/settings`);
+    return handleBotResponse(r);
+};
+
+export const updateBotSettings = async (payload) => {
+    const r = await customFetch(`${API_URL}/bot/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    return handleBotResponse(r);
+};
+
+export const getBotStatus = async () => {
+    const r = await customFetch(`${API_URL}/bot/status`);
+    return handleBotResponse(r);
+};
+
+export const getBotQr = async () => {
+    const r = await customFetch(`${API_URL}/bot/qr`);
+    if (r.status === 404) return null;
+    return handleBotResponse(r);
+};
+
+export const getBotLogs = async (limit = 200) => {
+    const r = await customFetch(`${API_URL}/bot/logs?limit=${limit}`);
+    return handleBotResponse(r);
+};
+
+export const restartBot = async () => {
+    const r = await customFetch(`${API_URL}/bot/restart`, { method: 'POST' });
+    return handleBotResponse(r);
+};
+
+export const logoutBot = async () => {
+    const r = await customFetch(`${API_URL}/bot/logout`, { method: 'POST' });
+    return handleBotResponse(r);
 };

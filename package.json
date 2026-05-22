@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run start\" \"vite\"",
+    "dev:all": "concurrently -n api,web,bot -c blue,green,magenta \"npm run start\" \"vite\" \"npm --prefix bot run dev\"",
     "start": "node api/index.js",
     "build": "vite build",
+    "bot:install": "npm --prefix bot install",
+    "bot:dev": "npm --prefix bot run dev",
+    "bot:build": "npm --prefix bot run build",
+    "bot:start": "npm --prefix bot start",
     "lint": "eslint .",
     "preview": "vite preview"
   },
