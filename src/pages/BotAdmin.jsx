@@ -216,12 +216,20 @@ const BotAdmin = () => {
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => navigate('/admin')}
-                            className="px-4 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700"
-                        >
-                            ← Admin Panel
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => navigate('/')}
+                                className="px-4 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700"
+                            >
+                                ← Ana Sayfa
+                            </button>
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="px-4 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700"
+                            >
+                                Admin Panel
+                            </button>
+                        </div>
                     </motion.div>
 
                     {/* Status + Actions */}

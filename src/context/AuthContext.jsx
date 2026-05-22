@@ -73,15 +73,31 @@ export const AuthProvider = ({ children }) => {
         window.location.href = '/'; // Force redirect to home/login
     };
 
+    // Giriş yapmış kullanıcının kendi şifresini değiştirir (Supabase Auth).
+    const changePassword = async (newPassword) => {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+    };
+
+    // Rol: 'admin' => Yönetici (panel + bot + içerik), diğer her şey (ör. 'user')
+    // => sadece içerik yönetebilen normal kullanıcı.
+    const role = profile?.access_role || profile?.role || null;
+    const isAdmin = role === 'admin';
+
     const value = {
         user,
         profile,
         loading,
         signIn,
         signOut,
-        isAdmin: (profile?.role === 'admin' || profile?.access_role === 'admin'),
-        isSuperAdmin: (profile?.role === 'admin' || profile?.access_role === 'admin'),
-        userDepartmentId: null
+        changePassword,
+        isAdmin,
+        // 2 seviye: Bot Yönetimi de yöneticiye bağlı
+        isSuperAdmin: isAdmin,
+        // Giriş yapmış ve admins tablosunda profili olan herkes (admin VEYA user)
+        // içerik (hata/kılavuz) ekleyip düzenleyebilir.
+        canManageContent: !!profile,
+        userDepartmentId: profile?.department_id ?? null
     };
 
     return (

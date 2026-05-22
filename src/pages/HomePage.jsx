@@ -44,14 +44,12 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 
 // Define imports for prefetching
-const importPeopleManagerModal = () => import('../components/PeopleManagerModal');
 const importAddErrorModal = () => import('../components/AddErrorModal');
 const importEditErrorModal = () => import('../components/EditErrorModal');
 const importAddGuideModal = () => import('../components/AddGuideModal');
 const importEditGuideModal = () => import('../components/EditGuideModal');
 
 // Lazy Load Modals
-const PeopleManagerModal = React.lazy(importPeopleManagerModal);
 const AddErrorModal = React.lazy(importAddErrorModal);
 const EditErrorModal = React.lazy(importEditErrorModal);
 const AddGuideModal = React.lazy(importAddGuideModal);
@@ -137,12 +135,13 @@ const HomePage = () => {
     // Let's assume for now I will rely on standard CSS hover or simple logic.
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-    const [isPeopleManagerOpen, setIsPeopleManagerOpen] = useState(false);
 
     const [loginData, setLoginData] = useState({ email: '', password: '' });
 
     // Admin State — gerçek Supabase oturumundan gelir (backend verifyAdmin ile uyumlu)
-    const { isAdmin, signIn, signOut } = useAuth();
+    // İçerik aksiyonları (ekle/düzenle/sil) giriş yapan her kullanıcıya açıktır;
+    // Yönetici Paneli / Bot menüsü Sidebar'da ayrıca isAdmin ile kontrol edilir.
+    const { canManageContent, profile, signIn, signOut, changePassword } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddGuideModalOpen, setIsAddGuideModalOpen] = useState(false);
 
@@ -238,11 +237,8 @@ const HomePage = () => {
     };
 
     // Admin Credentials State
-    const [adminCredentials, setAdminCredentials] = useState({ username: 'admin', password: 'admin' });
     const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
-    const [credentialsForm, setCredentialsForm] = useState({
-        newUsername: '',
-        currentPassword: '',
+    const [passwordForm, setPasswordForm] = useState({
         newPassword: '',
         confirmPassword: ''
     });
@@ -256,18 +252,6 @@ const HomePage = () => {
         else toast.success(message);
     };
 
-    useEffect(() => {
-        const storedCreds = localStorage.getItem('adminCredentials');
-        if (storedCreds) {
-            try {
-                setAdminCredentials(JSON.parse(storedCreds));
-            } catch (error) {
-                console.error("Failed to parse admin credentials:", error);
-                // Fail gracefully, keeping default credentials or maybe clearing invalid storage
-                localStorage.removeItem('adminCredentials');
-            }
-        }
-    }, []);
 
     // Prevent body scroll for all modals
     useEffect(() => {
@@ -344,34 +328,29 @@ const HomePage = () => {
     };
 
 
-    const handleUpdateCredentials = (e) => {
+    const handleChangePassword = async (e) => {
         e.preventDefault();
 
-        if (credentialsForm.currentPassword !== adminCredentials.password) {
-            toast.error("Mevcut şifre hatalı!");
-            return;
-        }
-
-        if (credentialsForm.newPassword !== credentialsForm.confirmPassword) {
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
             toast.error("Yeni şifreler eşleşmiyor!");
             return;
         }
 
-        if (credentialsForm.newPassword.length < 4) {
-            toast.error("Yeni şifre en az 4 karakter olmalıdır!");
+        if (passwordForm.newPassword.length < 6) {
+            toast.error("Yeni şifre en az 6 karakter olmalıdır!");
             return;
         }
 
-        const newCreds = {
-            username: (credentialsForm.newUsername || adminCredentials.username).trim(),
-            password: credentialsForm.newPassword.trim()
-        };
-
-        setAdminCredentials(newCreds);
-        localStorage.setItem('adminCredentials', JSON.stringify(newCreds));
-        setIsCredentialsModalOpen(false);
-        setCredentialsForm({ newUsername: '', currentPassword: '', newPassword: '', confirmPassword: '' });
-        toast.success("Giriş bilgileri başarıyla güncellendi!");
+        try {
+            // Giriş yapmış kullanıcının kendi Supabase şifresini değiştirir
+            await changePassword(passwordForm.newPassword);
+            setIsCredentialsModalOpen(false);
+            setPasswordForm({ newPassword: '', confirmPassword: '' });
+            toast.success("Şifreniz başarıyla güncellendi!");
+        } catch (error) {
+            console.error("Password change failed:", error);
+            toast.error(error?.message || "Şifre güncellenemedi.");
+        }
     };
 
     const handleLogout = async () => {
@@ -544,11 +523,10 @@ const HomePage = () => {
                     <Header
                         isDarkMode={isDarkMode}
                         setIsDarkMode={setIsDarkMode}
-                        isAdmin={isAdmin}
+                        isAdmin={canManageContent}
                         onLoginClick={() => setIsLoginModalOpen(true)}
                         onLogoutClick={handleLogout}
                         onAddClick={() => activeTab === 'errors' ? setIsAddModalOpen(true) : setIsAddGuideModalOpen(true)}
-                        onPeopleClick={() => setIsPeopleManagerOpen(true)}
                         onCredentialsClick={() => setIsCredentialsModalOpen(true)}
                         onLogoClick={() => {
                             setFilters({ query: '', category: null, date: null });
@@ -732,7 +710,7 @@ const HomePage = () => {
                                             setPreviewGallery({ items, index: 0 });
                                         }
                                     }}
-                                    isAdmin={isAdmin}
+                                    isAdmin={canManageContent}
                                     onDragEnd={handleDragEnd}
                                 />
                             ) : (
@@ -759,7 +737,7 @@ const HomePage = () => {
                                     onEditClick={handleEditGuideClick}
                                     onDeleteClick={handleDeleteGuideClick}
                                     onImageClick={handleImageClick}
-                                    isAdmin={isAdmin}
+                                    isAdmin={canManageContent}
                                     onDragEnd={handleGuideDragEnd}
                                 />
 
@@ -773,7 +751,7 @@ const HomePage = () => {
                         <ErrorDetailModal
                             error={selectedError}
                             onClose={() => navigate('/')}
-                            isAdmin={isAdmin}
+                            isAdmin={canManageContent}
                             onEdit={(e) => {
                                 if (selectedError.type === 'guide' || activeTab === 'guides') {
                                     handleEditGuideClick(e, selectedError);
@@ -855,13 +833,6 @@ const HomePage = () => {
 
 
 
-                    {/* People Manager Modal */}
-                    {isPeopleManagerOpen && (
-                        <PeopleManagerModal
-                            onClose={() => setIsPeopleManagerOpen(false)}
-                        />
-                    )}
-
                     {/* Login Modal (Inline Implementation for now) */}
                     {isLoginModalOpen && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
@@ -917,38 +888,28 @@ const HomePage = () => {
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                             <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
                                 <div className="p-8">
-                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 text-center">Giriş Bilgilerini Değiştir</h3>
-                                    <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 text-center">Şifre Değiştir</h3>
+                                    <form onSubmit={handleChangePassword} className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Kullanıcı Adı (İsteğe bağlı)</label>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-posta</label>
                                             <input
-                                                type="text"
-                                                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={credentialsForm.newUsername}
-                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, newUsername: e.target.value })}
-                                                placeholder={adminCredentials.username}
+                                                type="email"
+                                                readOnly
+                                                disabled
+                                                className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/70 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                                                value={profile?.email || ''}
                                             />
-                                        </div>
-                                        <div className="border-t border-slate-200 dark:border-slate-700 my-4 pt-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mevcut Şifre</label>
-                                                <input
-                                                    type="password"
-                                                    required
-                                                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    value={credentialsForm.currentPassword}
-                                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, currentPassword: e.target.value })}
-                                                />
-                                            </div>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre</label>
                                             <input
                                                 type="password"
                                                 required
+                                                minLength={6}
+                                                autoComplete="new-password"
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={credentialsForm.newPassword}
-                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, newPassword: e.target.value })}
+                                                value={passwordForm.newPassword}
+                                                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                                             />
                                         </div>
                                         <div>
@@ -956,9 +917,11 @@ const HomePage = () => {
                                             <input
                                                 type="password"
                                                 required
+                                                minLength={6}
+                                                autoComplete="new-password"
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={credentialsForm.confirmPassword}
-                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, confirmPassword: e.target.value })}
+                                                value={passwordForm.confirmPassword}
+                                                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                                             />
                                         </div>
 
@@ -967,7 +930,7 @@ const HomePage = () => {
                                                 type="submit"
                                                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
                                             >
-                                                Güncelle
+                                                Şifreyi Güncelle
                                             </button>
                                         </div>
                                     </form>

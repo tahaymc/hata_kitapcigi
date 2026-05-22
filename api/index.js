@@ -187,6 +187,52 @@ const verifyAdmin = async (req, res, next) => {
     }
 };
 
+// İçerik yönetimi (hata/kılavuz ekle/düzenle/sil) için yetkilendirme.
+// admins tablosunda profili olan HERKES (rol 'admin' veya 'user') geçer.
+// Yönetici Paneli / Bot uçları için ise verifyAdmin (yalnızca 'admin') gerekir.
+const verifyUser = async (req, res, next) => {
+    if (!checkDb(res)) return;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ error: 'Authorization header missing' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Bearer token missing' });
+    }
+
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        const { data: person, error: personError } = await supabase
+            .from('admins')
+            .select('access_role, role')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (personError || !person) {
+            return res.status(403).json({ error: 'User profile not found or unauthorized' });
+        }
+
+        req.user = user;
+        req.person = person;
+        req.isAdmin = (person.access_role === 'admin' || person.role === 'admin');
+        // İçerikte departman kısıtı uygulanmıyor (2 seviyeli model)
+        req.isSuperAdmin = true;
+        req.userDepartmentId = null;
+
+        next();
+    } catch (e) {
+        console.error('User verification failed:', e.message);
+        return res.status(500).json({ error: 'Internal server error during authentication' });
+    }
+};
+
 // --- ADMIN ENDPOINTS ---
 
 app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
@@ -204,6 +250,9 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields: email, password, name' });
     }
 
+    // Yalnızca 'admin' veya 'user' rolüne izin ver (varsayılan: user)
+    const safeRole = role === 'admin' ? 'admin' : 'user';
+
     try {
         // 1. Create User in Supabase Auth
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -215,15 +264,15 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
 
         if (authError) throw authError;
 
-        // 2. Create Profile in 'admins' table
-        const { data: personData, error: personError } = await supabase
+        // 2. Create Profile in 'admins' table (service-role; RLS'i baypas eder)
+        const { data: personData, error: personError } = await writeDb()
             .from('admins')
             .insert([{
                 auth_id: authData.user.id,
                 name,
                 email,
-                role: role || 'admin',
-                access_role: role || 'admin'
+                role: safeRole,
+                access_role: safeRole
             }])
             .select()
             .single();
@@ -243,6 +292,90 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
 
     } catch (e) {
         console.error('Create User Failed:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// List all login users (admins table) — yalnızca yöneticiler
+app.get('/api/admin/users', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { data, error } = await writeDb()
+            .from('admins')
+            .select('id, auth_id, name, email, role, access_role, created_at')
+            .order('created_at', { ascending: true });
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (GET /admin/users):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Update a user's role — yalnızca yöneticiler
+app.put('/api/admin/users/:id', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    const { id } = req.params;
+    const role = req.body.role === 'admin' ? 'admin' : 'user';
+
+    try {
+        const { data: target, error: findErr } = await writeDb()
+            .from('admins')
+            .select('auth_id')
+            .eq('id', id)
+            .single();
+        if (findErr || !target) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+
+        // Kendi rolünü değiştirmeyi engelle (kilitlenmeyi önler)
+        if (target.auth_id === req.user.id) {
+            return res.status(400).json({ error: 'Kendi rolünüzü değiştiremezsiniz' });
+        }
+
+        const { data, error } = await writeDb()
+            .from('admins')
+            .update({ role, access_role: role })
+            .eq('id', id)
+            .select('id, auth_id, name, email, role, access_role')
+            .single();
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (PUT /admin/users):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Delete a user (admins satırı + Supabase Auth kullanıcısı) — yalnızca yöneticiler
+app.delete('/api/admin/users/:id', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    if (!supabaseAdmin) {
+        return res.status(503).json({ error: 'Admin service not configured (Missing Key)' });
+    }
+    const { id } = req.params;
+
+    try {
+        const { data: target, error: findErr } = await writeDb()
+            .from('admins')
+            .select('auth_id')
+            .eq('id', id)
+            .single();
+        if (findErr || !target) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+
+        if (target.auth_id === req.user.id) {
+            return res.status(400).json({ error: 'Kendinizi silemezsiniz' });
+        }
+
+        const { error: delErr } = await writeDb().from('admins').delete().eq('id', id);
+        if (delErr) throw delErr;
+
+        // Supabase Auth kullanıcısını da sil
+        if (target.auth_id) {
+            await supabaseAdmin.auth.admin.deleteUser(target.auth_id);
+        }
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /admin/users):', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -336,7 +469,7 @@ app.get('/api/guides/:id', async (req, res) => {
 });
 
 // POST New Guide
-app.post('/api/guides', verifyAdmin, async (req, res) => {
+app.post('/api/guides', verifyUser, async (req, res) => {
     if (!checkDb(res)) return;
 
     // Department Permission Check
@@ -429,7 +562,7 @@ app.post('/api/guides', verifyAdmin, async (req, res) => {
 });
 
 // PUT Update Guide
-app.put('/api/guides/:id', verifyAdmin, async (req, res) => {
+app.put('/api/guides/:id', verifyUser, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -525,7 +658,7 @@ app.put('/api/guides/:id', verifyAdmin, async (req, res) => {
 });
 
 // DELETE Guide
-app.delete('/api/guides/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/guides/:id', verifyUser, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1055,7 +1188,7 @@ app.delete('/api/people/:id', async (req, res) => {
 });
 
 // POST New Error
-app.post('/api/errors', verifyAdmin, async (req, res) => {
+app.post('/api/errors', verifyUser, async (req, res) => {
     if (!checkDb(res)) return;
 
     // Department Permission Check
@@ -1176,7 +1309,7 @@ app.post('/api/errors', verifyAdmin, async (req, res) => {
 });
 
 // PUT Update Error
-app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
+app.put('/api/errors/:id', verifyUser, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1294,7 +1427,7 @@ app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
 });
 
 // DELETE Error
-app.delete('/api/errors/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/errors/:id', verifyUser, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1629,11 +1762,13 @@ app.get('/api/bot/status', verifyAdmin, async (req, res) => {
 // --- Bot QR ---
 app.get('/api/bot/qr', verifyAdmin, async (_req, res) => {
     if (!requireBotConfig(res)) return;
+    // Bota ulaşılamasa bile 200 dön (polling sırasında konsolu 502 ile doldurmamak için);
+    // frontend dataUrl yoksa "QR yok / çevrimdışı" gösterir.
     try {
         const r = await proxyToBot('/qr');
-        res.status(r.status).json(r.data);
+        res.json(r.ok ? r.data : { dataUrl: null, unreachable: true, status: r.status });
     } catch (e) {
-        res.status(502).json({ error: e.message });
+        res.json({ dataUrl: null, unreachable: true, error: e.message });
     }
 });
 
@@ -1641,11 +1776,12 @@ app.get('/api/bot/qr', verifyAdmin, async (_req, res) => {
 app.get('/api/bot/logs', verifyAdmin, async (req, res) => {
     if (!requireBotConfig(res)) return;
     const limit = parseInt(req.query.limit || '200', 10);
+    // Bota ulaşılamasa bile 200 + boş log dön (polling sırasında 502 konsol selini önler).
     try {
         const r = await proxyToBot(`/logs?limit=${limit}`);
-        res.status(r.status).json(r.data);
+        res.json(r.ok ? r.data : { logs: [], unreachable: true, status: r.status });
     } catch (e) {
-        res.status(502).json({ error: e.message });
+        res.json({ logs: [], unreachable: true, error: e.message });
     }
 });
 

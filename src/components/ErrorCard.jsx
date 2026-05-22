@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2, RotateCcw, GripVertical } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
-import { getCategoryIcon, formatDate } from '../utils/helpers';
+import { getCategoryIcon, formatDate, sanitizeRichHtml } from '../utils/helpers';
 import { getErrorById } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -94,8 +94,8 @@ const ErrorCard = ({
                 {/* Middle Section: Description */}
                 <div className="flex-1 mb-4 min-h-[60px]">
                     <div
-                        className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium"
-                        dangerouslySetInnerHTML={{ __html: error.summary }}
+                        className="rich-content text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium"
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(error.summary) }}
                     />
                 </div>
 
@@ -188,7 +188,7 @@ const ErrorCard = ({
                 </div>
 
                 {/* Admin Actions */}
-                {(isAdmin && (isSuperAdmin || error.department_id === userDepartmentId)) && (
+                {isAdmin && (
                     <div className="absolute top-2 right-6 flex gap-2 z-10">
                         {dragHandleProps && (
                             <button
@@ -265,8 +265,8 @@ const ErrorCard = ({
                 {/* Summary */}
                 <div className="hidden sm:block sm:col-span-6">
                     <div
-                        className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: error.summary }}
+                        className="rich-content text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(error.summary) }}
                     />
                 </div>
 

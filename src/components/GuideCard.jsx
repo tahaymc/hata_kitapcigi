@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Edit2, Eye, Trash2, Video, Image as ImageIcon, RotateCcw, GripVertical } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
-import { getCategoryIcon, formatDate } from '../utils/helpers';
+import { getCategoryIcon, formatDate, sanitizeRichHtml } from '../utils/helpers';
 import { getGuideById } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -98,8 +98,8 @@ const GuideCard = ({
             {/* Summary */}
             <div className="flex-1 mb-4 min-h-[60px]">
                 <div
-                    className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium"
-                    dangerouslySetInnerHTML={{ __html: guide.summary }}
+                    className="rich-content text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-3 font-medium"
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(guide.summary) }}
                 />
             </div>
 
@@ -212,7 +212,7 @@ const GuideCard = ({
             </div>
 
             {/* Admin Actions (Only visible on hover) */}
-            {(isAdmin && (isSuperAdmin || guide.department_id === userDepartmentId)) && (
+            {isAdmin && (
                 <div className="absolute top-2 right-6 flex gap-2 z-10">
                     {dragHandleProps && (
                         <button

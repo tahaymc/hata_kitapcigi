@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Calendar, Image as ImageIcon, ZoomIn, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Edit2, Trash2, Info, Users, Tag, Video, Eye, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getCategoryIcon, formatDate } from '../utils/helpers';
+import { getCategoryIcon, formatDate, sanitizeRichHtml } from '../utils/helpers';
 import { COLOR_STYLES } from '../utils/constants';
 
 
@@ -195,8 +195,8 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                 </div>
 
                                 <div
-                                    className="text-slate-700 dark:text-slate-200 text-lg leading-relaxed font-medium"
-                                    dangerouslySetInnerHTML={{ __html: error.summary }}
+                                    className="rich-content text-slate-700 dark:text-slate-200 text-lg leading-relaxed font-medium"
+                                    dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(error.summary) }}
                                 />
                             </div>
 
@@ -290,8 +290,8 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                                                 )}
 
                                                                 <div
-                                                                    className={`text-slate-700 dark:text-slate-300 leading-relaxed text-base ${title ? 'font-medium' : 'font-semibold'}`}
-                                                                    dangerouslySetInnerHTML={{ __html: text }}
+                                                                    className={`rich-content text-slate-700 dark:text-slate-300 leading-relaxed text-base ${title ? 'font-medium' : 'font-semibold'}`}
+                                                                    dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(text) }}
                                                                 />
 
                                                                 {step.imageUrl && (
@@ -315,8 +315,8 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                                                                 </span>
                                                                                 <div className="flex-1 space-y-2">
                                                                                     <div
-                                                                                        className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-relaxed"
-                                                                                        dangerouslySetInnerHTML={{ __html: subStep.text }}
+                                                                                        className="rich-content text-slate-700 dark:text-slate-300 text-sm font-medium leading-relaxed"
+                                                                                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(subStep.text) }}
                                                                                     />
                                                                                     {subStep.imageUrl && (
                                                                                         <div className="relative w-full max-w-[200px] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">

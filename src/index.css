@@ -9,6 +9,15 @@
   }
 }
 
+/* Rich-text içerik (kılavuz/hata özeti ve adımları) ve editör her zaman
+   tema fontunu (Inter) kullansın. Yapıştırılan metne gömülü inline
+   font-family stillerini etkisiz kılar; kalın/italik/renk gibi kasıtlı
+   biçimlendirme korunur. */
+.rich-content,
+.rich-content * {
+  font-family: inherit !important;
+}
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

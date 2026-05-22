@@ -2,6 +2,35 @@ import React from 'react';
 import { ShoppingCart, Archive, Monitor, Settings } from 'lucide-react';
 import { ICON_OPTIONS } from './constants';
 
+// Yapıştırılan zengin metni (Word, Google Gemini/Docs, web) temizler.
+// Bu kaynaklar inline 'style' (font-family/color ... !important dahil),
+// 'class' ve framework artığı (_ngcontent, data-*, aria-*) öznitelikleri
+// taşır; bunlar site temasını (Inter fontu, koyu mod rengi) ezer.
+// Etiketleri ve <font color> gibi kasıtlı biçimlendirmeyi korur,
+// yalnızca stil bozan öznitelikleri kaldırır.
+export const sanitizeRichHtml = (html) => {
+    if (!html || typeof html !== 'string') return html || '';
+    // HTML etiketi yoksa olduğu gibi bırak (düz metin)
+    if (!/<[a-z][\s\S]*>/i.test(html)) return html;
+    try {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.body.querySelectorAll('*').forEach((el) => {
+            [...el.attributes].forEach((attr) => {
+                const name = attr.name.toLowerCase();
+                const keep =
+                    name === 'href' ||
+                    name === 'src' ||
+                    name === 'alt' ||
+                    name === 'color'; // <font color="..."> toolbar rengi korunur
+                if (!keep) el.removeAttribute(attr.name);
+            });
+        });
+        return doc.body.innerHTML;
+    } catch {
+        return html;
+    }
+};
+
 
 export const getCategoryIcon = (categoryId, className = "w-6 h-6", iconName = null) => {
     // If iconName is provided (from category object), use it

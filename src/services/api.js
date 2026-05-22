@@ -62,6 +62,42 @@ export const createUser = async (userData) => {
     return await response.json();
 };
 
+// Giriş yapan kullanıcıları (admins tablosu) listele
+export const getUsers = async () => {
+    const response = await customFetch(`${API_URL}/admin/users`);
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Kullanıcılar alınamadı');
+    }
+    return await response.json();
+};
+
+// Bir kullanıcının rolünü güncelle ('admin' | 'user')
+export const updateUserRole = async (id, role) => {
+    const response = await customFetch(`${API_URL}/admin/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'Rol güncellenemedi');
+    }
+    return data;
+};
+
+// Bir kullanıcıyı sil (admins satırı + Supabase Auth)
+export const deleteUser = async (id) => {
+    const response = await customFetch(`${API_URL}/admin/users/${id}`, {
+        method: 'DELETE'
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'Kullanıcı silinemedi');
+    }
+    return data;
+};
+
 export const getDepartments = async () => {
     try {
         const response = await customFetch(`${API_URL}/departments`);

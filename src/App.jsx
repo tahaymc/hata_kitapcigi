@@ -1,8 +1,8 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import NProgress from 'nprogress';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'sonner';
 
 const HomePage = React.lazy(() => import('./pages/HomePage'));
@@ -53,6 +53,16 @@ const LoadingSpinner = () => (
   </div>
 );
 
+// Yalnızca yöneticilerin erişebileceği rotaları korur.
+// Yönetici değilse ana sayfaya yönlendirir (menüyü gizlemek tek başına
+// güvenlik değildir; doğrudan URL erişimi de burada engellenir).
+const RequireAdmin = ({ children }) => {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return children;
+};
+
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -65,8 +75,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/error/:id" element={<HomePage />} />
             <Route path="/guide/:id" element={<HomePage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/bot" element={<BotAdmin />} />
+            <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+            <Route path="/admin/bot" element={<RequireAdmin><BotAdmin /></RequireAdmin>} />
           </Routes>
         </Suspense>
       </AuthProvider>

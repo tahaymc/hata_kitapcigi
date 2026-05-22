@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { sanitizeRichHtml } from '../utils/helpers';
 
 const COLORS = {
     red: '#ef4444',
@@ -44,11 +45,21 @@ const RichTextEditor = forwardRef(({ value, onChange, placeholder, className, on
 
     useEffect(() => {
         if (editorRef.current && !isInternalUpdate.current && value !== editorRef.current.innerHTML) {
-            editorRef.current.innerHTML = value || '';
+            // Mevcut/yapıştırılmış içerikteki stil artıklarını temizleyerek yükle
+            editorRef.current.innerHTML = sanitizeRichHtml(value || '');
         }
         // Reset internal flag
         isInternalUpdate.current = false;
     }, [value]);
+
+    // Yapıştırmayı düz metin olarak ekle: kaynak font/renk/stil artıklarını
+    // (ör. Word, Gemini'den gelen "...!important" stiller) engeller.
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, text);
+        handleInput();
+    };
 
     const handleInput = () => {
         if (editorRef.current) {
@@ -64,8 +75,9 @@ const RichTextEditor = forwardRef(({ value, onChange, placeholder, className, on
         <div
             ref={editorRef}
             contentEditable
-            className={`overflow-y-auto whitespace-pre-wrap outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 cursor-text ${className}`}
+            className={`rich-content overflow-y-auto whitespace-pre-wrap outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 cursor-text ${className}`}
             onInput={handleInput}
+            onPaste={handlePaste}
             onKeyDown={onKeyDown}
             data-placeholder={placeholder}
             spellCheck={false}

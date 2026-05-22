@@ -9,7 +9,6 @@ const Header = ({
     onLoginClick,
     onLogoutClick,
     onAddClick,
-    onPeopleClick,
     onCredentialsClick,
     onLogoClick,
     searchProps // New prop to pass search bar functionality
@@ -64,16 +63,9 @@ const Header = ({
                                 <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                             </button>
                             <button
-                                onClick={onPeopleClick}
-                                className="hidden sm:block p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-                                title="Personel Yönetimi"
-                            >
-                                <Users className="w-4 h-4" />
-                            </button>
-                            <button
                                 onClick={onCredentialsClick}
                                 className="hidden sm:block p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-                                title="Kullanıcı Bilgilerini Değiştir"
+                                title="Şifre Değiştir"
                             >
                                 <UserCog className="w-4 h-4" />
                             </button>
