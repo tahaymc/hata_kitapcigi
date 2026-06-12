@@ -70,6 +70,7 @@ const useErrors = () => {
 
     return {
         errors,
+        allErrors,
         loading,
         filters,
         setFilters,

@@ -76,6 +76,7 @@ const useGuides = () => {
 
     return {
         guides,
+        allGuides,
         loading,
         filters,
         setFilters,

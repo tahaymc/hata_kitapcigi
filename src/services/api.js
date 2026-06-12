@@ -487,6 +487,54 @@ export const deleteCategory = async (id) => {
     return response.ok;
 };
 
+// --- Announcements (Duyurular) ---
+
+export const getAnnouncements = async () => {
+    try {
+        const response = await customFetch(`${API_URL}/announcements`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    } catch (e) {
+        console.warn('API connection failed (announcements)', e);
+        return [];
+    }
+};
+
+export const addAnnouncement = async (announcement) => {
+    const response = await customFetch(`${API_URL}/announcements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(announcement)
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Duyuru eklenemedi');
+    }
+    return await response.json();
+};
+
+export const updateAnnouncement = async (id, updatedData) => {
+    const response = await customFetch(`${API_URL}/announcements/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Duyuru güncellenemedi');
+    }
+    return await response.json();
+};
+
+export const deleteAnnouncement = async (id) => {
+    const response = await customFetch(`${API_URL}/announcements/${id}`, {
+        method: 'DELETE'
+    });
+    return response.ok;
+};
+
 // --- Bot ---
 
 const handleBotResponse = async (response) => {

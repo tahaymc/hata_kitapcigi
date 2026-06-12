@@ -1,6 +1,8 @@
 import React from 'react';
-import { BookOpen, Sun, Moon, Plus, Users, UserCog, Shield, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Sun, Moon, Plus, UserCog, Shield, LogOut, LayoutDashboard, Bot } from 'lucide-react';
 import SearchBar from './SearchBar';
+import { useAuth } from '../context/AuthContext';
 
 const Header = ({
     isDarkMode,
@@ -11,15 +13,21 @@ const Header = ({
     onAddClick,
     onCredentialsClick,
     onLogoClick,
-    searchProps // New prop to pass search bar functionality
+    searchProps
 }) => {
+    const navigate = useNavigate();
+    // Yönetici Paneli ve Bot Yönetimi yalnızca super_admin'e gösterilir
+    // (eski Sidebar davranışıyla aynı). canManageContent giriş yapmış admini,
+    // isSuperAdmin ise yetkili yöneticiyi belirtir.
+    const { isSuperAdmin } = useAuth();
+
     return (
         <header className="sticky top-0 z-[100] bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300">
             <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-50"></div>
             <div className="max-w-[1920px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
                 {/* Logo Section */}
                 <div className="flex items-center gap-3 group cursor-pointer flex-shrink-0" onClick={onLogoClick}>
-                    <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 group-hover:scale-105 transition-all duration-300 ring-2 ring-white/20 overflow-hidden">
+                    <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-r from-blue-700 via-cyan-400 to-blue-700 animate-gradient-x text-white shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 group-hover:scale-105 transition-all duration-300 ring-2 ring-white/20 overflow-hidden">
                         <div className="absolute inset-0 animate-[shine_3s_infinite] bg-gradient-to-tr from-transparent via-white/75 to-transparent skew-x-12 transform translate-x-[-150%]"></div>
                         <BookOpen className="w-5 h-5 md:w-6 md:h-6 relative z-10" strokeWidth={2.5} />
                     </div>
@@ -55,6 +63,25 @@ const Header = ({
 
                     {isAdmin ? (
                         <div className="flex items-center gap-1">
+                            {/* Yönetici Paneli + Bot Yönetimi — yalnızca super_admin (eski Sidebar davranışı) */}
+                            {isSuperAdmin && (
+                                <>
+                                    <button
+                                        onClick={() => navigate('/admin')}
+                                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                                        title="Yönetici Paneli"
+                                    >
+                                        <LayoutDashboard className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/admin/bot')}
+                                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
+                                        title="Bot Yönetimi"
+                                    >
+                                        <Bot className="w-4 h-4" />
+                                    </button>
+                                </>
+                            )}
                             <button
                                 onClick={onAddClick}
                                 className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 group"
@@ -89,8 +116,6 @@ const Header = ({
                     )}
                 </div>
             </div>
-
-
         </header>
     );
 };

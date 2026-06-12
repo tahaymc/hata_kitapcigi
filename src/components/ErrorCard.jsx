@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2, RotateCcw, GripVertical } from 'lucide-react';
+import { Calendar, Edit2, Eye, Image as ImageIcon, Trash2, RotateCcw, GripVertical, Star } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
 import { getCategoryIcon, formatDate, sanitizeRichHtml } from '../utils/helpers';
@@ -19,9 +19,10 @@ const ErrorCard = ({
     onResetViewClick,
     onImageClick,
     isAdmin,
-    viewMode = 'grid',
     defaultStyle = COLOR_STYLES['slate'],
-    dragHandleProps
+    dragHandleProps,
+    isFavorite = false,
+    onToggleFavorite
 }) => {
     const queryClient = useQueryClient();
     const { isSuperAdmin, userDepartmentId } = useAuth();
@@ -38,10 +39,9 @@ const ErrorCard = ({
         });
     };
 
-    if (viewMode === 'grid') {
-        return (
+    return (
             <div
-                className={`bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full overflow-hidden`}
+                className={`bg-white dark:bg-[#1e293b] rounded-3xl p-5 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full overflow-hidden`}
                 onClick={() => onCardClick(error)}
                 onMouseEnter={handleMouseEnter}
                 onDoubleClick={(e) => {
@@ -77,8 +77,15 @@ const ErrorCard = ({
                         </h3>
                     </div>
 
-                    {/* Right: Code */}
-                    <div className="flex-none">
+                    {/* Right: Favorite + Code */}
+                    <div className="flex-none flex items-center gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onToggleFavorite && onToggleFavorite(error.id); }}
+                            className={`p-1.5 rounded-lg transition-all hover:scale-110 active:scale-90 ${isFavorite ? 'text-amber-400 hover:text-amber-500' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400'}`}
+                            title={isFavorite ? 'Favorilerden çıkar' : 'Favorile'}
+                        >
+                            <Star className="w-4 h-4" fill={isFavorite ? 'currentColor' : 'none'} />
+                        </button>
                         <span
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -225,97 +232,6 @@ const ErrorCard = ({
                 )}
             </div>
         );
-    }
-
-    return (
-        <div
-            className={`bg-white dark:bg-[#1e293b] py-4 px-6 rounded-2xl shadow-sm hover:shadow-lg border border-slate-100 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-0.5 flex items-center gap-6`}
-            onClick={() => onCardClick(error)}
-            onMouseEnter={handleMouseEnter}
-        >
-            <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${style.bar?.split(' ')[0] || 'bg-slate-500'}`} />
-
-            {/* Left: Category Icon */}
-            <div className="flex-none">
-                <div
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onCategoryClick(error.category);
-                    }}
-                    className={`w-12 h-12 flex items-center justify-center rounded-xl border shadow-sm transition-transform group-hover:scale-105 cursor-pointer hover:opacity-80 ${style.bgLight} ${style.text} ${style.borderLight}`}
-                    title={`Kategoriye git: ${cat?.name || 'Bilinmeyen'}`}
-                >
-                    {getCategoryIcon(error.category, "w-6 h-6 transition-transform group-hover:rotate-12", cat?.icon)}
-                </div>
-            </div>
-
-            {/* Middle: Content */}
-            <div className="flex-1 min-w-0 grid grid-cols-12 gap-6 items-center">
-                {/* Title & Date */}
-                <div className="col-span-12 sm:col-span-4">
-                    <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-1 truncate">
-                        {error.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <Calendar className="w-3 h-3" />
-                        <span>{formatDate(error.date)}</span>
-                    </div>
-                </div>
-
-                {/* Summary */}
-                <div className="hidden sm:block sm:col-span-6">
-                    <div
-                        className="rich-content text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(error.summary) }}
-                    />
-                </div>
-
-                {/* Code */}
-                <div className="hidden sm:block sm:col-span-2 text-right">
-                    <span className={`inline-block px-3 py-1 rounded-lg border font-mono font-bold text-xs tracking-tight ${style.bgLight} ${style.text} ${style.borderLight}`}>
-                        {error.code || 'SYS-000'}
-                    </span>
-                </div>
-            </div>
-
-            {/* Top Right: Admin Actions (Only visible on hover) */}
-            {isAdmin && (
-                <div className="flex items-center gap-2 pl-4 border-l border-slate-100 dark:border-slate-800 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {dragHandleProps && (
-                        <div
-                            {...dragHandleProps}
-                            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-all cursor-grab active:cursor-grabbing"
-                            title="Sıralamak için sürükleyin"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <GripVertical className="w-4 h-4" />
-                        </div>
-                    )}
-                    <button
-                        onClick={(e) => onResetViewClick(e, error)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-orange-500 transition-all"
-                        title="Görüntülenmeyi Sıfırla"
-                    >
-                        <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => onEditClick(e, error)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-all"
-                        title="Düzenle"
-                    >
-                        <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => onDeleteClick(e, error.id)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-red-500 transition-all"
-                        title="Sil"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
-        </div>
-    );
 };
 
 export default ErrorCard;

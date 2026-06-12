@@ -3,7 +3,7 @@ import { ChevronDown, Plus, Edit2, Trash2 } from 'lucide-react';
 import { COLOR_STYLES, ICON_OPTIONS } from '../utils/constants';
 import { getCategoryIcon } from '../utils/helpers';
 
-const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori Seçin", onAddCategory, onUpdateCategory, onDeleteCategory }) => {
+const CategorySelect = ({ value, onChange, categories, departments = [], placeholder = "Kategori Seçin", onAddCategory, onUpdateCategory, onDeleteCategory }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
     const [editingCatId, setEditingCatId] = useState(null);
@@ -12,6 +12,12 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
     const [formName, setFormName] = useState("");
     const [formColor, setFormColor] = useState("slate");
     const [formIcon, setFormIcon] = useState("settings");
+    // Kategorinin bağlı olduğu departman (int PK; boş = atanmamış)
+    const [formDepartmentId, setFormDepartmentId] = useState("");
+
+    // Departman id -> ad eşlemesi (kategori satırında rozet göstermek için)
+    const departmentName = (id) =>
+        departments.find(d => String(d.id) === String(id))?.name || null;
 
     const dropdownRef = React.useRef(null);
 
@@ -33,6 +39,7 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
         setFormName("");
         setFormColor("slate");
         setFormIcon("settings");
+        setFormDepartmentId("");
     };
 
     const startEdit = (e, c) => {
@@ -42,6 +49,7 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
         setFormName(c.name);
         setFormColor(c.color);
         setFormIcon(c.icon || "settings");
+        setFormDepartmentId(c.department_id != null ? String(c.department_id) : "");
     };
 
     const handleSaveAdd = async (e) => {
@@ -49,12 +57,13 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
         e.stopPropagation();
         if (!formName.trim() || !onAddCategory) return;
 
-        const success = await onAddCategory(formName, formColor, formIcon);
+        const success = await onAddCategory(formName, formColor, formIcon, formDepartmentId);
         if (success) {
             setIsAdding(false);
             setFormName("");
             setFormColor("slate");
             setFormIcon("settings");
+            setFormDepartmentId("");
             // Optionally close dropdown or stay open
         }
     };
@@ -64,12 +73,13 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
         e.stopPropagation();
         if (!formName.trim() || !onUpdateCategory) return;
 
-        const success = await onUpdateCategory(editingCatId, formName, formColor, formIcon);
+        const success = await onUpdateCategory(editingCatId, formName, formColor, formIcon, formDepartmentId);
         if (success) {
             setEditingCatId(null);
             setFormName("");
             setFormColor("slate");
             setFormIcon("settings");
+            setFormDepartmentId("");
         }
     };
 
@@ -88,6 +98,7 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
         setEditingCatId(null);
         setFormName("");
         setFormColor("slate");
+        setFormDepartmentId("");
     };
 
     const selectedCat = categories.find(c => c.id === value);
@@ -109,6 +120,20 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
                     onChange={e => setFormName(e.target.value)}
                     onClick={e => e.stopPropagation()}
                 />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Departman</label>
+                <select
+                    value={formDepartmentId}
+                    onChange={e => setFormDepartmentId(e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                >
+                    <option value="">— Departman seçin —</option>
+                    {departments.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                </select>
             </div>
             <div>
                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Simge Seçin</label>
@@ -205,6 +230,15 @@ const CategorySelect = ({ value, onChange, categories, placeholder = "Kategori S
                                     <span className={`font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                         {c.name}
                                     </span>
+                                    {departmentName(c.department_id) ? (
+                                        <span className="ml-2 px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                            {departmentName(c.department_id)}
+                                        </span>
+                                    ) : (
+                                        <span className="ml-2 px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                                            Departman yok
+                                        </span>
+                                    )}
                                     {isSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></div>}
                                 </button>
 

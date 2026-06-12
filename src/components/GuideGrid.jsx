@@ -57,7 +57,9 @@ const GuideGrid = ({
     onDeleteClick,
     onImageClick,
     isAdmin,
-    onDragEnd // Callback from HomePage
+    onDragEnd, // Callback from HomePage
+    isFavorite,
+    onToggleFavorite
 }) => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -95,7 +97,9 @@ const GuideGrid = ({
             onEditClick,
             onDeleteClick,
             onImageClick,
-            isAdmin
+            isAdmin,
+            isFavorite: isFavorite ? isFavorite(guide.id) : false,
+            onToggleFavorite
         };
 
         if (isSortable) {
@@ -111,17 +115,17 @@ const GuideGrid = ({
                     <span className="text-4xl">📚</span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-                    Kılavuz Bulunamadı
+                    Eğitim Bulunamadı
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                    Henüz eklenmiş bir kullanım kılavuzu yok veya arama kriterlerine uygun kayıt bulunamadı.
+                    Henüz eklenmiş bir kullanım eğitimi yok veya arama kriterlerine uygun kayıt bulunamadı.
                 </p>
             </div>
         );
     }
 
     const content = (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {guides.map(guide => renderCard(guide, enableDnd))}
         </div>
     );
@@ -159,6 +163,8 @@ const GuideGrid = ({
                                 onDeleteClick={() => { }}
                                 onImageClick={() => { }}
                                 isAdmin={isAdmin}
+                                isFavorite={isFavorite ? isFavorite(activeGuide.id) : false}
+                                onToggleFavorite={() => { }}
                             />
                         </div>
                     ) : null}

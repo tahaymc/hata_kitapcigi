@@ -259,7 +259,7 @@ const DraggableStepItem = ({ step, index, editingError, setEditingError }) => {
     );
 };
 
-const EditErrorModal = ({ isOpen, onClose, onSuccess, errorToEdit, categories, onAddCategory, onUpdateCategory, onDeleteCategory, showToast }) => {
+const EditErrorModal = ({ isOpen, onClose, onSuccess, errorToEdit, categories, departments = [], onAddCategory, onUpdateCategory, onDeleteCategory, showToast }) => {
     const summaryEditorRef = React.useRef(null);
 
     const handleSummaryFormat = (type, value) => {
@@ -420,6 +420,7 @@ const EditErrorModal = ({ isOpen, onClose, onSuccess, errorToEdit, categories, o
                                 value={editingError.category}
                                 onChange={(val) => setEditingError({ ...editingError, category: val })}
                                 categories={categories}
+                                departments={departments}
                                 onAddCategory={onAddCategory}
                                 onUpdateCategory={onUpdateCategory}
                                 onDeleteCategory={onDeleteCategory}

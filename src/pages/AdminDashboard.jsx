@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { createUser, getUsers, updateUserRole, deleteUser } from '../services/api';
 
 const AdminDashboard = () => {
-    const { isAdmin, loading: authLoading, user } = useAuth();
+    const { isSuperAdmin, loading: authLoading, user } = useAuth();
     const navigate = useNavigate();
 
     // Form State
@@ -17,7 +17,7 @@ const AdminDashboard = () => {
         email: '',
         password: '',
         name: '',
-        role: 'user'
+        role: 'admin'
     });
     const [formLoading, setFormLoading] = useState(false);
     const [users, setUsers] = useState([]);
@@ -27,10 +27,10 @@ const AdminDashboard = () => {
 
     // Yetki koruması: yönetici değilse ana sayfaya yönlendir
     useEffect(() => {
-        if (!authLoading && !isAdmin) {
+        if (!authLoading && !isSuperAdmin) {
             navigate('/');
         }
-    }, [authLoading, isAdmin, navigate]);
+    }, [authLoading, isSuperAdmin, navigate]);
 
     const loadUsers = async () => {
         try {
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
         try {
             await createUser(formData);
             toast.success('Kullanıcı başarıyla oluşturuldu.');
-            setFormData({ email: '', password: '', name: '', role: 'user' });
+            setFormData({ email: '', password: '', name: '', role: 'admin' });
             loadUsers();
         } catch (err) {
             toast.error(err.message || 'Bir hata oluştu');
@@ -91,7 +91,7 @@ const AdminDashboard = () => {
         }
     };
 
-    if (authLoading || !isAdmin) return null;
+    if (authLoading || !isSuperAdmin) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 p-6 lg:p-12 font-sans selection:bg-blue-100 dark:selection:bg-blue-900/30">
@@ -201,8 +201,8 @@ const AdminDashboard = () => {
                                                     value={formData.role}
                                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                                 >
-                                                    <option value="user">Kullanıcı (sadece içerik)</option>
-                                                    <option value="admin">Yönetici (panel + bot)</option>
+                                                    <option value="admin">Yönetici (sadece içerik)</option>
+                                                    <option value="super_admin">Süper Yönetici (panel + bot)</option>
                                                 </select>
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                                     <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -257,11 +257,11 @@ const AdminDashboard = () => {
                                     ) : (
                                         users.map((u) => {
                                             const isSelf = u.auth_id === user?.id;
-                                            const role = (u.access_role === 'admin' || u.role === 'admin') ? 'admin' : 'user';
+                                            const role = (u.access_role === 'super_admin' || u.role === 'super_admin') ? 'super_admin' : 'admin';
                                             const busy = busyuserId === u.id;
                                             return (
                                                 <div key={u.id} className="flex items-center gap-4 p-4">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${role === 'admin' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'}`}>
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${role === 'super_admin' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'}`}>
                                                         {(u.name || u.email || '?').charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
@@ -279,8 +279,8 @@ const AdminDashboard = () => {
                                                         className="px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                         title={isSelf ? 'Kendi rolünüzü değiştiremezsiniz' : 'Rolü değiştir'}
                                                     >
-                                                        <option value="user">Kullanıcı</option>
                                                         <option value="admin">Yönetici</option>
+                                                        <option value="super_admin">Süper Yönetici</option>
                                                     </select>
 
                                                     <button

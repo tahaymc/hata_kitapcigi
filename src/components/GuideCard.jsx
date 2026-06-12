@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Edit2, Eye, Trash2, Video, Image as ImageIcon, RotateCcw, GripVertical } from 'lucide-react';
+import { Calendar, Edit2, Eye, Trash2, Video, Image as ImageIcon, RotateCcw, GripVertical, Star } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { COLOR_STYLES } from '../utils/constants';
 import { getCategoryIcon, formatDate, sanitizeRichHtml } from '../utils/helpers';
@@ -20,7 +20,9 @@ const GuideCard = ({
     isAdmin,
     selectedDate, // Add selectedDate prop
     defaultStyle = COLOR_STYLES['emerald'],
-    dragHandleProps
+    dragHandleProps,
+    isFavorite = false,
+    onToggleFavorite
 }) => {
     const queryClient = useQueryClient();
     const { isSuperAdmin, userDepartmentId } = useAuth();
@@ -48,7 +50,7 @@ const GuideCard = ({
 
     return (
         <div
-            className={`bg-white dark:bg-[#1e293b] rounded-[2rem] p-6 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full overflow-hidden`}
+            className={`bg-white dark:bg-[#1e293b] rounded-3xl p-5 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 ${style.hoverBorder} transition-all duration-300 group cursor-pointer relative hover:-translate-y-2 hover:scale-[1.02] flex flex-col h-full overflow-hidden`}
             onClick={() => onCardClick(guide)}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -81,8 +83,15 @@ const GuideCard = ({
                     </h3>
                 </div>
 
-                {/* Guide Code Badge */}
-                <div className="flex-none">
+                {/* Guide Favorite + Code Badge */}
+                <div className="flex-none flex items-center gap-2">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onToggleFavorite && onToggleFavorite(guide.id); }}
+                        className={`p-1.5 rounded-lg transition-all hover:scale-110 active:scale-90 ${isFavorite ? 'text-amber-400 hover:text-amber-500' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400'}`}
+                        title={isFavorite ? 'Favorilerden çıkar' : 'Favorile'}
+                    >
+                        <Star className="w-4 h-4" fill={isFavorite ? 'currentColor' : 'none'} />
+                    </button>
                     <span
                         onClick={(e) => {
                             e.stopPropagation();
@@ -144,7 +153,7 @@ const GuideCard = ({
             <div className="mt-auto pt-4">
                 <div className="flex items-center gap-2 mb-2 px-1 opacity-60">
                     <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kılavuz Görseli</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Eğitim Görseli</span>
                     <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
                 </div>
                 <div className={`aspect-video w-full rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900/50 relative group/image border-4 ${style.borderLight} transition-colors`}>

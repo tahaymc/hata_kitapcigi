@@ -52,7 +52,7 @@ try {
 }
 
 // Yazma işlemleri (insert/update/delete) için tercihen service-role client.
-// Bu uçlar zaten verifyAdmin ile yetkilendirilir; service-role kullanmak,
+// Bu uçlar zaten verifyAdmin/verifySuperAdmin ile yetkilendirilir; service-role kullanmak,
 // guides/errors tablolarındaki RLS politikalarını (ör. olmayan bir auth_id
 // kolonuna atıf yapan bozuk politika) baypas eder. Service key yoksa anon'a düşer.
 const writeDb = () => supabaseAdmin || supabase;
@@ -91,151 +91,161 @@ const upload = multer({
 // Video Upload Endpoint (Deprecated - replaced by client-side upload)
 // app.post('/api/upload-video', ...);
 
-// Generate Signed Upload URL
+// Bucket adından signed upload URL üreten ortak yardımcı.
+const generateSignedUploadFor = async (bucket, name, type) => {
+    if (!name || !type) return { error: 'File name and type are required' };
+    const cleanName = name.replace(/[^a-zA-Z0-9.]/g, '_');
+    const fileName = `${Date.now()}_${cleanName}`;
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUploadUrl(fileName);
+    if (error) return { error: error.message };
+    if (!data || !data.signedUrl) return { error: 'Failed to generate signed URL' };
+
+    const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+    return {
+        signedUrl: data.signedUrl,
+        path: data.path,
+        publicUrl,
+        fileName
+    };
+};
+
+// Generate Signed Upload URL (videos bucket — top-level kapak videoları için)
 app.post('/api/generate-upload-url', async (req, res) => {
     if (!checkDb(res)) return;
     try {
         const { name, type } = req.body;
-        if (!name || !type) return res.status(400).json({ error: 'File name and type are required' });
-
-        // Sanitize filename
-        const cleanName = name.replace(/[^a-zA-Z0-9.]/g, '_');
-        const fileName = `${Date.now()}_${cleanName}`;
-
-        // Generate Signed URL for Upload
-        // 'video' is the bucket name
-        const { data, error } = await supabase.storage
-            .from('videos')
-            .createSignedUploadUrl(fileName);
-
-        if (error) throw error;
-
-        // Verify signedUrl generation
-        if (!data || !data.signedUrl) {
-            throw new Error('Failed to generate signed URL');
-        }
-
-        // Generate Public URL for future access
-        const { data: { publicUrl } } = supabase.storage
-            .from('videos')
-            .getPublicUrl(fileName);
-
-        res.json({
-            signedUrl: data.signedUrl,
-            path: data.path, // May trigger 'token' in older versions, but 'signedUrl' is key
-            publicUrl: publicUrl,
-            fileName: fileName
-        });
+        const out = await generateSignedUploadFor('videos', name, type);
+        if (out.error) return res.status(400).json({ error: out.error });
+        res.json(out);
     } catch (e) {
         console.error('Generate Upload URL Failed:', e.message);
         res.status(500).json({ error: e.message });
     }
 });
 
+// NOT: Step foto yükleme ucu (generate-image-upload-url) verifyAdmin
+// middleware'ine bağlı olduğundan, aşağıdaki middleware tanımlarından SONRA
+// kaydedilir (const TDZ — tanımdan önce kullanılamaz).
+
 // --- AUTH MIDDLEWARE ---
+//
+// İki seviyeli yetki:
+//  - verifyAdmin: role ∈ {'admin', 'super_admin'} — içerik (hata/kılavuz/
+//    kategori/kişi) CRUD için. req.isSuperAdmin true ise departman kısıtı
+//    uygulanmaz; admin için req.userDepartmentId üzerinden kısıtlama yapılır.
+//  - verifySuperAdmin: role === 'super_admin' — Yönetici Paneli, Bot Yönetimi
+//    ve kullanıcı/departman yönetimi için.
+
+const authenticateRequest = async (req, res) => {
+    if (!checkDb(res)) return null;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).json({ error: 'Authorization header missing' });
+        return null;
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+        res.status(401).json({ error: 'Bearer token missing' });
+        return null;
+    }
+
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            res.status(403).json({ error: 'Invalid token' });
+            return null;
+        }
+
+        // admins tablosunda department_id kolonu yok; '*' ile çekiyoruz ki
+        // yapı değişirse middleware'i tekrar elle güncellemek gerekmesin.
+        const { data: person, error: personError } = await supabase
+            .from('admins')
+            .select('*')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (personError || !person) {
+            console.warn('authenticateRequest: admins row not found', {
+                auth_id: user.id,
+                error: personError?.message
+            });
+            res.status(403).json({ error: 'User profile not found or unauthorized' });
+            return null;
+        }
+
+        const role = person.access_role || person.role || null;
+        return { user, person, role };
+    } catch (e) {
+        console.error('Authentication failed:', e.message);
+        res.status(500).json({ error: 'Internal server error during authentication' });
+        return null;
+    }
+};
 
 const verifyAdmin = async (req, res, next) => {
-    if (!checkDb(res)) return;
+    const ctx = await authenticateRequest(req, res);
+    if (!ctx) return;
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ error: 'Authorization header missing' });
+    if (ctx.role !== 'admin' && ctx.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Access denied: admin or super_admin required' });
     }
 
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ error: 'Bearer token missing' });
-    }
-
-    try {
-        // 1. Verify Token with Supabase
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-        if (authError || !user) {
-            return res.status(403).json({ error: 'Invalid token' });
-        }
-
-        // 2. Fetch user's profile from 'admins' table to get their role
-        const { data: person, error: personError } = await supabase
-            .from('admins')
-            .select('access_role')
-            .eq('auth_id', user.id)
-            .single();
-
-        if (personError || !person) {
-            console.warn(`User ${user.id} found in auth but no profile in 'admins' table.`);
-            return res.status(403).json({ error: 'User profile not found or unauthorized' });
-        }
-
-        // 3. Check if the user has 'admin' access_role
-        if (person.access_role !== 'admin') {
-            return res.status(403).json({ error: 'Access denied: Not an administrator' });
-        }
-
-        // Attach user and person data to the request
-        req.user = user;
-        req.person = person;
-
-        req.isSuperAdmin = true;
-        req.userDepartmentId = null;
-
-        next();
-
-    } catch (e) {
-        console.error('Admin verification failed:', e.message);
-        return res.status(500).json({ error: 'Internal server error during authentication' });
-    }
+    req.user = ctx.user;
+    req.person = ctx.person;
+    req.role = ctx.role;
+    req.isSuperAdmin = ctx.role === 'super_admin';
+    // admins tablosunda department_id kolonu yoksa null kalır; varsa kullanılır.
+    req.userDepartmentId = ctx.person.department_id ?? null;
+    next();
 };
 
-// İçerik yönetimi (hata/kılavuz ekle/düzenle/sil) için yetkilendirme.
-// admins tablosunda profili olan HERKES (rol 'admin' veya 'user') geçer.
-// Yönetici Paneli / Bot uçları için ise verifyAdmin (yalnızca 'admin') gerekir.
-const verifyUser = async (req, res, next) => {
-    if (!checkDb(res)) return;
+const verifySuperAdmin = async (req, res, next) => {
+    const ctx = await authenticateRequest(req, res);
+    if (!ctx) return;
 
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ error: 'Authorization header missing' });
+    if (ctx.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Access denied: super_admin required' });
     }
 
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-        return res.status(401).json({ error: 'Bearer token missing' });
-    }
-
-    try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-        if (authError || !user) {
-            return res.status(403).json({ error: 'Invalid token' });
-        }
-
-        const { data: person, error: personError } = await supabase
-            .from('admins')
-            .select('access_role, role')
-            .eq('auth_id', user.id)
-            .single();
-
-        if (personError || !person) {
-            return res.status(403).json({ error: 'User profile not found or unauthorized' });
-        }
-
-        req.user = user;
-        req.person = person;
-        req.isAdmin = (person.access_role === 'admin' || person.role === 'admin');
-        // İçerikte departman kısıtı uygulanmıyor (2 seviyeli model)
-        req.isSuperAdmin = true;
-        req.userDepartmentId = null;
-
-        next();
-    } catch (e) {
-        console.error('User verification failed:', e.message);
-        return res.status(500).json({ error: 'Internal server error during authentication' });
-    }
+    req.user = ctx.user;
+    req.person = ctx.person;
+    req.role = ctx.role;
+    req.isSuperAdmin = true;
+    // admins tablosunda department_id kolonu yoksa null kalır; varsa kullanılır.
+    req.userDepartmentId = ctx.person.department_id ?? null;
+    next();
 };
+
+// Step foto yüklemeleri — 'step-photos' bucket. Yalnız admin yetkili.
+// (Bucket'ın Supabase'de public read ile oluşturulmuş olması gerekir.)
+// verifyAdmin yukarıda tanımlandıktan sonra kaydedilir.
+app.post('/api/generate-image-upload-url', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { name, type } = req.body;
+        if (type && !String(type).startsWith('image/')) {
+            return res.status(400).json({ error: 'Only image uploads are allowed for this endpoint' });
+        }
+        const out = await generateSignedUploadFor('step-photos', name, type);
+        if (out.error) return res.status(400).json({ error: out.error });
+        res.json(out);
+    } catch (e) {
+        console.error('Generate Image Upload URL Failed:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // --- ADMIN ENDPOINTS ---
 
-app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
+app.post('/api/admin/create-user', verifySuperAdmin, async (req, res) => {
     if (!req.isSuperAdmin) {
         return res.status(403).json({ error: 'Access denied: Only Super Admins can create users' });
     }
@@ -250,8 +260,8 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields: email, password, name' });
     }
 
-    // Yalnızca 'admin' veya 'user' rolüne izin ver (varsayılan: user)
-    const safeRole = role === 'admin' ? 'admin' : 'user';
+    // Yalnızca 'admin' veya 'super_admin' rolüne izin ver (varsayılan: admin)
+    const safeRole = role === 'super_admin' ? 'super_admin' : 'admin';
 
     try {
         // 1. Create User in Supabase Auth
@@ -297,7 +307,7 @@ app.post('/api/admin/create-user', verifyAdmin, async (req, res) => {
 });
 
 // List all login users (admins table) — yalnızca yöneticiler
-app.get('/api/admin/users', verifyAdmin, async (req, res) => {
+app.get('/api/admin/users', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     try {
         const { data, error } = await writeDb()
@@ -313,10 +323,10 @@ app.get('/api/admin/users', verifyAdmin, async (req, res) => {
 });
 
 // Update a user's role — yalnızca yöneticiler
-app.put('/api/admin/users/:id', verifyAdmin, async (req, res) => {
+app.put('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { id } = req.params;
-    const role = req.body.role === 'admin' ? 'admin' : 'user';
+    const role = req.body.role === 'super_admin' ? 'super_admin' : 'admin';
 
     try {
         const { data: target, error: findErr } = await writeDb()
@@ -346,7 +356,7 @@ app.put('/api/admin/users/:id', verifyAdmin, async (req, res) => {
 });
 
 // Delete a user (admins satırı + Supabase Auth kullanıcısı) — yalnızca yöneticiler
-app.delete('/api/admin/users/:id', verifyAdmin, async (req, res) => {
+app.delete('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     if (!supabaseAdmin) {
         return res.status(503).json({ error: 'Admin service not configured (Missing Key)' });
@@ -469,7 +479,7 @@ app.get('/api/guides/:id', async (req, res) => {
 });
 
 // POST New Guide
-app.post('/api/guides', verifyUser, async (req, res) => {
+app.post('/api/guides', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
 
     // Department Permission Check
@@ -562,7 +572,7 @@ app.post('/api/guides', verifyUser, async (req, res) => {
 });
 
 // PUT Update Guide
-app.put('/api/guides/:id', verifyUser, async (req, res) => {
+app.put('/api/guides/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -658,7 +668,7 @@ app.put('/api/guides/:id', verifyUser, async (req, res) => {
 });
 
 // DELETE Guide
-app.delete('/api/guides/:id', verifyUser, async (req, res) => {
+app.delete('/api/guides/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -724,7 +734,7 @@ app.post('/api/guides/:id/view', async (req, res) => {
 });
 
 // Reset Guide View Count
-app.post('/api/guides/:id/reset-view', async (req, res) => {
+app.post('/api/guides/:id/reset-view', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -745,7 +755,7 @@ app.post('/api/guides/:id/reset-view', async (req, res) => {
 });
 
 // Reorder Guides
-app.post('/api/guides/reorder', async (req, res) => {
+app.post('/api/guides/reorder', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { orderedIds } = req.body;
 
@@ -866,7 +876,7 @@ app.get('/api/errors', async (req, res) => {
 // [Start of NEW Reorder Endpoint]
 
 // Reorder Errors
-app.post('/api/errors/reorder', async (req, res) => {
+app.post('/api/errors/reorder', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { orderedIds } = req.body; // Array of IDs in new order
 
@@ -941,9 +951,16 @@ app.get('/api/errors/:id', async (req, res) => {
 app.get('/api/categories', async (req, res) => {
     if (!checkDb(res)) return;
     try {
-        const { data, error } = await supabase
+        let query = supabase
             .from('categories')
             .select('*');
+
+        // İsteğe bağlı: yalnızca belirli bir departmanın alt kategorileri.
+        if (req.query.department_id) {
+            query = query.eq('department_id', req.query.department_id);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         res.json(data);
@@ -954,21 +971,22 @@ app.get('/api/categories', async (req, res) => {
 });
 
 // POST New Category
-app.post('/api/categories', async (req, res) => {
+app.post('/api/categories', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
-    const { name, color, icon, type } = req.body;
+    const { name, color, icon, type, department_id } = req.body;
     const id = req.body.id || name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
     const newCategory = {
         id,
         name,
-        color,
+        color, // geriye dönük uyum; UI'da artık departman rengi esas
         icon: icon || 'settings',
-        type: type || 'errors' // Default to 'errors' if not provided
+        type: type || 'errors', // Default to 'errors' if not provided
+        department_id: department_id ?? null
     };
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('categories')
             .insert([newCategory])
             .select()
@@ -983,15 +1001,23 @@ app.post('/api/categories', async (req, res) => {
 });
 
 // PUT Update Category
-app.put('/api/categories/:id', async (req, res) => {
+app.put('/api/categories/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { id } = req.params;
-    const { name, color, icon, type } = req.body;
+    const { name, color, icon, type, department_id } = req.body;
+
+    // Yalnızca gönderilen alanları güncelle.
+    const patch = {};
+    if (name !== undefined) patch.name = name;
+    if (color !== undefined) patch.color = color;
+    if (icon !== undefined) patch.icon = icon;
+    if (type !== undefined) patch.type = type;
+    if (department_id !== undefined) patch.department_id = department_id;
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('categories')
-            .update({ name, color, icon, type })
+            .update(patch)
             .eq('id', id)
             .select()
             .single();
@@ -1009,12 +1035,12 @@ app.put('/api/categories/:id', async (req, res) => {
 });
 
 // DELETE Category
-app.delete('/api/categories/:id', async (req, res) => {
+app.delete('/api/categories/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { id } = req.params;
 
     try {
-        const { error } = await supabase
+        const { error } = await writeDb()
             .from('categories')
             .delete()
             .eq('id', id);
@@ -1027,15 +1053,107 @@ app.delete('/api/categories/:id', async (req, res) => {
     }
 });
 
+// --- ANNOUNCEMENTS (Duyurular) ENDPOINTS ---
+// Yetki: verifyAdmin (admin + super_admin). Okuma herkese açık.
+// Sıralama: acil olanlar üstte, sonra en yeni.
+
+app.get('/api/announcements', async (req, res) => {
+    if (!checkDb(res)) return;
+    try {
+        const { data, error } = await supabase
+            .from('announcements')
+            .select('*')
+            .order('is_urgent', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (GET /announcements):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/announcements', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    const { title, body, is_urgent, department_id } = req.body;
+    if (!title || !title.trim()) return res.status(400).json({ error: 'Başlık zorunludur' });
+
+    try {
+        const { data, error } = await writeDb()
+            .from('announcements')
+            .insert([{
+                title: title.trim(),
+                body: body || '',
+                is_urgent: !!is_urgent,
+                department_id: department_id ? Number(department_id) : null
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Supabase Error (POST /announcements):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/announcements/:id', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    const { id } = req.params;
+    const { title, body, is_urgent, department_id } = req.body;
+
+    const patch = {};
+    if (title !== undefined) patch.title = title;
+    if (body !== undefined) patch.body = body;
+    if (is_urgent !== undefined) patch.is_urgent = !!is_urgent;
+    if (department_id !== undefined) patch.department_id = department_id ? Number(department_id) : null;
+
+    try {
+        const { data, error } = await writeDb()
+            .from('announcements')
+            .update(patch)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
+    } catch (e) {
+        console.error('Supabase Error (PUT /announcements):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/announcements/:id', verifyAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    const { id } = req.params;
+
+    try {
+        const { error } = await writeDb()
+            .from('announcements')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (DELETE /announcements):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // --- DEPARTMENTS ENDPOINTS ---
 
-// GET All Departments
+// GET All Departments — ana katman; sort_order, sonra ad sırasıyla.
 app.get('/api/departments', async (req, res) => {
     if (!checkDb(res)) return;
     try {
         const { data, error } = await supabase
             .from('departments')
             .select('*')
+            .order('sort_order', { ascending: true, nullsFirst: false })
             .order('name', { ascending: true });
 
         if (error) throw error;
@@ -1046,15 +1164,15 @@ app.get('/api/departments', async (req, res) => {
     }
 });
 
-// POST New Department
-app.post('/api/departments', async (req, res) => {
+// POST New Department — yalnızca yönetici (RLS ile uyumlu)
+app.post('/api/departments', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
-    const { name, color, icon } = req.body;
+    const { name, color, icon, sort_order } = req.body;
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('departments')
-            .insert([{ name, color, icon }])
+            .insert([{ name, color, icon, sort_order: sort_order ?? 0 }])
             .select()
             .single();
 
@@ -1066,16 +1184,23 @@ app.post('/api/departments', async (req, res) => {
     }
 });
 
-// PUT Update Department
-app.put('/api/departments/:id', async (req, res) => {
+// PUT Update Department — yalnızca yönetici
+app.put('/api/departments/:id', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = req.params.id;
-    const { name, color, icon } = req.body;
+    const { name, color, icon, sort_order } = req.body;
+
+    // Yalnızca gönderilen alanları güncelle (sort_order tek başına gelebilir).
+    const patch = {};
+    if (name !== undefined) patch.name = name;
+    if (color !== undefined) patch.color = color;
+    if (icon !== undefined) patch.icon = icon;
+    if (sort_order !== undefined) patch.sort_order = sort_order;
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await writeDb()
             .from('departments')
-            .update({ name, color, icon })
+            .update(patch)
             .eq('id', id)
             .select()
             .single();
@@ -1088,13 +1213,13 @@ app.put('/api/departments/:id', async (req, res) => {
     }
 });
 
-// DELETE Department
-app.delete('/api/departments/:id', async (req, res) => {
+// DELETE Department — yalnızca yönetici
+app.delete('/api/departments/:id', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = req.params.id;
 
     try {
-        const { error } = await supabase
+        const { error } = await writeDb()
             .from('departments')
             .delete()
             .eq('id', id);
@@ -1103,6 +1228,31 @@ app.delete('/api/departments/:id', async (req, res) => {
         res.json({ success: true });
     } catch (e) {
         console.error('Supabase Error (DELETE /departments):', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST Reorder Departments — yalnızca yönetici
+app.post('/api/departments/reorder', verifySuperAdmin, async (req, res) => {
+    if (!checkDb(res)) return;
+    const { orderedIds } = req.body;
+
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+        return res.status(400).json({ error: 'Invalid data' });
+    }
+
+    try {
+        const updates = orderedIds.map((id, index) =>
+            writeDb()
+                .from('departments')
+                .update({ sort_order: index })
+                .eq('id', id)
+        );
+
+        await Promise.all(updates);
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Supabase Error (Reorder Departments):', e.message);
         res.status(500).json({ error: e.message });
     }
 });
@@ -1127,7 +1277,7 @@ app.get('/api/people', async (req, res) => {
 });
 
 // POST New Person
-app.post('/api/people', async (req, res) => {
+app.post('/api/people', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { name, role, department_id, color, avatar_url } = req.body;
 
@@ -1147,7 +1297,7 @@ app.post('/api/people', async (req, res) => {
 });
 
 // PUT Update Person
-app.put('/api/people/:id', async (req, res) => {
+app.put('/api/people/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = req.params.id;
     const { name, role, department_id, color, avatar_url } = req.body;
@@ -1169,7 +1319,7 @@ app.put('/api/people/:id', async (req, res) => {
 });
 
 // DELETE Person
-app.delete('/api/people/:id', async (req, res) => {
+app.delete('/api/people/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = req.params.id;
 
@@ -1188,7 +1338,7 @@ app.delete('/api/people/:id', async (req, res) => {
 });
 
 // POST New Error
-app.post('/api/errors', verifyUser, async (req, res) => {
+app.post('/api/errors', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
 
     // Department Permission Check
@@ -1309,7 +1459,7 @@ app.post('/api/errors', verifyUser, async (req, res) => {
 });
 
 // PUT Update Error
-app.put('/api/errors/:id', verifyUser, async (req, res) => {
+app.put('/api/errors/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1427,7 +1577,7 @@ app.put('/api/errors/:id', verifyUser, async (req, res) => {
 });
 
 // DELETE Error
-app.delete('/api/errors/:id', verifyUser, async (req, res) => {
+app.delete('/api/errors/:id', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1521,7 +1671,7 @@ app.post('/api/errors/:id/view', async (req, res) => {
 });
 
 // Reset View Count
-app.post('/api/errors/:id/reset-view', async (req, res) => {
+app.post('/api/errors/:id/reset-view', verifyAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1594,7 +1744,8 @@ const proxyToBot = async (path, { method = 'GET', body } = {}) => {
 
 // --- Bot Settings (CRUD) ---
 
-// Bot kendi ayarlarını çekerken token doğrulaması yapıyor; admin paneli ise verifyAdmin kullanıyor.
+// Bot kendi ayarlarını çekerken token doğrulaması yapıyor; admin paneli ise
+// verifySuperAdmin kullanıyor (bot ayarları yalnızca süper admin'e açık).
 // Yardımcı: ayarları her iki kaynaktan da okuyabilen handler
 const fetchBotSettings = async () => {
     const client = supabaseAdmin || supabase;
@@ -1634,9 +1785,9 @@ app.get('/api/bot/settings', async (req, res) => {
     const provided = req.header('x-bot-token') || (req.header('authorization') || '').replace(/^Bearer\s+/i, '');
     const isBot = BOT_SHARED_TOKEN && provided === BOT_SHARED_TOKEN;
 
-    // Bot değilse, admin doğrulamasından geçmeli
+    // Bot değilse, süper admin doğrulamasından geçmeli
     if (!isBot) {
-        return verifyAdmin(req, res, async () => {
+        return verifySuperAdmin(req, res, async () => {
             try {
                 const settings = await fetchBotSettings();
                 res.json(settings);
@@ -1655,7 +1806,7 @@ app.get('/api/bot/settings', async (req, res) => {
     }
 });
 
-app.put('/api/bot/settings', verifyAdmin, async (req, res) => {
+app.put('/api/bot/settings', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     if (!req.isSuperAdmin) {
         return res.status(403).json({ error: 'Only Super Admins can change bot settings' });
@@ -1732,7 +1883,7 @@ app.post('/api/bot/heartbeat', requireBotAuth, async (req, res) => {
 });
 
 // --- Bot Status (admin panel okuyor: önce DB, sonra canlı bot) ---
-app.get('/api/bot/status', verifyAdmin, async (req, res) => {
+app.get('/api/bot/status', verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
 
     let stored = null;
@@ -1760,7 +1911,7 @@ app.get('/api/bot/status', verifyAdmin, async (req, res) => {
 });
 
 // --- Bot QR ---
-app.get('/api/bot/qr', verifyAdmin, async (_req, res) => {
+app.get('/api/bot/qr', verifySuperAdmin, async (_req, res) => {
     if (!requireBotConfig(res)) return;
     // Bota ulaşılamasa bile 200 dön (polling sırasında konsolu 502 ile doldurmamak için);
     // frontend dataUrl yoksa "QR yok / çevrimdışı" gösterir.
@@ -1773,7 +1924,7 @@ app.get('/api/bot/qr', verifyAdmin, async (_req, res) => {
 });
 
 // --- Bot Logs ---
-app.get('/api/bot/logs', verifyAdmin, async (req, res) => {
+app.get('/api/bot/logs', verifySuperAdmin, async (req, res) => {
     if (!requireBotConfig(res)) return;
     const limit = parseInt(req.query.limit || '200', 10);
     // Bota ulaşılamasa bile 200 + boş log dön (polling sırasında 502 konsol selini önler).
@@ -1786,7 +1937,7 @@ app.get('/api/bot/logs', verifyAdmin, async (req, res) => {
 });
 
 // --- Bot Restart ---
-app.post('/api/bot/restart', verifyAdmin, async (req, res) => {
+app.post('/api/bot/restart', verifySuperAdmin, async (req, res) => {
     if (!req.isSuperAdmin) return res.status(403).json({ error: 'Super admin required' });
     if (!requireBotConfig(res)) return;
     try {
@@ -1798,7 +1949,7 @@ app.post('/api/bot/restart', verifyAdmin, async (req, res) => {
 });
 
 // --- Bot Logout (yeni QR için oturum sıfırlama) ---
-app.post('/api/bot/logout', verifyAdmin, async (req, res) => {
+app.post('/api/bot/logout', verifySuperAdmin, async (req, res) => {
     if (!req.isSuperAdmin) return res.status(403).json({ error: 'Super admin required' });
     if (!requireBotConfig(res)) return;
     try {

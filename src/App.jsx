@@ -53,13 +53,14 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Yalnızca yöneticilerin erişebileceği rotaları korur.
-// Yönetici değilse ana sayfaya yönlendirir (menüyü gizlemek tek başına
-// güvenlik değildir; doğrudan URL erişimi de burada engellenir).
-const RequireAdmin = ({ children }) => {
-  const { isAdmin, loading } = useAuth();
+// Yönetici Paneli ve Bot Yönetimi yalnızca super_admin'e açıktır.
+// Değilse ana sayfaya yönlendirir (menüyü gizlemek tek başına güvenlik
+// değildir; doğrudan URL erişimi de burada engellenir). Backend de bu
+// uçları verifySuperAdmin ile korur.
+const RequireSuperAdmin = ({ children }) => {
+  const { isSuperAdmin, loading } = useAuth();
   if (loading) return <LoadingSpinner />;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!isSuperAdmin) return <Navigate to="/" replace />;
   return children;
 };
 
@@ -75,8 +76,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/error/:id" element={<HomePage />} />
             <Route path="/guide/:id" element={<HomePage />} />
-            <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-            <Route path="/admin/bot" element={<RequireAdmin><BotAdmin /></RequireAdmin>} />
+            <Route path="/admin" element={<RequireSuperAdmin><AdminDashboard /></RequireSuperAdmin>} />
+            <Route path="/admin/bot" element={<RequireSuperAdmin><BotAdmin /></RequireSuperAdmin>} />
           </Routes>
         </Suspense>
       </AuthProvider>

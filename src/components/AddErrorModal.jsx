@@ -427,6 +427,7 @@ const AddErrorModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 value={newErrorData.category}
                                 onChange={(val) => setNewErrorData({ ...newErrorData, category: val })}
                                 categories={categories}
+                                departments={departments}
                                 onAddCategory={onAddCategory}
                                 onUpdateCategory={onUpdateCategory}
                                 onDeleteCategory={onDeleteCategory}

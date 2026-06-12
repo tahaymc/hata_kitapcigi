@@ -97,7 +97,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
         e.preventDefault();
 
         if (!newGuideData.title.trim()) {
-            showToast("Kılavuz başlığı zorunludur!", 'error');
+            showToast("Eğitim başlığı zorunludur!", 'error');
             return;
         }
 
@@ -114,7 +114,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
             }
         } catch (error) {
             console.error('Error adding guide:', error);
-            showToast(`Kılavuz eklenirken hata: ${error.message}`, 'error');
+            showToast(`Eğitim eklenirken hata: ${error.message}`, 'error');
         }
     };
 
@@ -122,7 +122,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
         <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Yeni Kullanım Kılavuzu</h2>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Yeni Kullanım Eğitimi</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                         <X className="w-6 h-6" />
                     </button>
@@ -131,7 +131,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                         <div className="md:col-span-3">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Kodu</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Eğitim Kodu</label>
                             <input
                                 type="text"
                                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 uppercase font-mono"
@@ -141,12 +141,12 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                             />
                         </div>
                         <div className="md:col-span-9">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Başlığı</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Eğitim Başlığı</label>
                             <input
                                 type="text"
                                 required
                                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-                                placeholder="Kılavuz başlığını giriniz"
+                                placeholder="Eğitim başlığını giriniz"
                                 value={newGuideData.title}
                                 onChange={e => setNewGuideData({ ...newGuideData, title: e.target.value })}
                             />
@@ -160,6 +160,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                 value={newGuideData.category}
                                 onChange={(val) => setNewGuideData({ ...newGuideData, category: val })}
                                 categories={categories}
+                                departments={departments}
                                 onAddCategory={onAddCategory}
                                 onUpdateCategory={onUpdateCategory}
                                 onDeleteCategory={onDeleteCategory}
@@ -195,7 +196,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kılavuz Görselleri</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Eğitim Görselleri</label>
                                 <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 5MB</span>
                             </div>
 
@@ -240,7 +241,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                                     <RichTextEditor
                                         ref={summaryEditorRef}
                                         className="w-full h-full px-4 py-3 bg-transparent text-sm text-slate-900 dark:text-slate-100 min-h-[120px]"
-                                        placeholder="Kılavuz hakkında kısa bilgi..."
+                                        placeholder="Eğitim hakkında kısa bilgi..."
                                         value={newGuideData.summary}
                                         onChange={val => setNewGuideData({ ...newGuideData, summary: val })}
                                     />
@@ -252,7 +253,7 @@ const AddGuideModal = ({ isOpen, onClose, onSuccess, categories, onAddCategory, 
                     {/* Video Upload Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kılavuz Videosu</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Eğitim Videosu</label>
                             <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 50MB</span>
                         </div>
 

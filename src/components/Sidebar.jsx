@@ -27,7 +27,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeTab, se
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                             }`}
                     >
-                        Kılavuzlar
+                        Eğitimler
                     </button>
                 </div>
 

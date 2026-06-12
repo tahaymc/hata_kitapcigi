@@ -79,10 +79,13 @@ export const AuthProvider = ({ children }) => {
         if (error) throw error;
     };
 
-    // Rol: 'admin' => Yönetici (panel + bot + içerik), diğer her şey (ör. 'user')
-    // => sadece içerik yönetebilen normal kullanıcı.
+    // İki seviye (backend ile uyumlu):
+    //  - super_admin => Yönetici Paneli + Bot + içerik
+    //  - admin       => yalnız içerik (hata/eğitim)
     const role = profile?.access_role || profile?.role || null;
-    const isAdmin = role === 'admin';
+    const isSuperAdmin = role === 'super_admin';
+    // İçerik yönetebilen herkes (hem admin hem super_admin).
+    const isAdmin = role === 'admin' || role === 'super_admin';
 
     const value = {
         user,
@@ -91,12 +94,12 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signOut,
         changePassword,
+        // İçerik yönetimi yetkisi (edit/sil butonları, ekleme modalleri).
         isAdmin,
-        // 2 seviye: Bot Yönetimi de yöneticiye bağlı
-        isSuperAdmin: isAdmin,
-        // Giriş yapmış ve admins tablosunda profili olan herkes (admin VEYA user)
-        // içerik (hata/kılavuz) ekleyip düzenleyebilir.
-        canManageContent: !!profile,
+        // Yönetici Paneli ve Bot Yönetimi erişimi.
+        isSuperAdmin,
+        // Geriye dönük uyumluluk: içerik yönetimi = isAdmin.
+        canManageContent: isAdmin,
         userDepartmentId: profile?.department_id ?? null
     };
 

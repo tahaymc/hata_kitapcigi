@@ -1,10 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import useErrors from '../hooks/useErrors';
 import useGuides from '../hooks/useGuides';
 import {
     getCategories,
+    getDepartments,
     getAllErrors,
     incrementViewCount,
     resetViewCount,
@@ -23,162 +23,102 @@ import {
     reorderGuides
 } from '../services/api';
 
-
-
 import { COLOR_STYLES } from '../utils/constants';
 import { arrayMove } from '@dnd-kit/sortable';
-import { LayoutGrid, List, Calendar, X } from 'lucide-react';
+import { Calendar, X } from 'lucide-react';
 
-// Import Components
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
-
 import ErrorGrid from '../components/ErrorGrid';
 import GuideGrid from '../components/GuideGrid';
-import Sidebar from '../components/Sidebar';
+import DepartmentBar from '../components/DepartmentBar';
+import FavoritesBar from '../components/FavoritesBar';
+import HighlightsBar from '../components/HighlightsBar';
+import AnnouncementsPanel from '../components/AnnouncementsPanel';
+import useFavorites from '../hooks/useFavorites';
 import { getCategoryIcon, formatDisplayDate } from '../utils/helpers';
-// import Toast from '../components/Toast'; // Removed in favor of sonner
 import ErrorDetailModal from '../components/ErrorDetailModal';
 import PageTransition from '../components/ui/PageTransition';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 
-// Define imports for prefetching
 const importAddErrorModal = () => import('../components/AddErrorModal');
 const importEditErrorModal = () => import('../components/EditErrorModal');
 const importAddGuideModal = () => import('../components/AddGuideModal');
 const importEditGuideModal = () => import('../components/EditGuideModal');
 
-// Lazy Load Modals
 const AddErrorModal = React.lazy(importAddErrorModal);
 const EditErrorModal = React.lazy(importEditErrorModal);
 const AddGuideModal = React.lazy(importAddGuideModal);
 const EditGuideModal = React.lazy(importEditGuideModal);
 
-// Ah, looking at the truncated file view, I didn't see LoginModal imported. 
-// Let's check if there is a LoginModal file. 
-// If not, I should keep the modal logic or create a LoginModal component. 
-// The user asked to split Header, SearchBar, ErrorGrid. 
-// I will keep the Modals (Login, Credentials, Add, Edit, Detail) in HomePage for now as they are "Page Level" interactions, 
-// unless I see a specific LoginModal component.
-// I'll check the file list or assume I need to keep the inline modal JSX if it was inline.
-// Actually, looking at imports in original file: 
-// `const importErrorDetailModal = () => import('../components/ErrorDetailModal'); `
-// It seems LoginModal wasn't imported. It might be inline. 
-// I will keep the inline Modals (Login, Credentials) in the HomePage JSX for now to be safe, or check if I need to extract them.
-// The user request was specific about Header, SearchBar, ErrorGrid.
-
 const HomePage = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [categories, setCategories] = useState([]);
+    const [departments, setDepartments] = useState([]);
 
-    // Custom Hook for Errors
-    const { errors, loading: errorsLoading, filters: errorFilters, setFilters: setErrorFilters, addLocalError, updateLocalError, setLocalErrors, removeLocalError } = useErrors();
+    const { errors, allErrors, loading: errorsLoading, filters: errorFilters, setFilters: setErrorFilters, addLocalError, updateLocalError, setLocalErrors, removeLocalError } = useErrors();
+    const { guides, allGuides, loading: guidesLoading, filters: guideFilters, setFilters: setGuideFilters, addLocalGuide, updateLocalGuide, removeLocalGuide, setLocalGuides } = useGuides();
 
-    // Custom Hook for Guides
-    const { guides, loading: guidesLoading, filters: guideFilters, setFilters: setGuideFilters, addLocalGuide, updateLocalGuide, removeLocalGuide, setLocalGuides } = useGuides();
+    const [activeTab, setActiveTab] = useState('errors');
 
-    // Tab State
-    const [activeTab, setActiveTab] = useState('errors'); // 'errors' | 'guides'
+    const { isFavorite, toggle: toggleFavorite, reorder: reorderFavorites, favoriteIds } = useFavorites(activeTab);
 
-    // Derived state based on active tab
+    // Şeritte yalnız görünür favoriler sürüklenir; görünmeyen favorilerin
+    // (aktif filtre dışı kalanların) sırasını koruyarak tam listeye birleştir.
+    const handleReorderFavorites = (visibleOrderedIds) => {
+        const visibleSet = new Set(visibleOrderedIds.map(String));
+        let vi = 0;
+        const merged = favoriteIds.map(id =>
+            visibleSet.has(String(id)) ? visibleOrderedIds[vi++] : id
+        );
+        reorderFavorites(merged);
+    };
+
     const errorsActive = activeTab === 'errors';
     const filters = errorsActive ? errorFilters : guideFilters;
     const setFilters = errorsActive ? setErrorFilters : setGuideFilters;
     const loading = errorsActive ? errorsLoading : guidesLoading;
 
-    // Derived state for UI consistency
     const searchTerm = filters.query;
     const selectedCategory = filters.category;
-    // Guides don't strictly use date filter in the same way, but we can support it if needed. For now, let's keep it shared.
-    // However, useGuides doesn't have date filter in my implementation.
-    // I should check useGuides.js. I only put query and category.
-    // So if activeTab is guides, selectedDate should probably be ignored or handled differently.
-    // I'll update the setters to handle this safely.
 
     const setSelectedCategory = (cat) => setFilters(prev => ({ ...prev, category: cat }));
     const setSearchTerm = (term) => setFilters(prev => ({ ...prev, query: term }));
-    // Shared date filter logic - Works if both hooks support 'date' in filters
     const selectedDate = filters.date;
     const setSelectedDate = (date) => setFilters(prev => ({ ...prev, date: date }));
 
-
-
-    const [viewMode, setViewMode] = useState('grid');
-    const [selectedError, setSelectedError] = useState(null); // For Modal
-    const [previewGallery, setPreviewGallery] = useState(null); // For Quick Image View { images: [], index: 0 }
-
-    // Note: hoverSlideshow logic was for the card itself. ErrorGrid might need to handle it or we pass it down?
-    // In ErrorGrid, the card is rendered. If I want the slideshow effect, I should probably move that logic into ErrorGrid or the individual Card component.
-    // However, the original code had the effect in HomePage. 
-    // To keep it simple and clean, I will move the slideshow logic to a new `ErrorCard` component ideally, but `ErrorGrid` is good enough.
-    // For now, I'll pass the `hoverSlideshow` state down if needed, OR better, let's move the slideshow logic into ErrorGrid or just drop it for a second if it's too complex to pass?
-    // No, I should preserve functionality.
-    // Actually, the useEffect for slideshow was in HomePage:
-    /*
-    useEffect(() => {
-        let interval;
-        if (hoverSlideshow.id) { ... }
-    }, [hoverSlideshow.id, errors]);
-    */
-    // I will keep this in HomePage and pass `hoverSlideshow` and `setHoverSlideshow` to ErrorGrid?
-    // Or better, refactor it into ErrorGrid directly? The user asked for "ErrorGrid.jsx: Hataların listelendiği Grid ve List görünümü mantığı".
-    // I'll move the slideshow logic into ErrorGrid.jsx in a future step or just keep it here if I haven't put it in ErrorGrid.
-    // Looking at my ErrorGrid code, I didn't include the slideshow logic.
-    // I will add it to HomePage for now to ensure I don't break it, and then maybe move it contextually. 
-    // Wait, ErrorGrid renders the cards. The 'onMouseEnter' in ErrorGrid triggers `importErrorDetailModal`.
-    // The slideshow was triggered by... wait, the original code didn't show `onMouseEnter` setting `hoverSlideshow`. 
-    // It seems `hoverSlideshow` state was there but where was it set?
-    // Ah, I might have missed seeing where `setHoverSlideshow` was called in the truncated view.
-    // If it's not critical, I might skip it or check where it was used.
-    // Let's assume for now I will rely on standard CSS hover or simple logic.
+    const [selectedError, setSelectedError] = useState(null);
+    const [previewGallery, setPreviewGallery] = useState(null);
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
     const [loginData, setLoginData] = useState({ email: '', password: '' });
 
-    // Admin State — gerçek Supabase oturumundan gelir (backend verifyAdmin ile uyumlu)
-    // İçerik aksiyonları (ekle/düzenle/sil) giriş yapan her kullanıcıya açıktır;
-    // Yönetici Paneli / Bot menüsü Sidebar'da ayrıca isAdmin ile kontrol edilir.
     const { canManageContent, profile, signIn, signOut, changePassword } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddGuideModalOpen, setIsAddGuideModalOpen] = useState(false);
 
-    // Edit Modal State
     const [editingError, setEditingError] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isEditGuideModalOpen, setIsEditGuideModalOpen] = useState(false);
 
-    // Reset selected category when switching tabs
     useEffect(() => {
         setSelectedCategory(null);
     }, [activeTab]);
 
-    // Handle Deep Linking (URL -> State)
     useEffect(() => {
         if (!id) {
             setSelectedError(null);
             return;
         }
-
-        // Determine type from URL (or we could pass it as a param if we used different routes)
-        // Since we have /error/:id and /guide/:id, we can check window.location.pathname
         const isGuidePath = window.location.pathname.startsWith('/guide');
         const targetList = isGuidePath ? guides : errors;
-
         if (targetList.length > 0) {
             const item = targetList.find(i => String(i.id) === String(id));
             if (item) {
                 if (isGuidePath) {
-                    const guideWithProps = {
-                        ...item,
-                        type: 'guide',
-                        date: item.created_at,
-                        solutionSteps: item.steps,
-                        solutionType: 'steps'
-                    };
-                    setSelectedError(guideWithProps);
+                    setSelectedError({ ...item, type: 'guide', date: item.created_at, solutionSteps: item.steps, solutionType: 'steps' });
                 } else {
                     setSelectedError(item);
                 }
@@ -186,14 +126,9 @@ const HomePage = () => {
         }
     }, [id, errors, guides]);
 
-    const handleAddCategory = async (name, color, icon) => {
+    const handleAddCategory = async (name, color, icon, departmentId) => {
         try {
-            const newCat = await addCategory({
-                name,
-                color,
-                icon,
-                type: activeTab
-            });
+            const newCat = await addCategory({ name, color, icon, type: activeTab, department_id: departmentId ? Number(departmentId) : null });
             setCategories(prev => [...prev, newCat]);
             showToast('Kategori başarıyla eklendi', 'success');
             return true;
@@ -204,14 +139,9 @@ const HomePage = () => {
         }
     };
 
-    const handleUpdateCategory = async (id, name, color, icon) => {
+    const handleUpdateCategory = async (id, name, color, icon, departmentId) => {
         try {
-            const updatedCat = await updateCategory(id, { name, color, icon, type: activeTab }); // Preserving type or allowing update? Usually types don't change, but send activeTab just in case or fetch existing. The backend update overwrites. Ideally we should keep original type or not send it if we don't want to change it. 
-            // My backend `updateCategory` implementation expects `type` in body or it might set it to null/default if I'm not careful? 
-            // The backend Code: `const { name, color, icon, type } = req.body; await supabase...update({ name, color, icon, type })`
-            // If I send `type: activeTab`, and the category was actually created in the OTHER tab (unlikely if filtered), it will move it to this tab. This is probably desired behavior if editing in this view?
-            // Yes, let's assume editing in 'Errors' tab makes it an 'Error' category.
-
+            const updatedCat = await updateCategory(id, { name, color, icon, type: activeTab, department_id: departmentId ? Number(departmentId) : null });
             setCategories(prev => prev.map(c => c.id === id ? updatedCat : c));
             showToast('Kategori güncellendi', 'success');
             return true;
@@ -236,52 +166,33 @@ const HomePage = () => {
         }
     };
 
-    // Admin Credentials State
     const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
-    const [passwordForm, setPasswordForm] = useState({
-        newPassword: '',
-        confirmPassword: ''
-    });
+    const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
 
-    // Toast State (Removed local state in favor of sonner)
-    // const [toast, setToast] = useState({ message: '', type: 'success', visible: false });
-
-    // Helper wrapper for legacy calls (optional, or replace direct calls)
     const showToast = (message, type = 'success') => {
         if (type === 'error') toast.error(message);
         else toast.success(message);
     };
 
-
-    // Prevent body scroll for all modals
     useEffect(() => {
         if (isAddModalOpen || isLoginModalOpen || isEditModalOpen || isEditGuideModalOpen || selectedError || isCredentialsModalOpen || previewGallery) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
+        return () => { document.body.style.overflow = 'unset'; };
     }, [isAddModalOpen, isLoginModalOpen, isEditModalOpen, isEditGuideModalOpen, selectedError, isCredentialsModalOpen, previewGallery]);
 
-
-    // Theme State
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        if (isDarkMode) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
     }, [isDarkMode]);
 
-    useEffect(() => {
-        getCategories().then(setCategories);
-    }, []);
+    useEffect(() => { getCategories().then(setCategories); }, []);
+    useEffect(() => { getDepartments().then(setDepartments); }, []);
 
-    // Close Credentials Modal on ESC
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -293,17 +204,14 @@ const HomePage = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isCredentialsModalOpen]);
 
-
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
         setSelectedError(null);
     };
-
     const handleDateClick = (date) => {
         setSelectedDate(date);
         setSelectedError(null);
     };
-
     const handleCodeClick = (code) => {
         setSearchTerm(searchTerm === code ? '' : code);
         setSelectedError(null);
@@ -311,13 +219,8 @@ const HomePage = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        const inputEmail = loginData.email.trim();
-        const inputPassword = loginData.password.trim();
-
         try {
-            // Gerçek Supabase oturumu açar; AuthContext oturumu/profili günceller,
-            // böylece isAdmin context'ten gelir ve API çağrıları token taşır.
-            await signIn(inputEmail, inputPassword);
+            await signIn(loginData.email.trim(), loginData.password.trim());
             setIsLoginModalOpen(false);
             setLoginData({ email: '', password: '' });
             toast.success("Giriş başarılı!");
@@ -327,22 +230,17 @@ const HomePage = () => {
         }
     };
 
-
     const handleChangePassword = async (e) => {
         e.preventDefault();
-
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
             toast.error("Yeni şifreler eşleşmiyor!");
             return;
         }
-
         if (passwordForm.newPassword.length < 6) {
             toast.error("Yeni şifre en az 6 karakter olmalıdır!");
             return;
         }
-
         try {
-            // Giriş yapmış kullanıcının kendi Supabase şifresini değiştirir
             await changePassword(passwordForm.newPassword);
             setIsCredentialsModalOpen(false);
             setPasswordForm({ newPassword: '', confirmPassword: '' });
@@ -354,27 +252,18 @@ const HomePage = () => {
     };
 
     const handleLogout = async () => {
-        try {
-            await signOut();
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
+        try { await signOut(); } catch (error) { console.error("Logout failed:", error); }
     };
 
-    const handleAddSuccess = (newError) => {
-        addLocalError(newError);
-    };
-
+    const handleAddSuccess = (newError) => addLocalError(newError);
     const handleAddGuideSuccess = (newGuide) => {
         addLocalGuide(newGuide);
-        showToast('Kılavuz başarıyla eklendi', 'success');
+        showToast('Eğitim başarıyla eklendi', 'success');
     };
-
     const handleEditSuccess = (updatedError) => {
         updateLocalError(updatedError);
         setEditingError(null);
     };
-
     const handleEditGuideSuccess = (updatedGuide) => {
         updateLocalGuide(updatedGuide);
         setEditingError(null);
@@ -384,13 +273,8 @@ const HomePage = () => {
     const handleDeleteClick = async (e, id) => {
         if (e) e.stopPropagation();
         if (window.confirm('Bu kaydı silmek istediğinize emin misiniz?')) {
-            if (activeTab === 'errors') {
-                await deleteError(id);
-                removeLocalError(id);
-            } else {
-                await deleteGuide(id);
-                removeLocalGuide(id);
-            }
+            if (activeTab === 'errors') { await deleteError(id); removeLocalError(id); }
+            else { await deleteGuide(id); removeLocalGuide(id); }
             setSelectedError(null);
         }
     };
@@ -400,23 +284,25 @@ const HomePage = () => {
         setEditingError(error);
         setIsEditModalOpen(true);
     };
-
     const handleEditGuideClick = (e, guide) => {
         if (e) e.stopPropagation();
-        setEditingError(guide); // Reusing editingError state to hold the object
+        setEditingError(guide);
         setIsEditGuideModalOpen(true);
     };
 
-    const handleCardClick = (error) => {
-        // Navigate to URL instead of just setting state
-        navigate(`/error/${error.id}`);
+    // Arama önerisinden seçim: aktif moda göre hata/eğitim detayını açar
+    // (kart tıklamasıyla aynı davranış).
+    const handleSuggestionSelect = (item) => {
+        if (errorsActive) handleCardClick(item);
+        else navigate(`/guide/${item.id}`);
+    };
 
-        // Update view count in background
+    const handleCardClick = (error) => {
+        navigate(`/error/${error.id}`);
         incrementViewCount(error.id).then(updatedError => {
             if (updatedError) {
                 const mergedError = { ...error, ...updatedError };
                 updateLocalError(mergedError);
-                // Also update the selected error if it's still the same one being viewed
                 setSelectedError(current => current?.id === error.id ? mergedError : current);
             }
         }).catch(err => console.error("Failed to increment view count", err));
@@ -424,63 +310,49 @@ const HomePage = () => {
 
     const handleDragEnd = (event) => {
         const { active, over } = event;
-
         if (active.id !== over.id) {
             const oldIndex = errors.findIndex((e) => e.id === active.id);
             const newIndex = errors.findIndex((e) => e.id === over.id);
-
             const newErrors = arrayMove(errors, oldIndex, newIndex);
             setLocalErrors(newErrors);
-
-            // Persist order
-            const orderedIds = newErrors.map(e => e.id);
-            reorderErrors(orderedIds)
-                .then(() => {
-                    // Optional: showToast('Sıralama kaydedildi', 'success');
-                })
-                .catch(err => {
-                    console.error('Reorder persistence failed:', err);
-                    showToast('Sıralama kaydedilirken hata oluştu', 'error');
-                    // Optionally revert state here if needed
-                });
+            reorderErrors(newErrors.map(e => e.id)).catch(err => {
+                console.error('Reorder persistence failed:', err);
+                showToast('Sıralama kaydedilirken hata oluştu', 'error');
+            });
         }
     };
 
     const errorCategories = categories.filter(c => c.type === 'errors' || !c.type);
     const guideCategories = categories.filter(c => c.type === 'guides');
 
+    const favoriteItems = useMemo(() => {
+        const src = activeTab === 'errors' ? errors : guides;
+        const byId = new Map(src.map(x => [String(x.id), x]));
+        return favoriteIds.map(id => byId.get(String(id))).filter(Boolean);
+    }, [activeTab, errors, guides, favoriteIds]);
+
+    const categoryCounts = useMemo(() => {
+        const src = activeTab === 'errors' ? errors : guides;
+        const map = {};
+        for (const item of src) {
+            const cid = item.category;
+            if (cid == null) continue;
+            map[cid] = (map[cid] || 0) + 1;
+        }
+        return map;
+    }, [activeTab, errors, guides]);
+
     const handleGuideDragEnd = (event) => {
         const { active, over } = event;
-
         if (active.id !== over.id) {
             const oldIndex = guides.findIndex((g) => g.id === active.id);
             const newIndex = guides.findIndex((g) => g.id === over.id);
-
             const newGuides = arrayMove(guides, oldIndex, newIndex);
-
-            // Optimistically update local state (if using setLocalGuides exposed from hook or direct setGuides)
-            // The useGuides hook returns: { guides, ..., setLocalGuides, ... } (Need to verify if setLocalGuides is returned)
-            // Looking at useGuides usage in HomePage:
-            // const { guides, ..., updateLocalGuide, removeLocalGuide } = useGuides();
-            // It doesn't seem to expose setLocalGuides in the destructuring at line 61.
-            // I need to check useGuides hook or assume I can modify it or use setGuides if it was exposed?
-            // Actually, in HomePage line 61: `const { guides ... } = useGuides()`
-            // I should check `useGuides.js` first to see if I can set the whole list.
-            // If not, I can't do optimistic DnD easily without refactoring useGuides.
-            // IMPORTANT: ErrorGrid DnD works because `useErrors` exposes `setLocalErrors`.
-            // Optimistic update
             setLocalGuides(newGuides);
-
-            // Persist order
-            const orderedIds = newGuides.map(g => g.id);
-            reorderGuides(orderedIds)
-                .then(() => {
-                    // Optional: showToast('Sıralama kaydedildi', 'success');
-                })
-                .catch(err => {
-                    console.error('Reorder persistence failed:', err);
-                    showToast('Sıralama kaydedilirken hata oluştu', 'error');
-                });
+            reorderGuides(newGuides.map(g => g.id)).catch(err => {
+                console.error('Reorder persistence failed:', err);
+                showToast('Sıralama kaydedilirken hata oluştu', 'error');
+            });
         }
     };
 
@@ -488,18 +360,17 @@ const HomePage = () => {
         if (e) e.stopPropagation();
         if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
             await resetGuideViewCount(guide.id);
-            const updatedGuide = { ...guide, viewCount: 0, view_count: 0 };
-            updateLocalGuide(updatedGuide);
+            updateLocalGuide({ ...guide, viewCount: 0, view_count: 0 });
             showToast('Görüntülenme sayısı sıfırlandı.', 'success');
         }
     };
 
     const handleDeleteGuideClick = async (e, id) => {
         if (e) e.stopPropagation();
-        if (window.confirm('Bu kılavuzu silmek istediğinize emin misiniz?')) {
+        if (window.confirm('Bu eğitimi silmek istediğinize emin misiniz?')) {
             await deleteGuide(id);
             removeLocalGuide(id);
-            showToast('Kılavuz başarıyla silindi', 'success');
+            showToast('Eğitim başarıyla silindi', 'success');
             setSelectedError(null);
         }
     };
@@ -510,10 +381,7 @@ const HomePage = () => {
         if (guide.videoUrl || guide.video_url) items.push({ type: 'video', url: guide.videoUrl || guide.video_url });
         const imgs = guide.image_urls || (guide.image_url ? [guide.image_url] : []);
         imgs.forEach(url => items.push({ type: 'image', url }));
-
-        if (items.length > 0) {
-            setPreviewGallery({ items, index: 0 });
-        }
+        if (items.length > 0) setPreviewGallery({ items, index: 0 });
     };
 
     return (
@@ -528,236 +396,159 @@ const HomePage = () => {
                         onLogoutClick={handleLogout}
                         onAddClick={() => activeTab === 'errors' ? setIsAddModalOpen(true) : setIsAddGuideModalOpen(true)}
                         onCredentialsClick={() => setIsCredentialsModalOpen(true)}
-                        onLogoClick={() => {
-                            setFilters({ query: '', category: null, date: null });
-                            navigate('/');
-                        }}
+                        onLogoClick={() => { setFilters({ query: '', category: null, date: null }); navigate('/'); }}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         searchProps={{
                             searchTerm,
                             setSearchTerm,
-                            placeholder: activeTab === 'errors' ? "Hata kodu, başlık veya anahtar kelime..." : "Kılavuz başlığı veya içeriğinde ara..."
+                            placeholder: activeTab === 'errors' ? "Hata kodu, başlık veya anahtar kelime..." : "Eğitim başlığı veya içeriğinde ara...",
+                            items: errorsActive ? allErrors : allGuides,
+                            onSelect: handleSuggestionSelect
                         }}
                     />
 
-                    <div className="max-w-[1920px] mx-auto flex flex-col lg:flex-row items-start gap-8 px-6 py-8">
-                        {/* Left Sidebar (Desktop Only) */}
-                        <Sidebar
-                            categories={categories} // Sidebar does its own filtering based on activeTab
-                            selectedCategory={selectedCategory}
-                            onSelectCategory={handleCategoryClick}
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
+                    {/* ÜST YATAY DEPARTMAN BANDI (modül seçici + departmanlar tek satırda) */}
+                    <DepartmentBar
+                        categories={categories}
+                        departments={departments}
+                        selectedCategory={selectedCategory}
+                        onSelectCategory={handleCategoryClick}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        counts={categoryCounts}
+                    />
+
+                    {/* Ana içerik — tam genişlik */}
+                    <main className="max-w-[1920px] mx-auto w-full px-6 py-6">
+                        <div className="md:hidden mb-5">
+                            <SearchBar
+                                searchTerm={searchTerm}
+                                setSearchTerm={setSearchTerm}
+                                placeholder={activeTab === 'errors' ? "Hata çözümü veya anahtar kelime..." : "Eğitimlerde ara..."}
+                                className="shadow-sm"
+                                items={errorsActive ? allErrors : allGuides}
+                                onSelect={handleSuggestionSelect}
+                            />
+                        </div>
+
+                        <FavoritesBar
+                            items={favoriteItems}
+                            categories={categories}
+                            kind={activeTab}
+                            onCardClick={(item) => activeTab === 'errors' ? handleCardClick(item) : navigate(`/guide/${item.id}`)}
+                            onUnfavorite={(id) => toggleFavorite(id)}
+                            onReorder={handleReorderFavorites}
                         />
 
-                        {/* Main Content */}
-                        <main className="flex-1 w-full min-w-0 py-8 px-6 lg:px-8">
-                            {/* ... Mobile Search & Filter ... */}
-
-                            {/* Re-using existing content which I shouldn't overwrite if I can avoid massive replace, but I need to inject variables. 
-                           Actually, standard practice: Put the variables before return.
-                           Then update the Modals.
-                           I will split this into two replaces or one big one if I target the return.
-                           Targeting lines 340-645 is huge.
-                           I will just insert the variables before return and update modals separately.
-                        */}
-
-                            {/* Mobile Module Switcher & Search (Search is in Header for desktop, but for mobile Header search might be hidden? 
-                           User said "Arama çubuğunu Header'ın ortasına yerleştir". 
-                           Usually Header search is visible on all screens or toggled. 
-                           If Header search is visible on mobile too, I don't need it here.
-                           But user said "Mobilde Sidebar gizlendiği için, bu 'Hata/Kılavuz' seçimini mobilde arama çubuğunun altına... eklemen gerekebilir."
-                           So I need Mobile Module Switcher here.
-                        */}
-
-                            <div className="lg:hidden mb-6 space-y-4">
-                                <div className="md:hidden">
-                                    <SearchBar
-                                        searchTerm={searchTerm}
-                                        setSearchTerm={setSearchTerm}
-                                        placeholder={activeTab === 'errors' ? "Hata çözümü veya anahtar kelime..." : "Kılavuzlarda ara..."}
-                                        className="shadow-sm"
+                        {/* Öne çıkanlar (en çok görüntülenen + yeni eklenenler) ve Duyurular.
+                            Yalnızca filtresiz ana görünümde gösterilir. */}
+                        {!searchTerm && !selectedCategory && !selectedDate && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-start">
+                                <div className="lg:col-span-2">
+                                    <HighlightsBar
+                                        items={errorsActive ? allErrors : allGuides}
+                                        categories={categories}
+                                        kind={activeTab}
+                                        onCardClick={(item) => {
+                                            if (activeTab === 'errors') {
+                                                handleCardClick(item);
+                                            } else {
+                                                navigate(`/guide/${item.id}`);
+                                                incrementGuideViewCount(item.id).then(u => { if (u) updateLocalGuide({ ...item, ...u }); });
+                                            }
+                                        }}
                                     />
                                 </div>
-
-                                {/* Mobile Tab Switcher */}
-                                <div className="bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-sm p-1.5 rounded-2xl flex shadow-inner">
-                                    <button
-                                        onClick={() => setActiveTab('errors')}
-                                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'errors'
-                                            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                            }`}
-                                    >
-                                        <span className={`w-2 h-2 rounded-full ${activeTab === 'errors' ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
-                                        Hata Çözümleri
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('guides')}
-                                        className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'guides'
-                                            ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                            }`}
-                                    >
-                                        <span className={`w-2 h-2 rounded-full ${activeTab === 'guides' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
-                                        Kılavuzlar
-                                    </button>
-                                </div>
+                                <AnnouncementsPanel isAdmin={canManageContent} departments={departments} />
                             </div>
+                        )}
 
-
-                            {/* Toolbar Area (View Mode & Date & Categories) */}
-                            {/* Mobile Categories (Horizontal Scroll) */}
-                            <div className="lg:hidden mb-8 -mx-6 px-6 overflow-x-auto pb-4 custom-scrollbar flex gap-3 snap-x">
+                        {selectedDate && (
+                            <div className="flex items-center justify-end mb-6">
                                 <button
-                                    onClick={() => setSelectedCategory(null)}
-                                    className={`snap-start flex-none flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 border shadow-sm ${!selectedCategory
-                                        ? 'bg-slate-900 text-white border-slate-900 shadow-slate-900/20 dark:bg-white dark:text-slate-900'
-                                        : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                                        }`}
+                                    onClick={() => setSelectedDate(null)}
+                                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-600 dark:text-blue-400 text-sm font-bold border border-blue-100 dark:border-blue-800 hover:shadow-md transition-all group"
                                 >
-                                    <LayoutGrid className="w-4 h-4" />
-                                    <span>Tümü</span>
+                                    <Calendar className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                    <span className="hidden sm:inline">{new Date(selectedDate).toLocaleDateString('tr-TR')}</span>
+                                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center ml-1 group-hover:bg-red-100 dark:group-hover:bg-red-900/50 group-hover:text-red-500 transition-colors">
+                                        <X className="w-3 h-3" />
+                                    </div>
                                 </button>
-                                {categories.map(c => {
-                                    const style = COLOR_STYLES[c.color] || COLOR_STYLES.slate;
-                                    const isSelected = selectedCategory === c.id;
-                                    return (
-                                        <button
-                                            key={c.id}
-                                            onClick={() => setSelectedCategory(isSelected ? null : c.id)}
-                                            className={`snap-start flex-none flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 border shadow-sm ${isSelected
-                                                ? `${style.buttonSelected} ring-1 ring-inset ring-current`
-                                                : `bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600`
-                                                }`}
-                                        >
-                                            <span>{c.name}</span>
-                                        </button>
-                                    );
-                                })}
                             </div>
+                        )}
 
-                            {/* Right Side Actions (View Mode & Date Filter) - Desktop aligned right, Mobile full width/flex */}
-                            <div className="flex flex-wrap items-center justify-end gap-3 mb-6">
-                                {/* Active Date Badge */}
-                                {selectedDate && (
-                                    <button
-                                        onClick={() => setSelectedDate(null)}
-                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-600 dark:text-blue-400 text-sm font-bold border border-blue-100 dark:border-blue-800 hover:shadow-md transition-all group"
-                                    >
-                                        <Calendar className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                        <span className="hidden sm:inline">{new Date(selectedDate).toLocaleDateString('tr-TR')}</span>
-                                        <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center ml-1 group-hover:bg-red-100 dark:group-hover:bg-red-900/50 group-hover:text-red-500 transition-colors">
-                                            <X className="w-3 h-3" />
-                                        </div>
-                                    </button>
-                                )}
-
-                                {/* View Mode Toggle */}
-                                <div className="flex bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm ml-auto lg:ml-0">
-                                    <button
-                                        onClick={() => setViewMode('grid')}
-                                        className={`p-2.5 rounded-lg transition-all duration-300 flex items-center justify-center ${viewMode === 'grid'
-                                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm ring-1 ring-blue-500/20'
-                                            : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-300'
-                                            }`}
-                                        title="Kart Görünümü"
-                                    >
-                                        <LayoutGrid className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('list')}
-                                        className={`p-2.5 rounded-lg transition-all duration-300 flex items-center justify-center ${viewMode === 'list'
-                                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm ring-1 ring-blue-500/20'
-                                            : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-300'
-                                            }`}
-                                        title="Liste Görünümü"
-                                    >
-                                        <List className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {activeTab === 'errors' ? (
-                                <ErrorGrid
-                                    errors={errors}
-                                    viewMode={viewMode}
-                                    categories={categories}
-                                    selectedDate={selectedDate}
-                                    onCardClick={handleCardClick}
-                                    onCategoryClick={handleCategoryClick}
-                                    onDateClick={handleDateClick}
-                                    onCodeClick={handleCodeClick}
-                                    onEditClick={handleEditClick}
-                                    onDeleteClick={handleDeleteClick}
-                                    onResetViewClick={async (e, error) => {
-                                        if (e) e.stopPropagation();
-                                        if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
-                                            await resetViewCount(error.id);
-                                            const updatedError = { ...error, viewCount: 0, view_count: 0 };
-                                            updateLocalError(updatedError);
-                                            showToast('Görüntülenme sayısı sıfırlandı.', 'success');
+                        {activeTab === 'errors' ? (
+                            <ErrorGrid
+                                errors={errors}
+                                categories={categories}
+                                selectedDate={selectedDate}
+                                onCardClick={handleCardClick}
+                                onCategoryClick={handleCategoryClick}
+                                onDateClick={handleDateClick}
+                                onCodeClick={handleCodeClick}
+                                onEditClick={handleEditClick}
+                                onDeleteClick={handleDeleteClick}
+                                onResetViewClick={async (e, error) => {
+                                    if (e) e.stopPropagation();
+                                    if (window.confirm('Görüntülenme sayısını sıfırlamak istediğinize emin misiniz?')) {
+                                        await resetViewCount(error.id);
+                                        updateLocalError({ ...error, viewCount: 0, view_count: 0 });
+                                        showToast('Görüntülenme sayısı sıfırlandı.', 'success');
+                                    }
+                                }}
+                                onImageClick={(error) => {
+                                    const items = [];
+                                    if (error.videoUrl || error.video_url) items.push({ type: 'video', url: error.videoUrl || error.video_url });
+                                    const imgs = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
+                                    imgs.forEach(url => items.push({ type: 'image', url }));
+                                    if (items.length > 0) setPreviewGallery({ items, index: 0 });
+                                }}
+                                isAdmin={canManageContent}
+                                onDragEnd={handleDragEnd}
+                                isFavorite={isFavorite}
+                                onToggleFavorite={toggleFavorite}
+                            />
+                        ) : (
+                            <GuideGrid
+                                guides={guides}
+                                categories={categories}
+                                selectedDate={selectedDate}
+                                onCardClick={(guide) => {
+                                    navigate(`/guide/${guide.id}`);
+                                    incrementGuideViewCount(guide.id).then(updatedGuide => {
+                                        if (updatedGuide) {
+                                            // View endpoint'i assignees döndürmüyor; mevcut
+                                            // guide ile merge ederek ilgili personeli koru.
+                                            const mergedGuide = { ...guide, ...updatedGuide };
+                                            updateLocalGuide(mergedGuide);
                                         }
-                                    }}
-                                    onImageClick={(error) => {
-                                        const items = [];
-                                        if (error.videoUrl || error.video_url) items.push({ type: 'video', url: error.videoUrl || error.video_url });
-                                        const imgs = error.imageUrls || (error.imageUrl ? [error.imageUrl] : []);
-                                        imgs.forEach(url => items.push({ type: 'image', url }));
+                                    });
+                                }}
+                                onCategoryClick={handleCategoryClick}
+                                onDateClick={handleDateClick}
+                                onCodeClick={handleCodeClick}
+                                onResetViewClick={handleResetGuideView}
+                                onEditClick={handleEditGuideClick}
+                                onDeleteClick={handleDeleteGuideClick}
+                                onImageClick={handleImageClick}
+                                isAdmin={canManageContent}
+                                onDragEnd={handleGuideDragEnd}
+                                isFavorite={isFavorite}
+                                onToggleFavorite={toggleFavorite}
+                            />
+                        )}
+                    </main>
 
-                                        if (items.length > 0) {
-                                            setPreviewGallery({ items, index: 0 });
-                                        }
-                                    }}
-                                    isAdmin={canManageContent}
-                                    onDragEnd={handleDragEnd}
-                                />
-                            ) : (
-                                <GuideGrid
-                                    guides={guides}
-                                    categories={categories}
-                                    selectedDate={selectedDate} // Pass selectedDate
-                                    onCardClick={(guide) => {
-                                        navigate(`/guide/${guide.id}`);
-                                        // View count increment logic is handled by the useEffect above indirectly if we want, 
-                                        // or we keep it here for immediate effect? 
-                                        // Let's keep the view count increment here for immediate action on click.
-                                        incrementGuideViewCount(guide.id).then(updatedGuide => {
-                                            if (updatedGuide) {
-                                                updateLocalGuide(updatedGuide);
-                                            }
-                                        });
-                                    }}
-                                    onCategoryClick={handleCategoryClick}
-                                    onDateClick={handleDateClick}
-                                    onCodeClick={handleCodeClick}
-
-                                    onResetViewClick={handleResetGuideView}
-                                    onEditClick={handleEditGuideClick}
-                                    onDeleteClick={handleDeleteGuideClick}
-                                    onImageClick={handleImageClick}
-                                    isAdmin={canManageContent}
-                                    onDragEnd={handleGuideDragEnd}
-                                />
-
-                            )}
-                        </main>
-                    </div>
-
-                    {/* Modals */}
-                    {/* Error Detail Modal */}
                     {selectedError && (
                         <ErrorDetailModal
                             error={selectedError}
                             onClose={() => navigate('/')}
                             isAdmin={canManageContent}
                             onEdit={(e) => {
-                                if (selectedError.type === 'guide' || activeTab === 'guides') {
-                                    handleEditGuideClick(e, selectedError);
-                                } else {
-                                    handleEditClick(e, selectedError);
-                                }
+                                if (selectedError.type === 'guide' || activeTab === 'guides') handleEditGuideClick(e, selectedError);
+                                else handleEditClick(e, selectedError);
                             }}
                             onDelete={(e) => handleDeleteClick(e, selectedError.id)}
                             categories={categories}
@@ -767,243 +558,116 @@ const HomePage = () => {
                         />
                     )}
 
-                    {/* Add Error Modal */}
                     {isAddModalOpen && (
-                        <AddErrorModal
-                            isOpen={true}
-                            onClose={() => setIsAddModalOpen(false)}
-                            onSuccess={handleAddSuccess}
-                            categories={errorCategories}
-                            onAddCategory={handleAddCategory}
-                            onUpdateCategory={handleUpdateCategory}
-                            onDeleteCategory={handleDeleteCategory}
-                            showToast={showToast}
-                        />
+                        <AddErrorModal isOpen={true} onClose={() => setIsAddModalOpen(false)} onSuccess={handleAddSuccess}
+                            categories={errorCategories} onAddCategory={handleAddCategory} onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory} showToast={showToast} />
                     )}
-
-                    {/* Add Guide Modal */}
                     {isAddGuideModalOpen && (
-                        <AddGuideModal
-                            isOpen={true}
-                            onClose={() => setIsAddGuideModalOpen(false)}
-                            onSuccess={handleAddGuideSuccess}
-                            categories={guideCategories}
-                            onAddCategory={handleAddCategory}
-                            onUpdateCategory={handleUpdateCategory}
-                            onDeleteCategory={handleDeleteCategory}
-                            showToast={showToast}
-                        />
+                        <AddGuideModal isOpen={true} onClose={() => setIsAddGuideModalOpen(false)} onSuccess={handleAddGuideSuccess}
+                            categories={guideCategories} onAddCategory={handleAddCategory} onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory} showToast={showToast} />
                     )}
-
-                    {/* Edit Error Modal */}
                     {isEditModalOpen && editingError && (
-                        <EditErrorModal
-                            isOpen={true}
-                            errorToEdit={editingError}
-                            onClose={() => {
-                                setIsEditModalOpen(false);
-                                setEditingError(null);
-                            }}
-                            onSuccess={handleEditSuccess}
-                            categories={errorCategories}
-                            onAddCategory={handleAddCategory}
-                            onUpdateCategory={handleUpdateCategory}
-                            onDeleteCategory={handleDeleteCategory}
-                            showToast={showToast}
-                        />
+                        <EditErrorModal isOpen={true} errorToEdit={editingError}
+                            onClose={() => { setIsEditModalOpen(false); setEditingError(null); }}
+                            onSuccess={handleEditSuccess} categories={errorCategories} departments={departments} onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory} onDeleteCategory={handleDeleteCategory} showToast={showToast} />
                     )}
-
-                    {/* Edit Guide Modal */}
                     {isEditGuideModalOpen && editingError && (
-                        <EditGuideModal
-                            isOpen={true}
-                            guideToEdit={editingError}
-                            onClose={() => {
-                                setIsEditGuideModalOpen(false);
-                                setEditingError(null);
-                            }}
-                            onSuccess={handleEditGuideSuccess}
-                            categories={guideCategories}
-                            onAddCategory={handleAddCategory}
-                            onUpdateCategory={handleUpdateCategory}
-                            onDeleteCategory={handleDeleteCategory}
-                            showToast={showToast}
-                        />
+                        <EditGuideModal isOpen={true} guideToEdit={editingError}
+                            onClose={() => { setIsEditGuideModalOpen(false); setEditingError(null); }}
+                            onSuccess={handleEditGuideSuccess} categories={guideCategories} departments={departments} onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory} onDeleteCategory={handleDeleteCategory} showToast={showToast} />
                     )}
 
-
-
-                    {/* Login Modal (Inline Implementation for now) */}
                     {isLoginModalOpen && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
                                 <div className="p-8">
                                     <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">Yönetici Girişi</h3>
                                     <form onSubmit={handleLogin} className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-posta</label>
-                                            <input
-                                                type="email"
-                                                required
-                                                autoComplete="email"
+                                            <input type="email" required autoComplete="email"
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={loginData.email}
-                                                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                                            />
+                                                value={loginData.email} onChange={(e) => setLoginData({ ...loginData, email: e.target.value })} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Şifre</label>
-                                            <input
-                                                type="password"
-                                                required
+                                            <input type="password" required
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={loginData.password}
-                                                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                            />
+                                                value={loginData.password} onChange={(e) => setLoginData({ ...loginData, password: e.target.value })} />
                                         </div>
                                         <div className="pt-2">
-                                            <button
-                                                type="submit"
-                                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
-                                            >
-                                                Giriş Yap
-                                            </button>
+                                            <button type="submit" className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all">Giriş Yap</button>
                                         </div>
                                     </form>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
-                                    <button
-                                        onClick={() => setIsLoginModalOpen(false)}
-                                        className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
-                                    >
-                                        Vazgeç
-                                    </button>
+                                    <button onClick={() => setIsLoginModalOpen(false)} className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white">Vazgeç</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Credentials Modal (Inline Implementation) */}
                     {isCredentialsModalOpen && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform transition-all">
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
                                 <div className="p-8">
                                     <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 text-center">Şifre Değiştir</h3>
                                     <form onSubmit={handleChangePassword} className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-posta</label>
-                                            <input
-                                                type="email"
-                                                readOnly
-                                                disabled
+                                            <input type="email" readOnly disabled
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/70 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                                                value={profile?.email || ''}
-                                            />
+                                                value={profile?.email || ''} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre</label>
-                                            <input
-                                                type="password"
-                                                required
-                                                minLength={6}
-                                                autoComplete="new-password"
+                                            <input type="password" required minLength={6} autoComplete="new-password"
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={passwordForm.newPassword}
-                                                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                                            />
+                                                value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yeni Şifre (Tekrar)</label>
-                                            <input
-                                                type="password"
-                                                required
-                                                minLength={6}
-                                                autoComplete="new-password"
+                                            <input type="password" required minLength={6} autoComplete="new-password"
                                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                value={passwordForm.confirmPassword}
-                                                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                                            />
+                                                value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} />
                                         </div>
-
                                         <div className="pt-2">
-                                            <button
-                                                type="submit"
-                                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all"
-                                            >
-                                                Şifreyi Güncelle
-                                            </button>
+                                            <button type="submit" className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all">Şifreyi Güncelle</button>
                                         </div>
                                     </form>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 flex justify-center border-t border-slate-100 dark:border-slate-800">
-                                    <button
-                                        onClick={() => setIsCredentialsModalOpen(false)}
-                                        className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
-                                    >
-                                        Vazgeç
-                                    </button>
+                                    <button onClick={() => setIsCredentialsModalOpen(false)} className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white">Vazgeç</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Preview Gallery (Quick View) */}
                     {previewGallery && (() => {
                         const items = previewGallery.items || (previewGallery.images ? previewGallery.images.map(url => ({ type: 'image', url })) : []);
                         const currentItem = items[previewGallery.index];
-
                         return (
-                            <div className="fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
+                            <div className="fullscreen-viewer fixed inset-0 bg-black/95 z-[250] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewGallery(null)}>
                                 <div className="relative w-full max-w-6xl h-full max-h-[90vh] flex flex-col items-center justify-center overflow-hidden">
-                                    <button
-                                        onClick={() => setPreviewGallery(null)}
-                                        className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"
-                                    >
-                                        <X className="w-6 h-6" />
-                                    </button>
-
+                                    <button onClick={() => setPreviewGallery(null)} className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
                                     <div className="w-full flex-1 relative flex items-center justify-center min-h-0">
                                         {currentItem?.type === 'video' ? (
-                                            <video
-                                                src={currentItem.url}
-                                                className="max-w-full max-h-full rounded-lg shadow-2xl"
-                                                controls
-                                                autoPlay
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
+                                            <video src={currentItem.url} className="max-w-full max-h-full rounded-lg shadow-2xl" controls autoPlay onClick={(e) => e.stopPropagation()} />
                                         ) : (
-                                            <img
-                                                src={currentItem?.url}
-                                                alt="Preview"
-                                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
+                                            <img src={currentItem?.url} alt="Preview" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
                                         )}
-
                                         {items.length > 1 && (
                                             <>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setPreviewGallery(prev => ({
-                                                            ...prev,
-                                                            index: prev.index === 0 ? items.length - 1 : prev.index - 1
-                                                        }));
-                                                    }}
-                                                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
-                                                >
+                                                <button onClick={(e) => { e.stopPropagation(); setPreviewGallery(prev => ({ ...prev, index: prev.index === 0 ? items.length - 1 : prev.index - 1 })); }}
+                                                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                                                 </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setPreviewGallery(prev => ({
-                                                            ...prev,
-                                                            index: (prev.index + 1) % items.length
-                                                        }));
-                                                    }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all"
-                                                >
+                                                <button onClick={(e) => { e.stopPropagation(); setPreviewGallery(prev => ({ ...prev, index: (prev.index + 1) % items.length })); }}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/75 hover:bg-black/75 hover:text-white backdrop-blur-sm transition-all">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                                 </button>
                                             </>
@@ -1011,18 +675,12 @@ const HomePage = () => {
                                     </div>
                                     <div className="mt-4 flex gap-2 overflow-x-auto overflow-y-hidden max-w-full p-2">
                                         {items.map((item, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setPreviewGallery(prev => ({ ...prev, index: idx }));
-                                                }}
-                                                className={`w - 16 h - 16 rounded - lg overflow - hidden border - 2 transition - all flex - shrink - 0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'} `}
-                                            >
+                                            <button key={idx} onClick={(e) => { e.stopPropagation(); setPreviewGallery(prev => ({ ...prev, index: idx })); }}
+                                                className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${idx === previewGallery.index ? 'border-blue-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}>
                                                 {item.type === 'video' ? (
                                                     <video src={item.url} className="w-full h-full object-cover" muted />
                                                 ) : (
-                                                    <img src={item.url} alt={`Thumb ${idx} `} className="w-full h-full object-cover" />
+                                                    <img src={item.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                                                 )}
                                             </button>
                                         ))}

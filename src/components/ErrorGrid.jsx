@@ -57,9 +57,10 @@ const ErrorGrid = ({
     onDeleteClick,
     onResetViewClick,
     onImageClick,
-    viewMode = 'grid',
     isAdmin,
-    onDragEnd // Callback from HomePage
+    onDragEnd, // Callback from HomePage
+    isFavorite,
+    onToggleFavorite
 }) => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -100,7 +101,8 @@ const ErrorGrid = ({
             onResetViewClick,
             onImageClick,
             isAdmin,
-            viewMode
+            isFavorite: isFavorite ? isFavorite(error.id) : false,
+            onToggleFavorite
         };
 
         if (isSortable) {
@@ -126,10 +128,7 @@ const ErrorGrid = ({
     }
 
     const content = (
-        <div className={viewMode === 'grid'
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            : "flex flex-col gap-4 max-w-5xl mx-auto"
-        }>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {errors.map(error => renderCard(error, enableDnd))}
         </div>
     );
@@ -168,7 +167,8 @@ const ErrorGrid = ({
                                 onResetViewClick={() => { }}
                                 onImageClick={() => { }}
                                 isAdmin={isAdmin}
-                                viewMode={viewMode}
+                                isFavorite={isFavorite ? isFavorite(activeError.id) : false}
+                                onToggleFavorite={() => { }}
                             />
                         </div>
                     ) : null}

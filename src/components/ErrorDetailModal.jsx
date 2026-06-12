@@ -64,8 +64,9 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
     const showVideoOnRight = hasVideo && !hasImages; // Resim yoksa video sağa geçer
     const showVideoOnLeft = hasVideo && hasImages;   // Resim varsa video solda kalır
 
-    // Video sağdaysa veya kullanıcı yatay modu seçtiyse geniş çerçeve kullan
-    const forceLandscape = isLandscape || showVideoOnRight;
+    // Görsel yataysa yatay (monitör) çerçeve + 2 sütun düzen; dikeyse telefon
+    // çerçevesi. isLandscape, gerçek görsel oranından tespit edilir (aşağıdaki effect).
+    const forceLandscape = isLandscape;
 
     // Ensure state resets when error changes (new error opened)
     React.useEffect(() => {
@@ -179,9 +180,9 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                 {/* Scrollable Content */}
                 <div className="overflow-y-auto p-10 custom-scrollbar">
 
-                    <div className={`grid grid-cols-1 ${forceLandscape ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-8 items-start`}>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         {/* Left Content */}
-                        <div className={`${forceLandscape ? 'lg:col-span-1' : 'lg:col-span-2'} space-y-8`}>
+                        <div className="lg:col-span-2 space-y-8">
                             {/* Summary Card - Redesigned */}
                             <div className={`p-6 rounded-2xl border ${colorStyle.bgLight} ${colorStyle.borderLight} relative overflow-hidden`}>
                                 {/* Header */}
@@ -190,12 +191,12 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                         <Info className="w-5 h-5" />
                                     </div>
                                     <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                                        {isGuide ? 'Kılavuz Özeti' : 'Hata Özeti'}
+                                        {isGuide ? 'Eğitim Özeti' : 'Hata Özeti'}
                                     </h3>
                                 </div>
 
                                 <div
-                                    className="rich-content text-slate-700 dark:text-slate-200 text-lg leading-relaxed font-medium"
+                                    className="rich-content text-slate-700 dark:text-slate-200 text-base leading-relaxed font-medium"
                                     dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(error.summary) }}
                                 />
                             </div>
@@ -208,7 +209,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                             <Video className="w-5 h-5" />
                                         </div>
                                         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                                            {isGuide ? 'Kılavuz Videosu' : 'Hata Çözüm Videosu'}
+                                            {isGuide ? 'Eğitim Videosu' : 'Hata Çözüm Videosu'}
                                         </h3>
                                     </div>
                                     <div className="rounded-xl overflow-hidden bg-black shadow-lg">
@@ -230,7 +231,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
-                                            {isGuide ? 'Kılavuz Adımları' : 'Çözüm Adımları'}
+                                            {isGuide ? 'Eğitim Adımları' : 'Çözüm Adımları'}
                                         </h3>
                                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                                             {isGuide ? 'Adımları sırasıyla takip edin' : 'Bu adımları sırasıyla uygulayın'}
@@ -284,13 +285,13 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
 
                                                                 {/* Title inside card */}
                                                                 {title && (
-                                                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-tight">
+                                                                    <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 leading-tight">
                                                                         {title}
                                                                     </h4>
                                                                 )}
 
                                                                 <div
-                                                                    className={`rich-content text-slate-700 dark:text-slate-300 leading-relaxed text-base ${title ? 'font-medium' : 'font-semibold'}`}
+                                                                    className={`rich-content text-slate-700 dark:text-slate-300 leading-relaxed text-sm ${title ? 'font-medium' : 'font-semibold'}`}
                                                                     dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(text) }}
                                                                 />
 
@@ -348,7 +349,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                         <div className="lg:col-span-1 sticky top-6">
                             {forceLandscape ? (
                                 // MONITOR/TABLET FRAME (Wider, Landscape)
-                                <div className="bg-white dark:bg-[#1e293b] p-3 rounded-[1.5rem] border-[8px] border-slate-200 dark:border-slate-700 shadow-2xl relative overflow-hidden group">
+                                <div className="max-w-[560px] mx-auto bg-white dark:bg-[#1e293b] p-3 rounded-[1.5rem] border-[8px] border-slate-200 dark:border-slate-700 shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-600 rounded-full z-10"></div>
                                     <div className="rounded-xl overflow-hidden bg-slate-100 dark:bg-[#0f172a] relative aspect-video w-full border border-slate-200 dark:border-slate-700/50">
 
@@ -390,9 +391,22 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                         )}
                                     </div>
                                 </div>
+                            ) : showVideoOnRight ? (
+                                // VIDEO PLAYER (sağ sütun) — görseli olmayan ama videosu olan
+                                // kayıtlarda (özellikle eğitimler) kompakt düzende de video gösterilsin.
+                                <div className="max-w-[560px] mx-auto bg-white dark:bg-[#1e293b] p-3 rounded-[1.5rem] border-[8px] border-slate-200 dark:border-slate-700 shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-600 rounded-full z-10"></div>
+                                    <div className="rounded-xl overflow-hidden bg-black relative aspect-video w-full border border-slate-200 dark:border-slate-700/50">
+                                        <video
+                                            src={error.videoUrl || error.video_url}
+                                            controls
+                                            className="w-full h-full object-contain"
+                                        />
+                                    </div>
+                                </div>
                             ) : (
                                 // PHONE FRAME (Vertical, Portrait) - Only for Images
-                                <div className="bg-white dark:bg-[#1e293b] p-2 rounded-[2.5rem] border-[8px] border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group">
+                                <div className="max-w-[340px] mx-auto bg-white dark:bg-[#1e293b] p-2 rounded-[2.5rem] border-[8px] border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-100 dark:bg-slate-800 rounded-b-xl z-10 flex items-center justify-center gap-2">
                                         <div className="w-12 h-1 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
                                         <div className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
@@ -431,14 +445,14 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
                                         <>
                                             <Video className="w-3.5 h-3.5" />
                                             <span className="text-[10px] font-bold uppercase tracking-wider">
-                                                {isGuide ? 'Kılavuz Videosu' : 'Hata Çözüm Videosu'}
+                                                {isGuide ? 'Eğitim Videosu' : 'Hata Çözüm Videosu'}
                                             </span>
                                         </>
                                     ) : (
                                         <>
                                             <AlertTriangle className="w-3.5 h-3.5" />
                                             <span className="text-[10px] font-bold uppercase tracking-wider">
-                                                {isGuide ? 'Kılavuz Videosu' : 'Hata Görseli'}
+                                                {isGuide ? 'Eğitim Videosu' : 'Hata Görseli'}
                                             </span>
                                         </>
                                     )}
@@ -548,7 +562,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
             {
                 isImageEnlarged && (
                     <div
-                        className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        className="fullscreen-viewer fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
                         onClick={() => setIsImageEnlarged(false)}
                     >
                         <button
@@ -603,7 +617,7 @@ const ErrorDetailModal = ({ error, onClose, onCategoryClick, onDateClick, onCode
             {
                 zoomedStepImage && (
                     <div
-                        className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        className="fullscreen-viewer fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200"
                         onClick={() => setZoomedStepImage(null)}
                     >
                         <button

@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tüm arayüzü görsel olarak %85'e küçült. zoom, sabit px değerlerinden etkilenmez
+   ve sticky/modal/blur ile uyumludur (transform: scale layout'u bozardı).
+   Çok büyükse 0.80, çok küçükse 0.90 yapılabilir (tek değer). */
+body {
+  zoom: 0.85;
+}
+
+/* Firefox zoom'u desteklemez; orada eşdeğer scale fallback'i uygula
+   (zoom destekleyen Chrome/Edge/Safari bu bloğu yok sayar). */
+@supports not (zoom: 1) {
+  html {
+    transform: scale(0.85);
+    transform-origin: top center;
+    width: 117.6%;          /* 1 / 0.85 */
+    margin-left: -8.8%;
+  }
+}
+
+/* Tam ekran görsel önizleyiciler (lightbox) global body zoom'undan etkilenmesin;
+   gerçek tam ekran boyutta açılsınlar (0.85 * 1.17647 ≈ 1). */
+.fullscreen-viewer {
+  zoom: 1.17647;
+}
+
+/* Mobilde input'a odaklanınca iOS Safari'nin otomatik zoom yapmasını engelle
+   (16px altı font'ta sayfayı yakınlaştırır). Yalnız metin boyutunu 16px tutar;
+   kutu boyutu rem tabanlı padding ile küçülmüş kalır. */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans;
@@ -139,4 +172,8 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

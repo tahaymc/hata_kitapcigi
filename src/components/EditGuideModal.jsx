@@ -10,7 +10,7 @@ import RichTextEditor from './RichTextEditor';
 
 import { DraggableStepItem } from './StepBuilder';
 
-const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, onAddCategory, onUpdateCategory, onDeleteCategory, showToast }) => {
+const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, departments = [], onAddCategory, onUpdateCategory, onDeleteCategory, showToast }) => {
     const summaryEditorRef = React.useRef(null);
 
     const handleSummaryFormat = (type, value) => {
@@ -89,7 +89,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
         e.preventDefault();
 
         if (!editingGuide.title.trim()) {
-            showToast("Kılavuz başlığı zorunludur!", 'error');
+            showToast("Eğitim başlığı zorunludur!", 'error');
             return;
         }
 
@@ -103,11 +103,11 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
             if (updated) {
                 onSuccess(updated);
                 onClose();
-                showToast('Kılavuz başarıyla güncellendi!');
+                showToast('Eğitim başarıyla güncellendi!');
             }
         } catch (error) {
             console.error('Error updating guide:', error);
-            showToast(`Kılavuz güncellenirken hata: ${error.message}`, 'error');
+            showToast(`Eğitim güncellenirken hata: ${error.message}`, 'error');
         }
     };
 
@@ -115,7 +115,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
         <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700/50">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Kılavuzu Düzenle</h2>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Eğitimi Düzenle</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                         <X className="w-6 h-6" />
                     </button>
@@ -124,7 +124,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                         <div className="md:col-span-3">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Kodu</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Eğitim Kodu</label>
                             <input
                                 type="text"
                                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 uppercase font-mono"
@@ -134,7 +134,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
                             />
                         </div>
                         <div className="md:col-span-5">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kılavuz Başlığı</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Eğitim Başlığı</label>
                             <input
                                 type="text"
                                 required
@@ -149,6 +149,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
                                 value={editingGuide.category}
                                 onChange={(val) => setEditingGuide({ ...editingGuide, category: val })}
                                 categories={categories}
+                                departments={departments}
                                 onAddCategory={onAddCategory}
                                 onUpdateCategory={onUpdateCategory}
                                 onDeleteCategory={onDeleteCategory}
@@ -170,7 +171,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kılavuz Görselleri</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Eğitim Görselleri</label>
                                 <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 5MB</span>
                             </div>
 
@@ -226,7 +227,7 @@ const EditGuideModal = ({ isOpen, onClose, onSuccess, guideToEdit, categories, o
                     {/* Video Upload Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Kılavuz Videosu</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Eğitim Videosu</label>
                             <span className="text-xs text-slate-400 dark:text-slate-500">Maks. 50MB</span>
                         </div>
 
