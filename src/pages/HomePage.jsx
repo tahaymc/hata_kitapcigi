@@ -25,7 +25,7 @@ import {
 
 import { COLOR_STYLES } from '../utils/constants';
 import { arrayMove } from '@dnd-kit/sortable';
-import { Calendar, X } from 'lucide-react';
+import { Calendar, X, LayoutGrid } from 'lucide-react';
 
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
@@ -461,6 +461,22 @@ const HomePage = () => {
                                     />
                                 </div>
                                 <AnnouncementsPanel isAdmin={canManageContent} departments={departments} />
+                            </div>
+                        )}
+
+                        {/* Öne çıkanlar ile tüm liste arasında estetik ayraç başlığı.
+                            Yalnızca filtresiz ana görünümde (öne çıkanlar görünürken) gösterilir. */}
+                        {!searchTerm && !selectedCategory && !selectedDate && (
+                            <div className="flex items-center gap-4 mt-10 mb-6">
+                                <div className="flex items-center gap-2.5 flex-none">
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                                        <LayoutGrid className="w-4 h-4" />
+                                    </span>
+                                    <h2 className="text-base font-extrabold text-slate-700 dark:text-slate-200 tracking-tight whitespace-nowrap">
+                                        {activeTab === 'errors' ? 'Tüm Çözümler' : 'Tüm Eğitimler'}
+                                    </h2>
+                                </div>
+                                <div className="flex-1 h-px bg-gradient-to-r from-slate-200 dark:from-slate-700 to-transparent" />
                             </div>
                         )}
 
