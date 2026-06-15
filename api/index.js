@@ -1960,6 +1960,117 @@ app.post('/api/bot/logout', verifySuperAdmin, async (req, res) => {
     }
 });
 
+// =====================================================================
+// Sosyal medya link önizlemeleri (WhatsApp, Facebook, Telegram...) için
+// Open Graph meta etiketleri.
+//
+// /error/:id linki paylaşıldığında crawler'lar sayfanın <head> meta
+// etiketlerini okuyup önizleme kartı üretir. SPA statik bir kabuk olduğu
+// için hataya özel başlık/görsel yoktu; bu uç, crawler isteklerinde hatanın
+// HTML'den temizlenmiş başlığını/özetini/görselini içeren küçük bir HTML
+// döner. Gerçek kullanıcılar (tarayıcı) Vercel rewrite'ı sayesinde buraya
+// hiç uğramaz; yine de güvenlik için crawler değilse SPA'ya düşeriz (next).
+// =====================================================================
+
+const CRAWLER_UA = /facebookexternalhit|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Googlebot|bingbot|redditbot|Embedly|Pinterest|vkShare|SkypeUriPreview/i;
+
+// HTML etiketlerini ve sık kullanılan entity'leri düz metne çevirir.
+const ogStripHtml = (input) => {
+    if (input === null || input === undefined) return '';
+    return String(input)
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
+// Temizlenmiş metni HTML attribute/içeriğine güvenle gömmek için kaçışlar.
+const ogEscape = (s) => String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+app.get('/error/:id', async (req, res, next) => {
+    const ua = req.headers['user-agent'] || '';
+    // Yalnızca crawler istekleri meta HTML alır; tarayıcılar normal SPA'ya gider.
+    if (!CRAWLER_UA.test(ua)) return next();
+
+    const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+    const host = req.headers['x-forwarded-host'] || req.headers.host || '';
+    const base = (process.env.SITE_PUBLIC_URL || `${proto}://${host}`).replace(/\/$/, '');
+    const pageUrl = `${base}/error/${req.params.id}`;
+
+    // Hata bulunamasa bile geçerli bir kart dönsün diye varsayılanlar.
+    let title = 'ENPLUS | Çözüm Kitapçığı';
+    let description = 'Hata çözüm kitapçığı';
+    let image = '';
+
+    try {
+        if (supabase) {
+            const id = parseInt(req.params.id);
+            const { data } = await supabase
+                .from('errors')
+                .select('title, summary, code, imageUrl, imageUrls')
+                .eq('id', id)
+                .single();
+
+            if (data) {
+                title = ogStripHtml(data.title) || data.code || 'Hata';
+                description = ogStripHtml(data.summary) || (data.code ? `Kod: ${data.code}` : 'Çözüm adımları için bağlantıya tıklayın.');
+                if (typeof data.imageUrl === 'string' && data.imageUrl.startsWith('http')) {
+                    image = data.imageUrl;
+                } else if (Array.isArray(data.imageUrls)) {
+                    image = data.imageUrls.find((u) => typeof u === 'string' && u.startsWith('http')) || '';
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('OG meta fetch failed:', e.message);
+    }
+
+    if (description.length > 200) description = description.slice(0, 197) + '...';
+
+    const t = ogEscape(title);
+    const d = ogEscape(description);
+    const u = ogEscape(pageUrl);
+    const img = image ? ogEscape(image) : '';
+
+    const html = `<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${t}</title>
+<meta name="description" content="${d}" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ENPLUS Çözüm Kitapçığı" />
+<meta property="og:title" content="${t}" />
+<meta property="og:description" content="${d}" />
+<meta property="og:url" content="${u}" />
+${img ? `<meta property="og:image" content="${img}" />` : ''}
+<meta name="twitter:card" content="${img ? 'summary_large_image' : 'summary'}" />
+<meta name="twitter:title" content="${t}" />
+<meta name="twitter:description" content="${d}" />
+${img ? `<meta name="twitter:image" content="${img}" />` : ''}
+</head>
+<body>
+<h1>${t}</h1>
+<p>${d}</p>
+<p><a href="${u}">Detaylı çözüm için tıklayın</a></p>
+</body>
+</html>`;
+
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
+    return res.send(html);
+});
+
 const PORT = 3001;
 
 // Serve Static Files (Frontend)

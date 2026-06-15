@@ -6,6 +6,17 @@
             "destination": "/api/index.js"
         },
         {
+            "source": "/error/(.*)",
+            "has": [
+                {
+                    "type": "header",
+                    "key": "user-agent",
+                    "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Googlebot|bingbot|redditbot|Embedly|Pinterest|vkShare|SkypeUriPreview|WhatsApp).*"
+                }
+            ],
+            "destination": "/api/index.js"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
