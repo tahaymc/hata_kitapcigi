@@ -10,6 +10,14 @@ qr.png
 # OCR çalışma alanı
 tmp
 
+# OCR yan-servisi (EasyOCR) Python sanal ortamı / derleme cache'i
+ocr-service/.venv
+ocr-service/__pycache__
+__pycache__
+
+# Geçici OCR test/debug görselleri ve çıktıları
+debug
+
 # OCR dil dosyaları (otomatik indirilir)
 *.traineddata
 

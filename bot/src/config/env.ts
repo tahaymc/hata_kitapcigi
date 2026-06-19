@@ -21,6 +21,12 @@ interface Config {
   whatsapp: {
     sessionDir: string;
   };
+  ocr: {
+    provider: string;
+    googleApiKey: string;
+    localUrl: string;
+    googleMonthlyLimit: number;
+  };
   settingsRefreshMs: number;
   heartbeatIntervalMs: number;
 }
@@ -59,6 +65,25 @@ export const config: Config = {
   },
   whatsapp: {
     sessionDir: process.env.SESSION_DIR || './auth_info_baileys',
+  },
+  ocr: {
+    // Saglayici secimi (OCR_PROVIDER ile zorlanabilir): Google Vision anahtari
+    // varsa 'google', yerel EasyOCR servisi (OCR_LOCAL_URL) tanimliysa 'easyocr',
+    // aksi halde yerel Tesseract. Hangisi olursa olsun hata durumunda Tesseract'a
+    // dusulur (botu calisir tutmak icin).
+    provider:
+      process.env.OCR_PROVIDER ||
+      (process.env.GOOGLE_VISION_API_KEY
+        ? 'google'
+        : process.env.OCR_LOCAL_URL
+          ? 'easyocr'
+          : 'tesseract'),
+    googleApiKey: process.env.GOOGLE_VISION_API_KEY || '',
+    localUrl: (process.env.OCR_LOCAL_URL || '').replace(/\/$/, ''),
+    // Google Vision aylik ucretsiz kotasi (1000 birim/ay). Bot bu sayiya gelince
+    // Google'i hic cagirmadan otomatik olarak EasyOCR'a duser; boylece ucret
+    // yazmaz. Guvenli tampon icin biraz dusuk verilebilir (or. 950).
+    googleMonthlyLimit: parseInt(process.env.OCR_GOOGLE_MONTHLY_LIMIT || '1000', 10),
   },
   settingsRefreshMs: parseInt(process.env.SETTINGS_REFRESH_MS || '30000', 10),
   heartbeatIntervalMs: parseInt(process.env.HEARTBEAT_INTERVAL_MS || '15000', 10),

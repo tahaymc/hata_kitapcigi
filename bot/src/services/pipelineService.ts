@@ -1,5 +1,6 @@
 import { Job } from 'bullmq';
 import fs from 'fs/promises';
+import path from 'path';
 import { getSocket } from '../whatsapp/connection';
 import { ImageDownloaderService } from './imageDownloader';
 import { DuplicateDetectionService } from './duplicateDetection';
@@ -58,6 +59,19 @@ export class PipelineService {
       logger.info(`[Job ${job.id}] Step 3: Running OCR (${settings.ocr_languages})`);
       const ocrResult = await OcrService.extractText(localPath, settings.ocr_languages);
 
+      // DEBUG (test asamasi): gelen gorseli ve OCR ciktisini sakla; eslesmeyen
+      // fotograflari inceleyip OCR/eslesme ayari yapabilmek icin.
+      try {
+        const debugDir = path.resolve(process.cwd(), 'debug');
+        await fs.mkdir(debugDir, { recursive: true });
+        const base = `job${job.id}-${Math.round(ocrResult.confidence)}pct`;
+        await fs.copyFile(localPath, path.join(debugDir, `${base}.jpeg`));
+        await fs.writeFile(path.join(debugDir, `${base}.txt`), ocrResult.text, 'utf8');
+        logger.debug(`[Job ${job.id}] Debug image+text saved to debug/${base}.*`);
+      } catch (dbgErr) {
+        // ignore debug failures
+      }
+
       if (ocrResult.confidence < settings.confidence_threshold) {
         logger.warn(`[Job ${job.id}] OCR confidence too low (${ocrResult.confidence}%). Sending fallback.`);
         await socket.sendMessage(remoteJid, { text: MessageFormatterService.formatFallbackMessage(settings) }, { quoted: msg });
@@ -69,7 +83,8 @@ export class PipelineService {
       // 4. Match
       await job.updateProgress(70);
       logger.info(`[Job ${job.id}] Step 4: Matching against site /api/errors`);
-      const matchResult = await MatchingService.findBestMatch(ocrResult.text);
+      const ocrCandidates = ocrResult.candidates?.length ? ocrResult.candidates : [ocrResult.text];
+      const matchResult = await MatchingService.findBestMatch(ocrCandidates);
 
       // 5. Reply
       await job.updateProgress(90);

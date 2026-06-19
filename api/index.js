@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
 import path from 'path';
@@ -11,8 +13,76 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '50mb' }));
+// Vercel/proxy arkasında gerçek istemci IP'sini X-Forwarded-For'dan oku
+// (rate limit'in IP başına doğru saymasi için gerekli).
+app.set('trust proxy', 1);
+
+// --- Güvenlik başlıkları ---
+app.use(helmet());
+
+// --- CORS ---
+// origin: true (her köken) yerine env'den okunan izin listesi. ALLOWED_ORIGINS
+// virgülle ayrılmış köken listesidir (örn. "https://site.com,https://www.site.com").
+// Liste boşsa geliştirme için localhost'a izin verilir. Köken içermeyen istekler
+// (server-to-server, curl, mobil uygulama, aynı köken) engellenmez.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+    credentials: true,
+    origin: (origin, callback) => {
+        // Köken yoksa (Postman, server-to-server, same-origin) izin ver
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.length > 0) {
+            return allowedOrigins.includes(origin)
+                ? callback(null, true)
+                : callback(new Error(`CORS: origin not allowed (${origin})`));
+        }
+
+        // Liste tanımlı değilse yalnızca localhost'a (geliştirme) izin ver
+        if (/^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`CORS: origin not allowed (${origin})`));
+    }
+};
+app.use(cors(corsOptions));
+
+app.use(express.json({ limit: '2mb' }));
+
+// --- Rate limiting ---
+// Genel API: 15 dakikada IP başına 300 istek.
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Çok fazla istek gönderildi, lütfen daha sonra tekrar deneyin.' }
+});
+
+// Hassas uçlar (kullanıcı oluşturma/yönetimi): 15 dakikada IP başına 20 istek.
+const sensitiveLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Çok fazla deneme yapıldı, lütfen daha sonra tekrar deneyin.' }
+});
+
+// Public görüntülenme sayacı (kimlik doğrulamasız): 15 dakikada IP başına 60 istek.
+const viewLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Çok fazla istek gönderildi, lütfen daha sonra tekrar deneyin.' }
+});
+
+// Genel limiter tüm /api uçlarına uygulanır (daha sıkı limiter'lar uç bazında ek olarak).
+app.use('/api', generalLimiter);
 
 // Supabase Connection
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -58,7 +128,11 @@ try {
 const writeDb = () => supabaseAdmin || supabase;
 
 // Endpoint to debug environment variables (Safe: shows only presence)
+// Üretimde tamamen devre dışı: bilgi sızıntısını önlemek için 404 dön.
 app.get('/api/debug-env', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(404).end();
+    }
     res.json({
         hasUrl: !!process.env.SUPABASE_URL,
         hasKey: !!process.env.SUPABASE_KEY,
@@ -245,7 +319,7 @@ app.post('/api/generate-image-upload-url', verifyAdmin, async (req, res) => {
 
 // --- ADMIN ENDPOINTS ---
 
-app.post('/api/admin/create-user', verifySuperAdmin, async (req, res) => {
+app.post('/api/admin/create-user', sensitiveLimiter, verifySuperAdmin, async (req, res) => {
     if (!req.isSuperAdmin) {
         return res.status(403).json({ error: 'Access denied: Only Super Admins can create users' });
     }
@@ -323,7 +397,7 @@ app.get('/api/admin/users', verifySuperAdmin, async (req, res) => {
 });
 
 // Update a user's role — yalnızca yöneticiler
-app.put('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
+app.put('/api/admin/users/:id', sensitiveLimiter, verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     const { id } = req.params;
     const role = req.body.role === 'super_admin' ? 'super_admin' : 'admin';
@@ -356,7 +430,7 @@ app.put('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
 });
 
 // Delete a user (admins satırı + Supabase Auth kullanıcısı) — yalnızca yöneticiler
-app.delete('/api/admin/users/:id', verifySuperAdmin, async (req, res) => {
+app.delete('/api/admin/users/:id', sensitiveLimiter, verifySuperAdmin, async (req, res) => {
     if (!checkDb(res)) return;
     if (!supabaseAdmin) {
         return res.status(503).json({ error: 'Admin service not configured (Missing Key)' });
@@ -701,7 +775,7 @@ app.delete('/api/guides/:id', verifyAdmin, async (req, res) => {
     }
 });
 
-app.post('/api/guides/:id/view', async (req, res) => {
+app.post('/api/guides/:id/view', viewLimiter, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
@@ -1616,7 +1690,7 @@ app.delete('/api/errors/:id', verifyAdmin, async (req, res) => {
     }
 });
 
-app.post('/api/errors/:id/view', async (req, res) => {
+app.post('/api/errors/:id/view', viewLimiter, async (req, res) => {
     if (!checkDb(res)) return;
     const id = parseInt(req.params.id);
 
